@@ -1,0 +1,13 @@
+{
+  "_meta": { "default": "0.52.0" },
+  "0.52.0": {
+    "sha256": "sha256-y0DBCmcHUK96VJkOI1WaenEnALUK9J4L4aTzJEfn73Y=",
+    "vendorHash": "sha256-s9ELOxDHHk+RyImrPxm9DPos7Wb4AFWaNKsrgU4soow=",
+    "go": "1.25.6"
+  },
+  "0.51.0": {
+    "sha256": "sha256-zfpxSd9YD4h1mMU/+ubL36DQ+CIF3YYq+/vBjHel23k=",
+    "vendorHash": "sha256-s9ELOxDHHk+RyImrPxm9DPos7Wb4AFWaNKsrgU4soow=",
+    "go": "1.25.6"
+  }
+}
