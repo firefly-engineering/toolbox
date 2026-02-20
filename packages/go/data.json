@@ -1,5 +1,8 @@
 {
-  "_meta": { "default": "1.25.6" },
+  "_meta": { "default": "1.25.7" },
+  "1.25.7": {
+    "sha256": "sha256-F48oMoICdLQ+F30y8Go+uwEp5CfdIKXkyI3ywXY88Qo="
+  },
   "1.25.6": {
     "sha256": "sha256-WMv3ceRNdt5vVtGeM7d9dFoeSJNAkih15GWFuXXCsFk="
   }
