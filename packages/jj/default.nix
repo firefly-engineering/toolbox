@@ -5,7 +5,11 @@ let
 
   builders = {
     default = version: versionData:
-      pkgs.rustPlatform.buildRustPackage {
+      let
+        rust = toolbox.rust.versions.${versionData.rust};
+        rustPlatform = pkgs.makeRustPlatform { rustc = rust; cargo = rust; };
+      in
+      rustPlatform.buildRustPackage {
         pname = "jujutsu";
         inherit version;
         src = pkgs.fetchFromGitHub {

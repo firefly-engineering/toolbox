@@ -1,0 +1,17 @@
+{
+  "_meta": { "default": "1.92.0" },
+  "1.92.0": {
+    "x86_64-linux": {
+      "sha256": "sha256-0szvWd2fdDnyxpSUgGn3iaBE3BrdzAgDYTIyr4+I7gw="
+    },
+    "aarch64-linux": {
+      "sha256": "sha256-Pjg/i0/KcQ0GANDB3pe3goFnK+LNpldey+HBg6EuOCI="
+    },
+    "x86_64-darwin": {
+      "sha256": "sha256-73H83NUO/TMBFE5wH68VEkETobLv6aERF119Hk8tMdI="
+    },
+    "aarch64-darwin": {
+      "sha256": "sha256-Iiduz4JrIucY8JnXv33bjIiqRiMP26dJYqs8UDFHImg="
+    }
+  }
+}
