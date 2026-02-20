@@ -1,9 +1,7 @@
-{ pkgs, lib, toolbox }:
+{ pkgs, lib, toolbox, toolboxLib }:
 
 let
-  data = builtins.fromJSON (builtins.readFile ./data.json);
-  meta = data._meta;
-  versionEntries = lib.filterAttrs (n: _: n != "_meta") data;
+  inherit (toolboxLib.readData ./data.json) meta versions;
 
   builders = {
     default = version: versionData:
@@ -47,16 +45,8 @@ let
         };
       };
   };
-
-  buildVersion = version: versionData:
-    let
-      builderName = versionData.builder or "default";
-      builder = builders.${builderName}
-        or (throw "Unknown builder '${builderName}' for beads ${version}");
-    in
-    builder version versionData;
 in
 {
-  versions = builtins.mapAttrs buildVersion versionEntries;
+  versions = toolboxLib.buildVersions "beads" builders versions;
   default = meta.default;
 }

@@ -10,10 +10,10 @@ Toolbox is a self-contained, data-driven package registry for [turnkey](https://
 toolbox/
 ├── flake.nix              # Flake assembly: auto-discovers packages/, exposes registry + packages
 ├── lib/
-│   └── default.nix        # Registry helpers (resolveTool, readData, versionToAttr)
+│   └── default.nix        # Registry helpers (resolveTool, readData, buildVersions, versionToAttr)
 └── packages/
     ├── go/
-    │   ├── default.nix    # Go builder: overrides nixpkgs go_1_25
+    │   ├── default.nix    # Go builder: builds Go from source using pkgs.go as bootstrap
     │   └── data.json      # Version metadata: { "1.25.6": { "sha256": "..." } }
     └── beads/
         ├── default.nix    # Beads builder: buildGoModule with toolbox Go
@@ -117,7 +117,7 @@ mkdir packages/mypackage
 
 ### 3. Create `default.nix`
 
-The builder must be a function that takes `{ pkgs, lib, toolbox }` and returns:
+The builder must be a function that takes `{ pkgs, lib, toolbox, toolboxLib }` and returns:
 
 ```nix
 {
@@ -129,12 +129,10 @@ The builder must be a function that takes `{ pkgs, lib, toolbox }` and returns:
 Full template:
 
 ```nix
-{ pkgs, lib, toolbox }:
+{ pkgs, lib, toolbox, toolboxLib }:
 
 let
-  data = builtins.fromJSON (builtins.readFile ./data.json);
-  meta = data._meta;
-  versionEntries = lib.filterAttrs (n: _: n != "_meta") data;
+  inherit (toolboxLib.readData ./data.json) meta versions;
 
   builders = {
     default = version: versionData:
@@ -148,17 +146,9 @@ let
         # ... build steps ...
       };
   };
-
-  buildVersion = version: versionData:
-    let
-      builderName = versionData.builder or "default";
-      builder = builders.${builderName}
-        or (throw "Unknown builder '${builderName}' for mypackage ${version}");
-    in
-    builder version versionData;
 in
 {
-  versions = builtins.mapAttrs buildVersion versionEntries;
+  versions = toolboxLib.buildVersions "mypackage" builders versions;
   default = meta.default;
 }
 ```
@@ -205,7 +195,7 @@ When `"builder"` is absent, it defaults to `"default"`. Existing versions are ne
 Packages can reference other toolbox packages via the `toolbox` argument:
 
 ```nix
-{ pkgs, lib, toolbox }:
+{ pkgs, lib, toolbox, toolboxLib }:
 
 # Get a specific Go version from toolbox
 go = toolbox.go.versions.${versionData.go};

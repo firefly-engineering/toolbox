@@ -1,30 +1,51 @@
-{ pkgs, lib, toolbox }:
+{ pkgs, lib, toolbox, toolboxLib }:
 
 let
-  data = builtins.fromJSON (builtins.readFile ./data.json);
-  meta = data._meta;
-  versionEntries = lib.filterAttrs (n: _: n != "_meta") data;
+  inherit (toolboxLib.readData ./data.json) meta versions;
+
+  # Attributes expected by buildGoModule when overriding `go`
+  GOOS = pkgs.go.GOOS;
+  GOARCH = pkgs.go.GOARCH;
+  CGO_ENABLED = pkgs.go.CGO_ENABLED;
 
   builders = {
     default = version: versionData:
-      pkgs.go_1_25.overrideAttrs (old: {
+      pkgs.stdenv.mkDerivation {
+        pname = "go";
         inherit version;
         src = pkgs.fetchurl {
           url = "https://go.dev/dl/go${version}.src.tar.gz";
           hash = versionData.sha256;
         };
-      });
-  };
 
-  buildVersion = version: versionData:
-    let
-      builderName = versionData.builder or "default";
-      builder = builders.${builderName}
-        or (throw "Unknown builder '${builderName}' for go ${version}");
-    in
-    builder version versionData;
+        nativeBuildInputs = [ pkgs.go ];
+        GOROOT_BOOTSTRAP = "${pkgs.go}/share/go";
+
+        buildPhase = ''
+          export HOME=$TMPDIR
+          cd src
+          bash make.bash
+          cd ..
+        '';
+
+        installPhase = ''
+          mkdir -p $out/share/go $out/bin
+          cp -a . $out/share/go/
+          ln -s $out/share/go/bin/go $out/bin/go
+          ln -s $out/share/go/bin/gofmt $out/bin/gofmt
+        '';
+
+        passthru = {
+          inherit GOOS GOARCH CGO_ENABLED;
+        };
+
+        meta = {
+          platforms = pkgs.go.meta.platforms;
+        };
+      };
+  };
 in
 {
-  versions = builtins.mapAttrs buildVersion versionEntries;
+  versions = toolboxLib.buildVersions "go" builders versions;
   default = meta.default;
 }

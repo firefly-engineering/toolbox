@@ -33,9 +33,10 @@
         let
           pkgs = nixpkgs.legacyPackages.${system};
           lib = pkgs.lib;
+          toolboxLib = import ./lib { inherit lib; };
           packageDirs = lib.filterAttrs (n: v: v == "directory") (builtins.readDir ./packages);
           toolbox = builtins.mapAttrs (
-            name: _: import ./packages/${name} { inherit pkgs lib toolbox; }
+            name: _: import ./packages/${name} { inherit pkgs lib toolbox toolboxLib; }
           ) packageDirs;
         in
         toolbox
