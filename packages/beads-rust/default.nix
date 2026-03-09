@@ -21,11 +21,7 @@ let
         cargoHash = versionData.cargoHash;
 
         nativeBuildInputs = [ pkgs.pkg-config ];
-        buildInputs = [ pkgs.openssl ]
-          ++ lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
-            pkgs.darwin.apple_sdk.frameworks.Security
-            pkgs.darwin.apple_sdk.frameworks.SystemConfiguration
-          ];
+        buildInputs = [ pkgs.openssl ];
 
         doCheck = false;
 

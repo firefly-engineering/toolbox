@@ -21,11 +21,7 @@ let
         cargoHash = versionData.cargoHash;
 
         nativeBuildInputs = [ pkgs.installShellFiles pkgs.pkg-config ];
-        buildInputs = [ pkgs.openssl pkgs.libgit2 pkgs.libssh2 pkgs.zstd ]
-          ++ lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
-            pkgs.darwin.apple_sdk.frameworks.Security
-            pkgs.darwin.apple_sdk.frameworks.SystemConfiguration
-          ];
+        buildInputs = [ pkgs.openssl pkgs.libgit2 pkgs.libssh2 pkgs.zstd ];
 
         cargoBuildFlags = [ "--bin" "jj" ];
         env = {
