@@ -1,5 +1,10 @@
 {
-  "_meta": { "default": "0.38.0" },
+  "_meta": { "default": "0.39.0" },
+  "0.39.0": {
+    "sha256": "sha256-rcmiBDDQaJYpESJt/gWkcitWtcvQosDY9pUbX5YpFjA=",
+    "cargoHash": "sha256-WqM9NJQIrbu+ynhh1pq9nXjoL30A56vIE2lHi7ZUQoc=",
+    "rust": "1.92.0"
+  },
   "0.38.0": {
     "sha256": "sha256-FXbQyKmh/CG/TsRi9yq9L8bVbQ39u6PRLZIet3d/bjA=",
     "cargoHash": "sha256-VvgGnAPCvcBmbP2Aw7tdJcjfo+011u4Pqx1pKiiWISA=",
