@@ -1,0 +1,8 @@
+{
+  "_meta": { "default": "0.21.1" },
+  "0.21.1": {
+    "sha256": "sha256-D/HBqFy5pNSOhMxx/G102HuL+l+oPljsG8rPNLZjUCs=",
+    "vendorHash": "sha256-hT0rvmTyniUdZx1ZVd80nJgsWUpOMKkb9VaCAlKM4lk=",
+    "go": "1.26.0"
+  }
+}
