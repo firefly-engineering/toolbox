@@ -18,7 +18,28 @@
     },
     "root": {
       "inputs": {
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "teller": "teller"
+      }
+    },
+    "teller": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1773266285,
+        "narHash": "sha256-PI4RMO6RWtsYS9eADXUyOH1YpLfG9NVepKiZeEoSEgE=",
+        "owner": "firefly-engineering",
+        "repo": "teller",
+        "rev": "77bd58a63f113852ae8758a7221176322deb797c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "firefly-engineering",
+        "repo": "teller",
+        "type": "github"
       }
     }
   },

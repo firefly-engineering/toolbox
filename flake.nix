@@ -3,10 +3,12 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    teller.url = "github:firefly-engineering/teller";
+    teller.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
-    { self, nixpkgs }:
+    { self, nixpkgs, teller }:
     let
       systems = [
         "x86_64-linux"
@@ -27,6 +29,12 @@
       versionToAttr = builtins.replaceStrings [ "." ] [ "_" ];
     in
     {
+      # Teller-compatible overlay for registry composition
+      overlays.default = teller.lib.mkRegistryOverlay (
+        final: prev:
+        self.registry.${prev.stdenv.system}
+      );
+
       # Full versioned registry (turnkey-compatible)
       registry = forAllSystems (
         system:
