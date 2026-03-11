@@ -1,0 +1,9 @@
+{
+  "_meta": { "default": "2026-03-09" },
+  "2026-03-09": {
+    "x86_64-linux": { "sha256": "sha256-mGTDMK+u15lJotgu7eykStkCT18EqbLsImU5mIElFh4=" },
+    "aarch64-linux": { "sha256": "sha256-wBfOnRjfhTo5paq9XEg4mwHAxUhOyf582ZOTdMq0oXc=" },
+    "x86_64-darwin": { "sha256": "sha256-9XcJnBkjIX/lHZ18v+OesN/NtApN87+wdIfNrfNRqKQ=" },
+    "aarch64-darwin": { "sha256": "sha256-ISlqYCW5lITtwEoLEZCu0pGRFVlUsFHZg+bV4qEelJo=" }
+  }
+}
