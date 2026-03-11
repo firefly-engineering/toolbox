@@ -1,0 +1,9 @@
+{
+  "_meta": { "default": "1.8.1" },
+  "1.8.1": {
+    "x86_64-linux": { "sha256": "sha256-AgRo3nU5znDvG86vfN4ujE8spsOvuEZCqrxcl9n8Kg0=" },
+    "aarch64-linux": { "sha256": "sha256-a8YvJZgTKO3Tz8/m/lGwc/LX53ENfvf82sKNTjhPw9Q=" },
+    "x86_64-darwin": { "sha256": "sha256-6A2+DSoll+PBHEBPAzN7mB10tKhQS3BYbDVLdpenwn8=" },
+    "aarch64-darwin": { "sha256": "sha256-qf4+ovht/HL2coQXUh7JBns0MncVKxFPTpjYyw4mNgM=" }
+  }
+}
