@@ -1,0 +1,10 @@
+{
+  "_meta": { "default": "3.13.12", "release": "20260310" },
+  "3.13.12": {
+    "release": "20260310",
+    "x86_64-linux": { "sha256": "sha256-kErcm8Q3HAGyD351oZsQ8H+1d4ib4CvyH39Ekim5dhE=" },
+    "aarch64-linux": { "sha256": "sha256-DrwASRITGLXegLiH0iq67VXdMCAU9zzWgRyZgag9lg4=" },
+    "x86_64-darwin": { "sha256": "sha256-xjpfdhuyEhkZceZ0bQiq0NBSdU32HA508Hdsr0zoN8g=" },
+    "aarch64-darwin": { "sha256": "sha256-IfQZQu2jxUy9jxO9KLNsSWxYvxiVwWn6x/O8xqVAef0=" }
+  }
+}
