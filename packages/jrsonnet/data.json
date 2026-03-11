@@ -1,0 +1,8 @@
+{
+  "_meta": { "default": "0.5.0-pre96-test" },
+  "0.5.0-pre96-test": {
+    "sha256": "sha256-dm62UkL8lbvU3Ftjj6K5ziZGuHpFyLUzyTg9x/+no54=",
+    "cargoHash": "sha256-ZHmdlqakucapzXJz6L7ZJpmvqTutelN8qkWAD4uDJr8=",
+    "rust": "1.92.0"
+  }
+}
