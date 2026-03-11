@@ -1,0 +1,8 @@
+{
+  "_meta": { "default": "2026.03.09.00" },
+  "2026.03.09.00": {
+    "sha256": "sha256-Nyyzz9LJnynsylMwqf2PKsH5hhOAYhqyOGctyWxPolA=",
+    "cargoHash": "sha256-NwGGO8/Mb3oqoCro7G7dT362RAXU/m2XSgMgp7fkAws=",
+    "rust": "1.92.0"
+  }
+}
