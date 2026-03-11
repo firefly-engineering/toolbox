@@ -46,7 +46,7 @@ let
 
           bash install.sh \
             --prefix=$out \
-            --components=rustc,cargo,rust-std-${targetTriple} \
+            --components=rustc,cargo,rust-std-${targetTriple},clippy-preview,rustfmt-preview \
             --disable-ldconfig
 
           # Remove installation manifest (not needed in Nix store)
