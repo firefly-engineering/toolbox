@@ -1,0 +1,17 @@
+{
+  "_meta": { "default": "2025-12-01" },
+  "2025-12-01": {
+    "x86_64-linux": {
+      "sha256": "sha256-TOgL0pLnNEAhHkKvynnM91kW06K6jZPeJnpSibYg8EU="
+    },
+    "aarch64-linux": {
+      "sha256": "sha256-Pka0HEEqRsQp2R435duy6gJy/RQXp5lK5Dg9+rfr9L8="
+    },
+    "x86_64-darwin": {
+      "sha256": "sha256-8SvAZ30ZFsamVAheKpa2vzGty1TZECUv+BHeXLlDneQ="
+    },
+    "aarch64-darwin": {
+      "sha256": "sha256-1Fv0LzAZUN/BbcorCBaPBbm8JAzLarhJysLqPT78XEQ="
+    }
+  }
+}
