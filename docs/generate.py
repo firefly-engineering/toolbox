@@ -2,15 +2,68 @@
 """Generate GitHub Pages documentation from the toolbox package registry."""
 
 import json
-import os
 import re
 from pathlib import Path
 
 
-def read_toolchain_components(nix_path: Path) -> list[str]:
-    """Parse a toolchain default.nix to extract component package names."""
+def load_package_defaults(packages_dir: Path) -> dict[str, str]:
+    """Load the default version for every package that has a data.json."""
+    defaults = {}
+    for pkg_dir in packages_dir.iterdir():
+        data_json = pkg_dir / "data.json"
+        if pkg_dir.is_dir() and data_json.exists():
+            data = json.loads(data_json.read_text())
+            defaults[pkg_dir.name] = data.get("_meta", {}).get("default", "")
+    return defaults
+
+
+def parse_toolchain_versions(
+    nix_path: Path, pkg_defaults: dict[str, str]
+) -> tuple[list[str], dict[str, list[dict]]]:
+    """Parse a toolchain default.nix to extract versions and their resolved components.
+
+    Returns (version_names, {version: [{name, version}, ...]}).
+    """
     content = nix_path.read_text()
-    return re.findall(r"toolbox\.(\w[\w-]*)\.versions", content)
+
+    # Extract the default version
+    default_match = re.search(r'default\s*=\s*"([^"]+)"', content)
+    default = default_match.group(1) if default_match else ""
+
+    # Split into version blocks: find each "version" = pkgs.symlinkJoin { ... };
+    version_pattern = re.compile(
+        r'"([^"]+)"\s*=\s*pkgs\.symlinkJoin\s*\{[^}]*paths\s*=\s*\[(.*?)\]',
+        re.DOTALL,
+    )
+
+    versions = {}
+    version_names = []
+    for m in version_pattern.finditer(content):
+        ver = m.group(1)
+        paths_block = m.group(2)
+        version_names.append(ver)
+
+        components = []
+        # Match toolbox.<pkg>.versions.${toolbox.<pkg>.default} (uses default)
+        for pkg in re.findall(
+            r"toolbox\.([\w-]+)\.versions\.\$\{toolbox\.\1\.default\}", paths_block
+        ):
+            resolved = pkg_defaults.get(pkg, "?")
+            components.append({"name": pkg, "version": resolved})
+
+        # Match toolbox.<pkg>.versions.<literal_version> (pinned)
+        for pkg, ver_literal in re.findall(
+            r'toolbox\.([\w-]+)\.versions\."?([^"\s};]+)"?', paths_block
+        ):
+            # Skip if already matched as a default reference
+            if not re.search(
+                rf"toolbox\.{re.escape(pkg)}\.versions\.\$\{{", paths_block
+            ):
+                components.append({"name": pkg, "version": ver_literal})
+
+        versions[ver] = components
+
+    return default, version_names, versions
 
 
 def main():
@@ -18,6 +71,8 @@ def main():
     packages_dir = repo_root / "packages"
     out_dir = repo_root / "docs" / "_site"
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    pkg_defaults = load_package_defaults(packages_dir)
 
     packages = []
     toolchains = []
@@ -46,45 +101,57 @@ def main():
                 }
             )
         else:
-            # Toolchain meta-package
             nix_path = pkg_dir / "default.nix"
-            components = (
-                read_toolchain_components(nix_path) if nix_path.exists() else []
-            )
-            toolchains.append(
-                {
-                    "name": name,
-                    "components": components,
-                }
-            )
+            if nix_path.exists():
+                default, version_names, version_map = parse_toolchain_versions(
+                    nix_path, pkg_defaults
+                )
+                toolchains.append(
+                    {
+                        "name": name,
+                        "default": default,
+                        "versions": version_names,
+                        "expansion": version_map,
+                    }
+                )
 
     html = render_html(packages, toolchains)
     (out_dir / "index.html").write_text(html)
-    print(f"Generated docs with {len(packages)} packages and {len(toolchains)} toolchains")
+    print(
+        f"Generated docs with {len(packages)} packages and {len(toolchains)} toolchains"
+    )
 
 
 def render_html(packages: list[dict], toolchains: list[dict]) -> str:
     package_rows = ""
     for pkg in packages:
         versions_html = ", ".join(
-            f'<span class="version{"" if v != pkg["default"] else " default"}">{v}</span>'
+            f'<span class="version{" default" if v == pkg["default"] else ""}">{v}</span>'
             for v in pkg["versions"]
         )
         package_rows += f"""      <tr>
         <td class="pkg-name">{pkg["name"]}</td>
-        <td><code>{pkg["default"]}</code></td>
         <td>{versions_html}</td>
       </tr>
 """
 
     toolchain_rows = ""
     for tc in toolchains:
-        components_html = ", ".join(
-            f"<code>{c}</code>" for c in tc["components"]
-        )
+        versions_html = ""
+        for ver in tc["versions"]:
+            is_default = ver == tc["default"]
+            components = tc["expansion"].get(ver, [])
+            comp_rows = "".join(
+                f'<tr><td><code>{c["name"]}</code></td><td>{c["version"]}</td></tr>'
+                for c in components
+            )
+            versions_html += f"""<details class="tc-details">
+          <summary><span class="version{" default" if is_default else ""}">{ver}</span></summary>
+          <table class="tc-expansion"><tbody>{comp_rows}</tbody></table>
+        </details>"""
         toolchain_rows += f"""      <tr>
         <td class="pkg-name">{tc["name"]}</td>
-        <td>{components_html}</td>
+        <td>{versions_html}</td>
       </tr>
 """
 
@@ -176,6 +243,7 @@ def render_html(packages: list[dict], toolchains: list[dict]) -> str:
     .pkg-name {{
       font-weight: 600;
       color: var(--accent);
+      white-space: nowrap;
     }}
     code {{
       background: var(--bg);
@@ -195,6 +263,35 @@ def render_html(packages: list[dict], toolchains: list[dict]) -> str:
       background: rgba(63, 185, 80, 0.15);
       color: var(--green);
       font-weight: 600;
+    }}
+    .tc-details {{
+      display: inline-block;
+      margin: 0.1em;
+    }}
+    .tc-details summary {{
+      cursor: pointer;
+      list-style: none;
+    }}
+    .tc-details summary::-webkit-details-marker {{
+      display: none;
+    }}
+    .tc-details summary .version::after {{
+      content: " \u25b8";
+      font-size: 0.7em;
+      color: var(--text-muted);
+      vertical-align: middle;
+    }}
+    .tc-details[open] summary .version::after {{
+      content: " \u25be";
+    }}
+    .tc-expansion {{
+      margin: 0.4em 0 0.2em 0.5em;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      font-size: 0.85em;
+    }}
+    .tc-expansion td {{
+      padding: 0.25rem 0.6rem;
     }}
     footer {{
       margin-top: 3rem;
@@ -233,8 +330,7 @@ def render_html(packages: list[dict], toolchains: list[dict]) -> str:
     <thead>
       <tr>
         <th>Package</th>
-        <th>Default</th>
-        <th>Available Versions</th>
+        <th>Versions</th>
       </tr>
     </thead>
     <tbody>
@@ -246,7 +342,7 @@ def render_html(packages: list[dict], toolchains: list[dict]) -> str:
     <thead>
       <tr>
         <th>Toolchain</th>
-        <th>Included Packages</th>
+        <th>Versions</th>
       </tr>
     </thead>
     <tbody>
