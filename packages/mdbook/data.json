@@ -1,5 +1,5 @@
 {
-  "_meta": { "default": "0.5.2" },
+  "_meta": { "default": "0.5.2", "releases": "https://github.com/rust-lang/mdBook/releases" },
   "0.5.2": {
     "x86_64-linux": { "sha256": "sha256-CE5DQrpWTbJwEIdj5ASn0fMJ2TJlGiJITpPA3BoHH20=" },
     "aarch64-linux": { "sha256": "sha256-+yKb/caN1sk2kuZMUCpnqNPS/DXDfGH8cnaIQ+ZHat0=" },

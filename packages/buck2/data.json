@@ -1,5 +1,5 @@
 {
-  "_meta": { "default": "2025-12-01" },
+  "_meta": { "default": "2025-12-01", "releases": "https://github.com/facebook/buck2/releases" },
   "2025-12-01": {
     "x86_64-linux": {
       "sha256": "sha256-TOgL0pLnNEAhHkKvynnM91kW06K6jZPeJnpSibYg8EU="

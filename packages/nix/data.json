@@ -1,5 +1,5 @@
 {
-  "_meta": { "default": "2.34.1" },
+  "_meta": { "default": "2.34.1", "releases": "https://github.com/NixOS/nix/releases" },
   "2.34.1": {
     "sha256": "sha256-qzVtneydMSjNZXzNbxQG9VvJc490keS9RNlbUCfiQas="
   }

@@ -1,5 +1,5 @@
 {
-  "_meta": { "default": "0.15.5" },
+  "_meta": { "default": "0.15.5", "releases": "https://github.com/astral-sh/ruff/releases" },
   "0.15.5": {
     "x86_64-linux": { "sha256": "sha256-rAM2Ug/ZhrO9fFELH50wSeDRUN2qt1TPpcXq+Mu4QM4=" },
     "aarch64-linux": { "sha256": "sha256-zQHjyd8tbBMkdEiDp5bmaTZCSU8vYiKk8VjaNvhJCM4=" },

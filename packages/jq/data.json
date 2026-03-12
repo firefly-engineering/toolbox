@@ -1,5 +1,5 @@
 {
-  "_meta": { "default": "1.8.1" },
+  "_meta": { "default": "1.8.1", "releases": "https://github.com/jqlang/jq/releases" },
   "1.8.1": {
     "x86_64-linux": { "sha256": "sha256-AgRo3nU5znDvG86vfN4ujE8spsOvuEZCqrxcl9n8Kg0=" },
     "aarch64-linux": { "sha256": "sha256-a8YvJZgTKO3Tz8/m/lGwc/LX53ENfvf82sKNTjhPw9Q=" },

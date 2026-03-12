@@ -1,5 +1,5 @@
 {
-  "_meta": { "default": "1.92.0" },
+  "_meta": { "default": "1.92.0", "releases": "https://github.com/rust-lang/rust/releases" },
   "1.92.0": {
     "x86_64-linux": {
       "sha256": "sha256-0szvWd2fdDnyxpSUgGn3iaBE3BrdzAgDYTIyr4+I7gw="

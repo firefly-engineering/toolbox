@@ -1,5 +1,5 @@
 {
-  "_meta": { "default": "3.13.12", "release": "20260310" },
+  "_meta": { "default": "3.13.12", "release": "20260310", "releases": "https://github.com/astral-sh/python-build-standalone/releases" },
   "3.13.12": {
     "release": "20260310",
     "x86_64-linux": { "sha256": "sha256-kErcm8Q3HAGyD351oZsQ8H+1d4ib4CvyH39Ekim5dhE=" },

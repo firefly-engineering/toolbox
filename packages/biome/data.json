@@ -1,5 +1,5 @@
 {
-  "_meta": { "default": "2.4.6" },
+  "_meta": { "default": "2.4.6", "releases": "https://github.com/biomejs/biome/releases" },
   "2.4.6": {
     "x86_64-linux": { "sha256": "sha256-a8GS8fCzSVRDRy2VvU2/yTcsF/esUSVtY1GSylJdpZ0=" },
     "aarch64-linux": { "sha256": "sha256-LaC40Cjnf3eJAKyE4dRLvHAzLan/2uPsOqBDVfM5+no=" },

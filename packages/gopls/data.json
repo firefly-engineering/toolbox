@@ -1,5 +1,5 @@
 {
-  "_meta": { "default": "0.21.1" },
+  "_meta": { "default": "0.21.1", "releases": "https://github.com/golang/tools/releases" },
   "0.21.1": {
     "sha256": "sha256-D/HBqFy5pNSOhMxx/G102HuL+l+oPljsG8rPNLZjUCs=",
     "vendorHash": "sha256-hT0rvmTyniUdZx1ZVd80nJgsWUpOMKkb9VaCAlKM4lk=",

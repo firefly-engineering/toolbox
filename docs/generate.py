@@ -88,6 +88,7 @@ def main():
             data = json.loads(data_json.read_text())
             meta = data.get("_meta", {})
             default_version = meta.get("default", "")
+            releases_url = meta.get("releases", "")
             versions = sorted(
                 [k for k in data if k != "_meta"],
                 key=lambda v: v,
@@ -98,6 +99,7 @@ def main():
                     "name": name,
                     "default": default_version,
                     "versions": versions,
+                    "releases": releases_url,
                 }
             )
         else:
@@ -129,8 +131,12 @@ def render_html(packages: list[dict], toolchains: list[dict]) -> str:
             f'<span class="version{" default" if v == pkg["default"] else ""}">{v}</span>'
             for v in pkg["versions"]
         )
+        if pkg["releases"]:
+            name_html = f'<a href="{pkg["releases"]}" class="pkg-name">{pkg["name"]}</a>'
+        else:
+            name_html = f'<span class="pkg-name">{pkg["name"]}</span>'
         package_rows += f"""      <tr>
-        <td class="pkg-name">{pkg["name"]}</td>
+        <td>{name_html}</td>
         <td>{versions_html}</td>
       </tr>
 """
@@ -244,6 +250,10 @@ def render_html(packages: list[dict], toolchains: list[dict]) -> str:
       font-weight: 600;
       color: var(--accent);
       white-space: nowrap;
+      text-decoration: none;
+    }}
+    a.pkg-name:hover {{
+      text-decoration: underline;
     }}
     code {{
       background: var(--bg);

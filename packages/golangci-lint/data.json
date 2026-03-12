@@ -1,5 +1,5 @@
 {
-  "_meta": { "default": "2.11.3" },
+  "_meta": { "default": "2.11.3", "releases": "https://github.com/golangci/golangci-lint/releases" },
   "2.11.3": {
     "x86_64-linux": { "sha256": "sha256-h7uM3bzIJdV3i2ToqRtGwFJrJH9OLykE3qdOx0UEddE=" },
     "aarch64-linux": { "sha256": "sha256-7j2V8wE1nn1Xjm2ZyK1a6turxaEwCaMLKw3xHIBYr+k=" },

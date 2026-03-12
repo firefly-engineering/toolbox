@@ -1,5 +1,5 @@
 {
-  "_meta": { "default": "0.8.34" },
+  "_meta": { "default": "0.8.34", "releases": "https://github.com/ethereum/solidity/releases" },
   "0.8.34": {
     "x86_64-linux": { "sha256": "sha256-1Arcb5/bsiqX0yoC+gVoi/LueIav/EjJhRsK/Upyazk=" },
     "aarch64-linux": { "sha256": "sha256-5CYOWPn2U/mEyMBy9yYoVcpGKFcHUqq8mls1jFfSpuU=" },

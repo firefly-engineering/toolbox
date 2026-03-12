@@ -1,5 +1,5 @@
 {
-  "_meta": { "default": "0.13.9" },
+  "_meta": { "default": "0.13.9", "releases": "https://github.com/killercup/cargo-edit/releases" },
   "0.13.9": {
     "sha256": "sha256-8cl7Ev4G3w8UZltP4GnoZs2SWChVipePtUezavmftso=",
     "cargoHash": "sha256-CDrTVl7XQIpuEQc8WdVkzVMk1vHw0H0YOpQQsvQcczU=",

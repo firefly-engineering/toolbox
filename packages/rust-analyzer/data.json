@@ -1,5 +1,5 @@
 {
-  "_meta": { "default": "2026-03-09" },
+  "_meta": { "default": "2026-03-09", "releases": "https://github.com/rust-lang/rust-analyzer/releases" },
   "2026-03-09": {
     "x86_64-linux": { "sha256": "sha256-mGTDMK+u15lJotgu7eykStkCT18EqbLsImU5mIElFh4=" },
     "aarch64-linux": { "sha256": "sha256-wBfOnRjfhTo5paq9XEg4mwHAxUhOyf582ZOTdMq0oXc=" },
