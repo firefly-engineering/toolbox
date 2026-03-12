@@ -26,7 +26,7 @@ Each package directory has a `data.json` with version entries and a `_meta` key:
 
 ```json
 {
-  "_meta": { "default": "1.2.3" },
+  "_meta": { "default": "1.2.3", "releases": "https://github.com/OWNER/REPO/releases" },
   "1.2.3": {
     "sha256": "sha256-XXXX",
     "vendorHash": "sha256-YYYY"
@@ -35,6 +35,7 @@ Each package directory has a `data.json` with version entries and a `_meta` key:
 ```
 
 - **`_meta.default`**: Which version is the default (used by `nix build .#<pkg>.default`)
+- **`_meta.releases`**: URL to the upstream releases page (e.g., GitHub releases, official download page). Used by the docs generator to link package names, and by agents to check for new versions.
 - **Version keys**: Semantic version strings (e.g., `"1.25.6"`, `"0.52.0"`)
 - **`sha256`**: SRI hash of the source archive
 - **`vendorHash`**: (Go packages) SRI hash of vendored dependencies
@@ -108,7 +109,7 @@ mkdir packages/mypackage
 
 ```json
 {
-  "_meta": { "default": "1.0.0" },
+  "_meta": { "default": "1.0.0", "releases": "https://github.com/OWNER/REPO/releases" },
   "1.0.0": {
     "sha256": "sha256-XXXX"
   }
@@ -236,6 +237,43 @@ registryExtensions = {
   go = inputs.toolbox.registry.${system}.go;
 };
 ```
+
+## Checking for Package Updates
+
+Each package's `data.json` has a `_meta.releases` URL pointing to its upstream releases page. Use this to discover whether newer versions are available.
+
+### Checking a single package
+
+1. Read `packages/<pkg>/data.json` to find `_meta.releases` and `_meta.default` (the current default version).
+2. Fetch the releases URL to find the latest available version(s).
+   - **GitHub releases pages** (`github.com/<owner>/<repo>/releases`): use the GitHub API for structured data:
+     ```bash
+     gh api repos/<owner>/<repo>/releases/latest --jq '.tag_name'
+     ```
+     Or to list recent releases:
+     ```bash
+     gh api repos/<owner>/<repo>/releases --jq '.[].tag_name' | head -10
+     ```
+   - **Non-GitHub pages** (e.g., `go.dev/dl/`, `nodejs.org`, `static.rust-lang.org`): fetch the page and extract version information from it.
+3. Compare the latest upstream version against `_meta.default`. Note that some packages use a `v` prefix in their version keys (e.g., `"v1.5.1"`) — match the convention already used in that package's `data.json`.
+
+### Checking all packages for updates
+
+To scan the entire registry for outdated packages:
+
+1. Iterate over every `packages/*/data.json`.
+2. For each, extract `_meta.releases` and `_meta.default`.
+3. Fetch the upstream releases URL and compare.
+4. Report which packages have newer versions available, showing current vs. latest.
+
+### Bumping a package to a new version
+
+Once you've identified that a newer version exists:
+
+1. Follow the steps in "Adding a New Version of an Existing Package" above.
+2. Use the URL patterns in the package's `default.nix` to construct the correct download URL for the new version — this tells you how to compute the source hash.
+3. Update `_meta.default` to the new version.
+4. Test the build and verify the binary.
 
 ## Verification Checklist
 
