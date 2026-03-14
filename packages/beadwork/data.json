@@ -1,0 +1,8 @@
+{
+  "_meta": { "default": "0.11.6", "releases": "https://github.com/jallum/beadwork/releases" },
+  "0.11.6": {
+    "sha256": "sha256-+WcNCXOjK8TuozVIbQME2U/cfwGPYgcOLONmmjqfqQ8=",
+    "vendorHash": "sha256-/tmJPuL9xHsh3oTtlaW1nUxroAxyX5rhsSB1pkuE9Fo=",
+    "go": "1.25.7"
+  }
+}
