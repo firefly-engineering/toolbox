@@ -28,10 +28,6 @@ let
         env.GOTOOLCHAIN = "auto";
         nativeBuildInputs = [ pkgs.git ];
 
-        postInstall = ''
-          ln -s bw $out/bin/beadwork
-        '';
-
         meta = with lib; {
           description = "A git-native work management tool for AI coding agents";
           homepage = "https://github.com/jallum/beadwork";
