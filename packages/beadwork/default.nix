@@ -21,11 +21,6 @@ let
         subPackages = [ "cmd/bw" ];
         doCheck = false;
 
-        postPatch = ''
-          goVer="$(${go}/bin/go env GOVERSION | sed 's/^go//')"
-          sed -i "s/^go .*/go $goVer/" go.mod
-        '';
-        env.GOTOOLCHAIN = "auto";
         nativeBuildInputs = [ pkgs.git ];
 
         meta = with lib; {
