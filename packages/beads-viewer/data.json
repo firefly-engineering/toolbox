@@ -1,5 +1,10 @@
 {
-  "_meta": { "default": "0.14.4", "releases": "https://github.com/Dicklesworthstone/beads_viewer/releases" },
+  "_meta": { "default": "0.15.2", "releases": "https://github.com/Dicklesworthstone/beads_viewer/releases" },
+  "0.15.2": {
+    "sha256": "sha256-sdlw9Zr+/I1/PaX0Wpim+UGPxvP7hPrlJ0MTGC20Q5w=",
+    "vendorHash": null,
+    "go": "1.26.1"
+  },
   "0.14.4": {
     "sha256": "sha256-0HK1ycgE9U57mYLhOgR68ElWQWXin4v5P7l1n4XECI8=",
     "vendorHash": null,
