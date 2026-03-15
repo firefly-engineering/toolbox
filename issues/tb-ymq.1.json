@@ -1,7 +1,9 @@
 {
   "assignee": "",
   "blocked_by": [],
-  "blocks": [],
+  "blocks": [
+    "tb-ymq.5"
+  ],
   "created": "2026-03-15T16:32:04Z",
   "description": "Patch release. Foundation — other Go packages (beads, golangci-lint, gopls) reference toolbox Go. Source: https://go.dev/dl/go1.26.1.src.tar.gz",
   "id": "tb-ymq.1",
@@ -11,5 +13,5 @@
   "status": "open",
   "title": "Bump go 1.26.0 → 1.26.1",
   "type": "task",
-  "updated_at": "2026-03-15T16:32:04Z"
+  "updated_at": "2026-03-15T16:32:20Z"
 }
