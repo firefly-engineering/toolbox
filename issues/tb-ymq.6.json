@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-15T16:32:09Z",
+  "description": "14 patch versions behind. Rust crate, will need new sha256 and vendorHash.",
+  "id": "tb-ymq.6",
+  "labels": [],
+  "parent": "tb-ymq",
+  "priority": 2,
+  "status": "open",
+  "title": "Bump beads-rust 0.1.14 → 0.1.28",
+  "type": "task",
+  "updated_at": "2026-03-15T16:32:09Z"
+}
