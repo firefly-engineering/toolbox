@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "unknown",
   "blocked_by": [
     "tb-ymq.8"
   ],
@@ -10,8 +10,8 @@
   "labels": [],
   "parent": "tb-ymq",
   "priority": 3,
-  "status": "open",
+  "status": "in_progress",
   "title": "Bump buck2 2025-12-01 → 2026-03-15",
   "type": "task",
-  "updated_at": "2026-03-15T16:32:20Z"
+  "updated_at": "2026-03-15T17:07:30Z"
 }
