@@ -4,14 +4,15 @@
     "tb-ymq.8"
   ],
   "blocks": [],
+  "closed_at": "2026-03-15T17:07:47Z",
   "created": "2026-03-15T16:32:14Z",
   "description": "3.5 months of changes. Date-based releases, builds from source with Rust. May need compatible Rust version — do after Rust bump.",
   "id": "tb-ymq.9",
   "labels": [],
   "parent": "tb-ymq",
   "priority": 3,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Bump buck2 2025-12-01 → 2026-03-15",
   "type": "task",
-  "updated_at": "2026-03-15T17:07:30Z"
+  "updated_at": "2026-03-15T17:07:47Z"
 }
