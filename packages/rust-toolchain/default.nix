@@ -1,14 +1,23 @@
 { pkgs, lib, toolbox, toolboxLib }:
-{
-  versions = {
-    "1" = pkgs.symlinkJoin {
-      name = "rust-toolchain-1";
-      paths = [
-        toolbox.rust.versions.${toolbox.rust.default}
-        toolbox.rust-analyzer.versions.${toolbox.rust-analyzer.default}
-        toolbox.cargo-edit.versions.${toolbox.cargo-edit.default}
-      ];
-    };
+
+let
+  inherit (toolboxLib.readData ./data.json) meta versions;
+
+  components = {
+    rust = toolbox.rust;
+    rust-analyzer = toolbox.rust-analyzer;
+    cargo-edit = toolbox.cargo-edit;
   };
-  default = "1";
+
+  mkToolchain = version: versionData:
+    pkgs.symlinkJoin {
+      name = "rust-toolchain-${version}";
+      paths = lib.mapAttrsToList (name: ver:
+        components.${name}.versions.${ver}
+      ) (lib.filterAttrs (n: _: builtins.hasAttr n components) versionData);
+    };
+in
+{
+  versions = builtins.mapAttrs mkToolchain versions;
+  default = meta.default;
 }

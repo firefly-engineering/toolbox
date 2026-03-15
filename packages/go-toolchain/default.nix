@@ -1,14 +1,23 @@
 { pkgs, lib, toolbox, toolboxLib }:
-{
-  versions = {
-    "1" = pkgs.symlinkJoin {
-      name = "go-toolchain-1";
-      paths = [
-        toolbox.go.versions.${toolbox.go.default}
-        toolbox.golangci-lint.versions.${toolbox.golangci-lint.default}
-        toolbox.gopls.versions.${toolbox.gopls.default}
-      ];
-    };
+
+let
+  inherit (toolboxLib.readData ./data.json) meta versions;
+
+  components = {
+    go = toolbox.go;
+    golangci-lint = toolbox.golangci-lint;
+    gopls = toolbox.gopls;
   };
-  default = "1";
+
+  mkToolchain = version: versionData:
+    pkgs.symlinkJoin {
+      name = "go-toolchain-${version}";
+      paths = lib.mapAttrsToList (name: ver:
+        components.${name}.versions.${ver}
+      ) (lib.filterAttrs (n: _: builtins.hasAttr n components) versionData);
+    };
+in
+{
+  versions = builtins.mapAttrs mkToolchain versions;
+  default = meta.default;
 }

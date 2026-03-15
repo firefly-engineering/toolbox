@@ -1,13 +1,22 @@
 { pkgs, lib, toolbox, toolboxLib }:
-{
-  versions = {
-    "1" = pkgs.symlinkJoin {
-      name = "js-toolchain-1";
-      paths = [
-        toolbox.nodejs.versions.${toolbox.nodejs.default}
-        toolbox.biome.versions.${toolbox.biome.default}
-      ];
-    };
+
+let
+  inherit (toolboxLib.readData ./data.json) meta versions;
+
+  components = {
+    nodejs = toolbox.nodejs;
+    biome = toolbox.biome;
   };
-  default = "1";
+
+  mkToolchain = version: versionData:
+    pkgs.symlinkJoin {
+      name = "js-toolchain-${version}";
+      paths = lib.mapAttrsToList (name: ver:
+        components.${name}.versions.${ver}
+      ) (lib.filterAttrs (n: _: builtins.hasAttr n components) versionData);
+    };
+in
+{
+  versions = builtins.mapAttrs mkToolchain versions;
+  default = meta.default;
 }

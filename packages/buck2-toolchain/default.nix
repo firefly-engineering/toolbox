@@ -1,13 +1,22 @@
 { pkgs, lib, toolbox, toolboxLib }:
-{
-  versions = {
-    "1" = pkgs.symlinkJoin {
-      name = "buck2-toolchain-1";
-      paths = [
-        toolbox.buck2.versions.${toolbox.buck2.default}
-        toolbox.reindeer.versions.${toolbox.reindeer.default}
-      ];
-    };
+
+let
+  inherit (toolboxLib.readData ./data.json) meta versions;
+
+  components = {
+    buck2 = toolbox.buck2;
+    reindeer = toolbox.reindeer;
   };
-  default = "1";
+
+  mkToolchain = version: versionData:
+    pkgs.symlinkJoin {
+      name = "buck2-toolchain-${version}";
+      paths = lib.mapAttrsToList (name: ver:
+        components.${name}.versions.${ver}
+      ) (lib.filterAttrs (n: _: builtins.hasAttr n components) versionData);
+    };
+in
+{
+  versions = builtins.mapAttrs mkToolchain versions;
+  default = meta.default;
 }

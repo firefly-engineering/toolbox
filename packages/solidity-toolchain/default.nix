@@ -1,13 +1,22 @@
 { pkgs, lib, toolbox, toolboxLib }:
-{
-  versions = {
-    "1" = pkgs.symlinkJoin {
-      name = "solidity-toolchain-1";
-      paths = [
-        toolbox.solc.versions.${toolbox.solc.default}
-        toolbox.foundry.versions.${toolbox.foundry.default}
-      ];
-    };
+
+let
+  inherit (toolboxLib.readData ./data.json) meta versions;
+
+  components = {
+    solc = toolbox.solc;
+    foundry = toolbox.foundry;
   };
-  default = "1";
+
+  mkToolchain = version: versionData:
+    pkgs.symlinkJoin {
+      name = "solidity-toolchain-${version}";
+      paths = lib.mapAttrsToList (name: ver:
+        components.${name}.versions.${ver}
+      ) (lib.filterAttrs (n: _: builtins.hasAttr n components) versionData);
+    };
+in
+{
+  versions = builtins.mapAttrs mkToolchain versions;
+  default = meta.default;
 }

@@ -1,14 +1,23 @@
 { pkgs, lib, toolbox, toolboxLib }:
-{
-  versions = {
-    "1" = pkgs.symlinkJoin {
-      name = "python-toolchain-1";
-      paths = [
-        toolbox.python.versions.${toolbox.python.default}
-        toolbox.uv.versions.${toolbox.uv.default}
-        toolbox.ruff.versions.${toolbox.ruff.default}
-      ];
-    };
+
+let
+  inherit (toolboxLib.readData ./data.json) meta versions;
+
+  components = {
+    python = toolbox.python;
+    uv = toolbox.uv;
+    ruff = toolbox.ruff;
   };
-  default = "1";
+
+  mkToolchain = version: versionData:
+    pkgs.symlinkJoin {
+      name = "python-toolchain-${version}";
+      paths = lib.mapAttrsToList (name: ver:
+        components.${name}.versions.${ver}
+      ) (lib.filterAttrs (n: _: builtins.hasAttr n components) versionData);
+    };
+in
+{
+  versions = builtins.mapAttrs mkToolchain versions;
+  default = meta.default;
 }
