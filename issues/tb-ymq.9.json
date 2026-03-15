@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "tb-ymq.8"
+  ],
   "blocks": [],
   "created": "2026-03-15T16:32:14Z",
   "description": "3.5 months of changes. Date-based releases, builds from source with Rust. May need compatible Rust version — do after Rust bump.",
@@ -11,5 +13,5 @@
   "status": "open",
   "title": "Bump buck2 2025-12-01 → 2026-03-15",
   "type": "task",
-  "updated_at": "2026-03-15T16:32:14Z"
+  "updated_at": "2026-03-15T16:32:20Z"
 }
