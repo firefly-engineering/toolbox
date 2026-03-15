@@ -3,12 +3,23 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    devenv.url = "github:cachix/devenv";
+    devenv-root = {
+      url = "file+file:///dev/null";
+      flake = false;
+    };
     teller.url = "github:firefly-engineering/teller";
     teller.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
-    { self, nixpkgs, teller }:
+    inputs@{
+      self,
+      nixpkgs,
+      devenv,
+      devenv-root,
+      teller,
+    }:
     let
       systems = [
         "x86_64-linux"
@@ -93,6 +104,35 @@
             "${name}-default" = entry.versions.${entry.default};
           }
         ) { } (builtins.attrNames reg)
+      );
+
+      # Development shell via devenv (activated by direnv)
+      devShells = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          reg = self.registry.${system};
+          beadwork = reg.beadwork.versions.${reg.beadwork.default};
+        in
+        {
+          default = devenv.lib.mkShell {
+            inherit inputs pkgs;
+            modules = [
+              {
+                devenv.root =
+                  let
+                    devenvRootFileContent = builtins.readFile inputs.devenv-root.outPath;
+                  in
+                  pkgs.lib.mkIf (devenvRootFileContent != "") devenvRootFileContent;
+
+                packages = [ beadwork ];
+
+                languages.nix.enable = true;
+                languages.python.enable = true;
+              }
+            ];
+          };
+        }
       );
     };
 }
