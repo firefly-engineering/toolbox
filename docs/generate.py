@@ -2,68 +2,32 @@
 """Generate GitHub Pages documentation from the toolbox package registry."""
 
 import json
-import re
 from pathlib import Path
 
 
-def load_package_defaults(packages_dir: Path) -> dict[str, str]:
-    """Load the default version for every package that has a data.json."""
-    defaults = {}
-    for pkg_dir in packages_dir.iterdir():
-        data_json = pkg_dir / "data.json"
-        if pkg_dir.is_dir() and data_json.exists():
-            data = json.loads(data_json.read_text())
-            defaults[pkg_dir.name] = data.get("_meta", {}).get("default", "")
-    return defaults
+def parse_toolchain_data(
+    data: dict,
+) -> tuple[str, list[str], dict[str, list[dict]]]:
+    """Extract toolchain versions and their pinned components from data.json.
 
-
-def parse_toolchain_versions(
-    nix_path: Path, pkg_defaults: dict[str, str]
-) -> tuple[list[str], dict[str, list[dict]]]:
-    """Parse a toolchain default.nix to extract versions and their resolved components.
-
-    Returns (version_names, {version: [{name, version}, ...]}).
+    Returns (default, version_names, {version: [{name, version}, ...]}).
     """
-    content = nix_path.read_text()
+    meta = data.get("_meta", {})
+    default = meta.get("default", "")
 
-    # Extract the default version
-    default_match = re.search(r'default\s*=\s*"([^"]+)"', content)
-    default = default_match.group(1) if default_match else ""
-
-    # Split into version blocks: find each "version" = pkgs.symlinkJoin { ... };
-    version_pattern = re.compile(
-        r'"([^"]+)"\s*=\s*pkgs\.symlinkJoin\s*\{[^}]*paths\s*=\s*\[(.*?)\]',
-        re.DOTALL,
-    )
-
-    versions = {}
     version_names = []
-    for m in version_pattern.finditer(content):
-        ver = m.group(1)
-        paths_block = m.group(2)
+    version_map = {}
+    for ver, ver_data in sorted(
+        ((k, v) for k, v in data.items() if k != "_meta"),
+        key=lambda x: x[0],
+    ):
         version_names.append(ver)
+        version_map[ver] = [
+            {"name": pkg, "version": pin}
+            for pkg, pin in sorted(ver_data.items())
+        ]
 
-        components = []
-        # Match toolbox.<pkg>.versions.${toolbox.<pkg>.default} (uses default)
-        for pkg in re.findall(
-            r"toolbox\.([\w-]+)\.versions\.\$\{toolbox\.\1\.default\}", paths_block
-        ):
-            resolved = pkg_defaults.get(pkg, "?")
-            components.append({"name": pkg, "version": resolved})
-
-        # Match toolbox.<pkg>.versions.<literal_version> (pinned)
-        for pkg, ver_literal in re.findall(
-            r'toolbox\.([\w-]+)\.versions\."?([^"\s};]+)"?', paths_block
-        ):
-            # Skip if already matched as a default reference
-            if not re.search(
-                rf"toolbox\.{re.escape(pkg)}\.versions\.\$\{{", paths_block
-            ):
-                components.append({"name": pkg, "version": ver_literal})
-
-        versions[ver] = components
-
-    return default, version_names, versions
+    return default, version_names, version_map
 
 
 def main():
@@ -71,8 +35,6 @@ def main():
     packages_dir = repo_root / "packages"
     out_dir = repo_root / "docs" / "_site"
     out_dir.mkdir(parents=True, exist_ok=True)
-
-    pkg_defaults = load_package_defaults(packages_dir)
 
     packages = []
     toolchains = []
@@ -84,9 +46,23 @@ def main():
         name = pkg_dir.name
         data_json = pkg_dir / "data.json"
 
-        if data_json.exists():
-            data = json.loads(data_json.read_text())
-            meta = data.get("_meta", {})
+        if not data_json.exists():
+            continue
+
+        data = json.loads(data_json.read_text())
+        meta = data.get("_meta", {})
+
+        if name.endswith("-toolchain"):
+            default, version_names, version_map = parse_toolchain_data(data)
+            toolchains.append(
+                {
+                    "name": name,
+                    "default": default,
+                    "versions": version_names,
+                    "expansion": version_map,
+                }
+            )
+        else:
             default_version = meta.get("default", "")
             releases_url = meta.get("releases", "")
             versions = sorted(
@@ -102,20 +78,6 @@ def main():
                     "releases": releases_url,
                 }
             )
-        else:
-            nix_path = pkg_dir / "default.nix"
-            if nix_path.exists():
-                default, version_names, version_map = parse_toolchain_versions(
-                    nix_path, pkg_defaults
-                )
-                toolchains.append(
-                    {
-                        "name": name,
-                        "default": default,
-                        "versions": version_names,
-                        "expansion": version_map,
-                    }
-                )
 
     html = render_html(packages, toolchains)
     (out_dir / "index.html").write_text(html)
