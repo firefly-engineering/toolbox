@@ -4,14 +4,15 @@
   "blocks": [
     "tb-ymq.9"
   ],
+  "closed_at": "2026-03-15T16:56:26Z",
   "created": "2026-03-15T16:32:12Z",
   "description": "Two minor versions. Bootstrap compiler — affects rust-toolchain and Rust packages built from source. Test carefully.",
   "id": "tb-ymq.8",
   "labels": [],
   "parent": "tb-ymq",
   "priority": 3,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Bump rust 1.92.0 → 1.94.0",
   "type": "task",
-  "updated_at": "2026-03-15T16:54:11Z"
+  "updated_at": "2026-03-15T16:56:26Z"
 }
