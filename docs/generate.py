@@ -20,6 +20,7 @@ def parse_toolchain_data(
     for ver, ver_data in sorted(
         ((k, v) for k, v in data.items() if k != "_meta"),
         key=lambda x: x[0],
+        reverse=True,
     ):
         version_names.append(ver)
         version_map[ver] = [
