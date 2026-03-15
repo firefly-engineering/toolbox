@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-15T16:31:58Z",
+  "description": "Audit found 9 packages with newer upstream versions available (as of 2026-03-15). Bump each, verify builds, and update defaults.\n\n## Packages to update\n\n| Package | Current | Latest | Risk |\n|---|---|---|---|\n| go | 1.26.0 | 1.26.1 | low (patch) |\n| biome | 2.4.6 | 2.4.7 | low (patch) |\n| ruff | 0.15.5 | 0.15.6 | low (patch) |\n| uv | 0.10.9 | 0.10.10 | low (patch) |\n| beads | 0.52.0 | 0.60.0 | medium (minor, big jump) |\n| beads-rust | 0.1.14 | 0.1.28 | medium (many patches) |\n| beads-viewer | 0.14.4 | 0.15.2 | medium (minor) |\n| rust | 1.92.0 | 1.94.0 | high (bootstrap compiler) |\n| buck2 | 2025-12-01 | 2026-03-15 | high (large delta, Rust dep) |\n\n## Phasing\n\nPhase 1 (foundation): go — other Go packages depend on toolbox Go.\nPhase 2 (low-risk patches): biome, ruff, uv — independent Rust binaries.\nPhase 3 (moderate): beads, beads-rust, beads-viewer — check release notes for build changes.\nPhase 4 (larger): rust, then buck2 — rust is a bootstrap compiler; buck2 depends on it.\n\n## Process per package\n\n1. Prefetch source hash: `nix-prefetch-url --type sha256 --unpack \u003curl\u003e` → `nix hash convert --hash-algo sha256 --to sri \u003chash\u003e`\n2. Add version entry to `data.json`, update `_meta.default`\n3. For Go/Rust packages: set `vendorHash` to `\"\"`, build, capture correct hash from error\n4. `nix build .#\u003cpkg\u003e.default` to verify\n5. Test binary with `./result/bin/\u003cbinary\u003e --version` or similar\n\n```mermaid\ngraph LR\n    go[go 1.26.1] --\u003e beads[beads 0.60.0]\n    biome[biome 2.4.7]\n    ruff[ruff 0.15.6]\n    uv[uv 0.10.10]\n    beads-rust[beads-rust 0.1.28]\n    beads-viewer[beads-viewer 0.15.2]\n    rust[rust 1.94.0] --\u003e buck2[buck2 2026-03-15]\n```",
+  "id": "tb-ymq",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Bump outdated packages to latest versions",
+  "type": "epic",
+  "updated_at": "2026-03-15T16:31:58Z"
+}
