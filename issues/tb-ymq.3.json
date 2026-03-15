@@ -2,14 +2,15 @@
   "assignee": "unknown",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-15T17:07:47Z",
   "created": "2026-03-15T16:32:05Z",
   "description": "Patch release. Standalone Rust binary, no cross-deps.",
   "id": "tb-ymq.3",
   "labels": [],
   "parent": "tb-ymq",
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Bump ruff 0.15.5 → 0.15.6",
   "type": "task",
-  "updated_at": "2026-03-15T17:07:30Z"
+  "updated_at": "2026-03-15T17:07:47Z"
 }
