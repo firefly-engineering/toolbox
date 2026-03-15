@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-15T16:32:09Z",
+  "description": "Significant version jump (8 minor versions). Check release notes for build changes — may need new builder variant. Go package, uses toolbox Go.",
+  "id": "tb-ymq.5",
+  "labels": [],
+  "parent": "tb-ymq",
+  "priority": 2,
+  "status": "open",
+  "title": "Bump beads 0.52.0 → 0.60.0",
+  "type": "task",
+  "updated_at": "2026-03-15T16:32:09Z"
+}
