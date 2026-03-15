@@ -2,14 +2,15 @@
   "assignee": "unknown",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-15T17:07:47Z",
   "created": "2026-03-15T16:32:11Z",
   "description": "Minor version bump. May have build changes.",
   "id": "tb-ymq.7",
   "labels": [],
   "parent": "tb-ymq",
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Bump beads-viewer 0.14.4 → 0.15.2",
   "type": "task",
-  "updated_at": "2026-03-15T17:07:30Z"
+  "updated_at": "2026-03-15T17:07:47Z"
 }
