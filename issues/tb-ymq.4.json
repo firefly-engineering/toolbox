@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-15T16:32:06Z",
+  "description": "Patch release. Standalone Rust binary, no cross-deps.",
+  "id": "tb-ymq.4",
+  "labels": [],
+  "parent": "tb-ymq",
+  "priority": 2,
+  "status": "open",
+  "title": "Bump uv 0.10.9 → 0.10.10",
+  "type": "task",
+  "updated_at": "2026-03-15T16:32:06Z"
+}
