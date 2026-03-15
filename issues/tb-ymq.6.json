@@ -7,9 +7,15 @@
   "id": "tb-ymq.6",
   "labels": [],
   "parent": "tb-ymq",
+  "comments": [
+    {
+      "text": "Blocked: v0.1.28 Cargo.toml has [patch] overrides pointing to ../frankensqlite (a sibling repo with ~18 fsqlite-* crates). buildRustPackage can't resolve these path deps from a single source tarball. Options: (1) wait for upstream to publish fsqlite crates to crates.io, (2) write a new builder variant that fetches both repos, (3) patch Cargo.toml to use crates.io versions. Leaving at 0.1.14 for now.",
+      "timestamp": "2026-03-15T17:07:55Z"
+    }
+  ],
   "priority": 2,
   "status": "open",
   "title": "Bump beads-rust 0.1.14 → 0.1.28",
   "type": "task",
-  "updated_at": "2026-03-15T16:32:09Z"
+  "updated_at": "2026-03-15T17:07:55Z"
 }
