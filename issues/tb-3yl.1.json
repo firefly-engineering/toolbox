@@ -1,7 +1,9 @@
 {
   "assignee": "",
   "blocked_by": [],
-  "blocks": [],
+  "blocks": [
+    "tb-3yl.2"
+  ],
   "created": "2026-03-16T21:30:40Z",
   "description": "Add `\"inactive\": true` to the `_meta` object in:\n- packages/beads/data.json\n- packages/beads_rust/data.json\n- packages/beads-viewer/data.json\n\nVerify existing versions still build after the change.",
   "id": "tb-3yl.1",
@@ -11,5 +13,5 @@
   "status": "open",
   "title": "Mark beads, beads_rust, beads_viewer as inactive in data.json",
   "type": "task",
-  "updated_at": "2026-03-16T21:30:40Z"
+  "updated_at": "2026-03-16T21:30:44Z"
 }

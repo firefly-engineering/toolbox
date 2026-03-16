@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "tb-3yl.1"
+  ],
   "blocks": [],
   "created": "2026-03-16T21:30:40Z",
   "description": "The update-checking flow described in CLAUDE.md (iterating packages/*/data.json to find outdated versions) should skip any package where `_meta.inactive` is true. This is agent-driven (described in CLAUDE.md), so update the instructions accordingly.",
@@ -11,5 +13,5 @@
   "status": "open",
   "title": "Update update-checker to skip inactive packages",
   "type": "task",
-  "updated_at": "2026-03-16T21:30:40Z"
+  "updated_at": "2026-03-16T21:30:44Z"
 }
