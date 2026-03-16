@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-16T21:30:31Z",
+  "description": "Add an \"inactive\" concept to the package registry. Inactive packages keep all existing versions functional but are excluded from update checks and visually distinguished in docs.\n\n## Design\n\n- Marker: `\"inactive\": true` in `_meta` of `data.json`\n- Update checker: skip packages where `_meta.inactive` is true\n- Docs generator: visually distinguish inactive packages (badge, greyed out, or separate section)\n\n## Initial inactive packages\n\n- beads\n- beads_rust\n- beads_viewer\n\n## Steps\n\n1. Add `\"inactive\": true` to data.json `_meta` for beads, beads_rust, beads_viewer\n2. Update the update-checker logic to skip inactive packages\n3. Update the docs generator to distinguish inactive packages\n4. Update CLAUDE.md to document the inactive flag\n\n```mermaid\ngraph LR\n    tb-1[\"Mark packages inactive in data.json\"] --\u003e tb-3[\"Update docs generator\"]\n    tb-2[\"Update update-checker to skip inactive\"] \n    tb-1 --\u003e tb-2\n    tb-3 --\u003e tb-4[\"Update CLAUDE.md\"]\n    tb-2 --\u003e tb-4\n```",
+  "id": "tb-3yl",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Support inactive packages",
+  "type": "epic",
+  "updated_at": "2026-03-16T21:30:31Z"
+}
