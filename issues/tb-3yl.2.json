@@ -6,14 +6,15 @@
   "blocks": [
     "tb-3yl.4"
   ],
+  "closed_at": "2026-03-16T21:39:24Z",
   "created": "2026-03-16T21:30:40Z",
   "description": "The update-checking flow described in CLAUDE.md (iterating packages/*/data.json to find outdated versions) should skip any package where `_meta.inactive` is true. This is agent-driven (described in CLAUDE.md), so update the instructions accordingly.",
   "id": "tb-3yl.2",
   "labels": [],
   "parent": "tb-3yl",
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Update update-checker to skip inactive packages",
   "type": "task",
-  "updated_at": "2026-03-16T21:38:57Z"
+  "updated_at": "2026-03-16T21:39:24Z"
 }
