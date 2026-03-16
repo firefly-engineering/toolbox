@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "tb-h1i.1"
+  ],
   "blocks": [],
   "created": "2026-03-16T21:27:26Z",
   "description": "Replace the body of each toolchain default.nix with a single call to `toolboxLib.buildToolchain`. Affected packages:\n- go-toolchain\n- rust-toolchain\n- buck2-toolchain\n- python-toolchain\n- js-toolchain\n- solidity-toolchain\n\nEach ~23-line file becomes ~2 lines. Verify with `nix flake check` and build-test at least one toolchain.",
