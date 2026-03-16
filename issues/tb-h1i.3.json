@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "tb-h1i.2"
+  ],
   "blocks": [],
   "created": "2026-03-16T21:27:32Z",
   "description": "Update the CLAUDE.md \"Adding a New Package\" and related sections to document:\n- The `buildToolchain` helper and when to use it\n- That toolchain data.json keys must match toolbox package names\n- Simplified toolchain default.nix template",
