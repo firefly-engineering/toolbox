@@ -36,6 +36,7 @@ Each package directory has a `data.json` with version entries and a `_meta` key:
 
 - **`_meta.default`**: Which version is the default (used by `nix build .#<pkg>.default`)
 - **`_meta.releases`**: URL to the upstream releases page (e.g., GitHub releases, official download page). Used by the docs generator to link package names, and by agents to check for new versions.
+- **`_meta.inactive`**: (optional) When `true`, the package is no longer actively maintained — no new versions will be added. Existing versions remain fully functional. Inactive packages are skipped by update checks and shown with reduced emphasis in generated docs. To mark a package inactive, add `"inactive": true` to its `_meta` object.
 - **Version keys**: Semantic version strings (e.g., `"1.25.6"`, `"0.52.0"`)
 - **`sha256`**: SRI hash of the source archive
 - **`vendorHash`**: (Go packages) SRI hash of vendored dependencies
