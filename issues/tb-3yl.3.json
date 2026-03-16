@@ -6,14 +6,15 @@
   "blocks": [
     "tb-3yl.4"
   ],
+  "closed_at": "2026-03-16T21:40:31Z",
   "created": "2026-03-16T21:30:40Z",
   "description": "The docs generator should visually distinguish inactive packages — e.g., a badge, greyed-out styling, or a separate section. Read the existing docs generator to determine the best approach.",
   "id": "tb-3yl.3",
   "labels": [],
   "parent": "tb-3yl",
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Update docs generator to distinguish inactive packages",
   "type": "task",
-  "updated_at": "2026-03-16T21:39:31Z"
+  "updated_at": "2026-03-16T21:40:31Z"
 }
