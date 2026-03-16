@@ -5,14 +5,15 @@
     "tb-3yl.3"
   ],
   "blocks": [],
+  "closed_at": "2026-03-16T21:41:03Z",
   "created": "2026-03-16T21:30:40Z",
   "description": "Add documentation for the `\"inactive\": true` flag in `_meta`:\n- What it means (no new versions, existing versions remain functional)\n- How to mark a package inactive\n- Effect on update checks and docs",
   "id": "tb-3yl.4",
   "labels": [],
   "parent": "tb-3yl",
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Document inactive flag in CLAUDE.md",
   "type": "task",
-  "updated_at": "2026-03-16T21:40:38Z"
+  "updated_at": "2026-03-16T21:41:03Z"
 }
