@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-16T21:27:12Z",
+  "description": "Toolchain packages (go-toolchain, rust-toolchain, buck2-toolchain, python-toolchain, js-toolchain, solidity-toolchain) all duplicate identical mkToolchain logic and redundant component maps that mirror data.json keys. This epic centralizes the builder into lib/ and reduces each toolchain default.nix to a one-liner.\n\n## Steps\n\n1. Add `buildToolchain` helper to `lib/default.nix`\n2. Migrate all 6 toolchain packages to use the new helper\n3. Update CLAUDE.md docs to document the toolchain helper pattern\n\n## Dependency graph\n\n```mermaid\ngraph LR\n    tb-1[\"Add buildToolchain to lib\"] --\u003e tb-2[\"Migrate toolchain packages\"]\n    tb-2 --\u003e tb-3[\"Update docs\"]\n```",
+  "id": "tb-h1i",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Simplify toolchain packages: centralize mkToolchain, remove redundant component maps",
+  "type": "epic",
+  "updated_at": "2026-03-16T21:27:12Z"
+}
