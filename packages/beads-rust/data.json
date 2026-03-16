@@ -1,5 +1,5 @@
 {
-  "_meta": { "default": "0.1.14", "releases": "https://github.com/Dicklesworthstone/beads_rust/releases" },
+  "_meta": { "default": "0.1.14", "releases": "https://github.com/Dicklesworthstone/beads_rust/releases", "inactive": true },
   "0.1.14": {
     "sha256": "sha256-VuGs/Y0d610OTSUCH0uDgs5Wdf6axiLOiEF+44z1FfE=",
     "cargoHash": "sha256-gXurYi1sIGW2aNjI6QDWHuXEvg6L4QFl8cFPVacz2W0=",

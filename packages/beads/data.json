@@ -1,5 +1,5 @@
 {
-  "_meta": { "default": "0.60.0", "releases": "https://github.com/steveyegge/beads/releases" },
+  "_meta": { "default": "0.60.0", "releases": "https://github.com/steveyegge/beads/releases", "inactive": true },
   "0.60.0": {
     "sha256": "sha256-z3EDtaBHB3ltPRT7vuBFURD7UwgAJBXAPozRnkjejeU=",
     "vendorHash": "sha256-1BJsEPP5SYZFGCWHLn532IUKlzcGDg5nhrqGWylEHgY=",
