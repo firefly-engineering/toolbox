@@ -4,14 +4,15 @@
     "tb-h1i.2"
   ],
   "blocks": [],
+  "closed_at": "2026-03-16T21:38:10Z",
   "created": "2026-03-16T21:27:32Z",
   "description": "Update the CLAUDE.md \"Adding a New Package\" and related sections to document:\n- The `buildToolchain` helper and when to use it\n- That toolchain data.json keys must match toolbox package names\n- Simplified toolchain default.nix template",
   "id": "tb-h1i.3",
   "labels": [],
   "parent": "tb-h1i",
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Update CLAUDE.md docs for toolchain helper pattern",
   "type": "task",
-  "updated_at": "2026-03-16T21:37:42Z"
+  "updated_at": "2026-03-16T21:38:10Z"
 }
