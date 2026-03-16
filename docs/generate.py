@@ -66,6 +66,7 @@ def main():
         else:
             default_version = meta.get("default", "")
             releases_url = meta.get("releases", "")
+            inactive = meta.get("inactive", False)
             versions = sorted(
                 [k for k in data if k != "_meta"],
                 key=lambda v: v,
@@ -77,6 +78,7 @@ def main():
                     "default": default_version,
                     "versions": versions,
                     "releases": releases_url,
+                    "inactive": inactive,
                 }
             )
 
@@ -98,7 +100,10 @@ def render_html(packages: list[dict], toolchains: list[dict]) -> str:
             name_html = f'<a href="{pkg["releases"]}" class="pkg-name">{pkg["name"]}</a>'
         else:
             name_html = f'<span class="pkg-name">{pkg["name"]}</span>'
-        package_rows += f"""      <tr>
+        if pkg["inactive"]:
+            name_html += ' <span class="badge-inactive">inactive</span>'
+        row_class = ' class="inactive"' if pkg["inactive"] else ""
+        package_rows += f"""      <tr{row_class}>
         <td>{name_html}</td>
         <td>{versions_html}</td>
       </tr>
@@ -265,6 +270,20 @@ def render_html(packages: list[dict], toolchains: list[dict]) -> str:
     }}
     .tc-expansion td {{
       padding: 0.25rem 0.6rem;
+    }}
+    tr.inactive {{
+      opacity: 0.5;
+    }}
+    .badge-inactive {{
+      display: inline-block;
+      background: var(--border);
+      color: var(--text-muted);
+      padding: 0.1em 0.5em;
+      border-radius: 4px;
+      font-size: 0.75em;
+      font-weight: 600;
+      vertical-align: middle;
+      margin-left: 0.4em;
     }}
     footer {{
       margin-top: 3rem;
