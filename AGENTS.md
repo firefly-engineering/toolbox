@@ -10,7 +10,7 @@ Toolbox is a self-contained, data-driven package registry for [turnkey](https://
 toolbox/
 ├── flake.nix              # Flake assembly: auto-discovers packages/, exposes registry + packages
 ├── lib/
-│   └── default.nix        # Registry helpers (resolveTool, readData, buildVersions, versionToAttr)
+│   └── default.nix        # Registry helpers (resolveTool, readData, buildVersions, buildToolchain, versionToAttr)
 └── packages/
     ├── go/
     │   ├── default.nix    # Go builder: builds Go from source using pkgs.go as bootstrap
@@ -161,6 +161,45 @@ The package is auto-discovered — no changes to `flake.nix` needed:
 ```bash
 nix build .#mypackage.default
 nix build .#mypackage.1_0_0   # Version dots become underscores
+```
+
+## Adding a New Toolchain
+
+Toolchains are meta-packages that bundle related tools via `symlinkJoin`. They use `toolboxLib.buildToolchain` — no custom Nix logic needed.
+
+### 1. Create the package directory
+
+```bash
+mkdir packages/my-toolchain
+```
+
+### 2. Create `data.json`
+
+Component keys must match toolbox package names exactly:
+
+```json
+{
+  "_meta": { "default": "1" },
+  "1": {
+    "mytool": "1.0.0",
+    "myformatter": "2.3.4"
+  }
+}
+```
+
+### 3. Create `default.nix`
+
+```nix
+{ pkgs, lib, toolbox, toolboxLib }:
+
+toolboxLib.buildToolchain { inherit toolbox pkgs; name = "my-toolchain"; dataPath = ./data.json; }
+```
+
+### 4. Test
+
+```bash
+nix build .#my-toolchain.default
+nix build .#my-toolchain.1
 ```
 
 ## Builder Versioning
