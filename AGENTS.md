@@ -283,7 +283,7 @@ Each package's `data.json` has a `_meta.releases` URL pointing to its upstream r
 
 ### Checking a single package
 
-1. Read `packages/<pkg>/data.json` to find `_meta.releases` and `_meta.default` (the current default version).
+1. Read `packages/<pkg>/data.json` to find `_meta.releases` and `_meta.default` (the current default version). If `_meta.inactive` is `true`, the package is no longer maintained — skip it.
 2. Fetch the releases URL to find the latest available version(s).
    - **GitHub releases pages** (`github.com/<owner>/<repo>/releases`): use the GitHub API for structured data:
      ```bash
@@ -302,8 +302,9 @@ To scan the entire registry for outdated packages:
 
 1. Iterate over every `packages/*/data.json`.
 2. For each, extract `_meta.releases` and `_meta.default`.
-3. Fetch the upstream releases URL and compare.
-4. Report which packages have newer versions available, showing current vs. latest.
+3. **Skip inactive packages** — if `_meta.inactive` is `true`, skip the package entirely.
+4. Fetch the upstream releases URL and compare.
+5. Report which packages have newer versions available, showing current vs. latest.
 
 ### Bumping a package to a new version
 
