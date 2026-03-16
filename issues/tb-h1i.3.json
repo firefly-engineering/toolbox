@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "unknown",
   "blocked_by": [
     "tb-h1i.2"
   ],
@@ -10,8 +10,8 @@
   "labels": [],
   "parent": "tb-h1i",
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "Update CLAUDE.md docs for toolchain helper pattern",
   "type": "task",
-  "updated_at": "2026-03-16T21:27:32Z"
+  "updated_at": "2026-03-16T21:37:42Z"
 }
