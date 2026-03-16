@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "tb-3yl.2"
+  ],
   "blocks": [],
   "created": "2026-03-16T21:30:40Z",
   "description": "Add documentation for the `\"inactive\": true` flag in `_meta`:\n- What it means (no new versions, existing versions remain functional)\n- How to mark a package inactive\n- Effect on update checks and docs",
@@ -11,5 +13,5 @@
   "status": "open",
   "title": "Document inactive flag in CLAUDE.md",
   "type": "task",
-  "updated_at": "2026-03-16T21:30:40Z"
+  "updated_at": "2026-03-16T21:30:44Z"
 }
