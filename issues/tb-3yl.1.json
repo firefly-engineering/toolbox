@@ -2,7 +2,8 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [
-    "tb-3yl.2"
+    "tb-3yl.2",
+    "tb-3yl.3"
   ],
   "created": "2026-03-16T21:30:40Z",
   "description": "Add `\"inactive\": true` to the `_meta` object in:\n- packages/beads/data.json\n- packages/beads_rust/data.json\n- packages/beads-viewer/data.json\n\nVerify existing versions still build after the change.",
