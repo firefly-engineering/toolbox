@@ -4,14 +4,15 @@
   "blocks": [
     "tb-h1i.2"
   ],
+  "closed_at": "2026-03-16T21:34:25Z",
   "created": "2026-03-16T21:27:18Z",
   "description": "Add a `buildToolchain` function to `lib/default.nix` that:\n- Takes `toolbox`, `pkgs`, `name`, and `data.json path`\n- Reads data.json via `readData`\n- Builds a `symlinkJoin` for each version, resolving component names directly against `toolbox`\n- Returns `{ versions; default; }`\n\nThis replaces the per-package mkToolchain + components pattern. Component names in data.json already match toolbox package names, so no explicit mapping is needed.",
   "id": "tb-h1i.1",
   "labels": [],
   "parent": "tb-h1i",
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add buildToolchain helper to lib/default.nix",
   "type": "task",
-  "updated_at": "2026-03-16T21:32:51Z"
+  "updated_at": "2026-03-16T21:34:25Z"
 }
