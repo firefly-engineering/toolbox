@@ -1,6 +1,6 @@
 { lib }:
 
-{
+let
   # Read and parse a data.json file, separating _meta from version entries
   readData = path:
     let
@@ -10,6 +10,9 @@
       meta = data._meta;
       versions = lib.filterAttrs (n: _: n != "_meta") data;
     };
+in
+{
+  inherit readData;
 
   # Resolve a tool from the registry by name and optional version
   # If version is null, returns the default version's derivation
@@ -34,6 +37,24 @@
       in
       builder version versionData
     ) versionEntries;
+
+  # Build a toolchain meta-package from a data.json file.
+  # Component names in data.json must match toolbox package names.
+  buildToolchain = { toolbox, pkgs, name, dataPath }:
+    let
+      inherit (readData dataPath) meta versions;
+      mkToolchain = version: versionData:
+        pkgs.symlinkJoin {
+          name = "${name}-${version}";
+          paths = lib.mapAttrsToList (component: ver:
+            toolbox.${component}.versions.${ver}
+          ) versionData;
+        };
+    in
+    {
+      versions = builtins.mapAttrs mkToolchain versions;
+      default = meta.default;
+    };
 
   # Normalize a version string for use as a Nix attribute name
   # "1.25.6" -> "1_25_6"
