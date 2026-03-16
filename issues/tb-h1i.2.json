@@ -6,14 +6,15 @@
   "blocks": [
     "tb-h1i.3"
   ],
+  "closed_at": "2026-03-16T21:37:35Z",
   "created": "2026-03-16T21:27:26Z",
   "description": "Replace the body of each toolchain default.nix with a single call to `toolboxLib.buildToolchain`. Affected packages:\n- go-toolchain\n- rust-toolchain\n- buck2-toolchain\n- python-toolchain\n- js-toolchain\n- solidity-toolchain\n\nEach ~23-line file becomes ~2 lines. Verify with `nix flake check` and build-test at least one toolchain.",
   "id": "tb-h1i.2",
   "labels": [],
   "parent": "tb-h1i",
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Migrate all 6 toolchain packages to use buildToolchain",
   "type": "task",
-  "updated_at": "2026-03-16T21:34:51Z"
+  "updated_at": "2026-03-16T21:37:35Z"
 }
