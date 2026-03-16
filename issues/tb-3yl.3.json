@@ -3,7 +3,9 @@
   "blocked_by": [
     "tb-3yl.1"
   ],
-  "blocks": [],
+  "blocks": [
+    "tb-3yl.4"
+  ],
   "created": "2026-03-16T21:30:40Z",
   "description": "The docs generator should visually distinguish inactive packages — e.g., a badge, greyed-out styling, or a separate section. Read the existing docs generator to determine the best approach.",
   "id": "tb-3yl.3",
