@@ -54,10 +54,9 @@ def _render_toolchain_rows(toolchains: list[ToolchainInfo]) -> str:
 def render_html(packages: list[PackageInfo], toolchains: list[ToolchainInfo]) -> str:
     """Render the full HTML page from package and toolchain metadata."""
     assets_dir = Path(__file__).parent / "assets"
-    templates_dir = Path(__file__).parent.parent.parent / "templates"
 
     css = (assets_dir / "style.css").read_text()
-    template_str = (templates_dir / "index.html.tmpl").read_text()
+    template_str = (assets_dir / "index.html.tmpl").read_text()
 
     package_rows = _render_package_rows(packages)
     toolchain_rows = _render_toolchain_rows(toolchains)
