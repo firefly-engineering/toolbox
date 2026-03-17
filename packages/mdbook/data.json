@@ -1,9 +1,15 @@
 {
-  "_meta": { "default": "0.5.2", "releases": "https://github.com/rust-lang/mdBook/releases" },
+  "_meta": { "default": "0.4.52", "releases": "https://github.com/rust-lang/mdBook/releases" },
   "0.5.2": {
     "x86_64-linux": { "sha256": "sha256-CE5DQrpWTbJwEIdj5ASn0fMJ2TJlGiJITpPA3BoHH20=" },
     "aarch64-linux": { "sha256": "sha256-+yKb/caN1sk2kuZMUCpnqNPS/DXDfGH8cnaIQ+ZHat0=" },
     "x86_64-darwin": { "sha256": "sha256-F8xkR47Ceac4gUIOhQvY+dRgVS5WtQFZ/0ZbyX65DWw=" },
     "aarch64-darwin": { "sha256": "sha256-2i9VZT6W4/bhxT4uE+kcwM+86KuXHC4N55LA8fjSQiI=" }
+  },
+  "0.4.52": {
+    "x86_64-linux": { "sha256": "sha256-wLkD8B3Y9O3GRDcq0rgLH93dElUtN7agmGV8vY7d12g=" },
+    "aarch64-linux": { "sha256": "sha256-cnPdqYCRWh4vEU1j1DKqYoRVHjfwNY4852U9Hknm+j8=" },
+    "x86_64-darwin": { "sha256": "sha256-R2iio81r/xOf7/2FXdj7gu41bs+CKuEu2avL3gYzIFs=" },
+    "aarch64-darwin": { "sha256": "sha256-Su5qj/VNxZ++m88cOLj1hYP7pjU13/el7IIF8M/8P9Q=" }
   }
 }
