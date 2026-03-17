@@ -7,7 +7,7 @@ from .scanner import scan_packages
 
 
 def main():
-    repo_root = Path(__file__).resolve().parent.parent.parent.parent
+    repo_root = Path.cwd()
     packages_dir = repo_root / "packages"
     out_dir = repo_root / "docs" / "_site"
     out_dir.mkdir(parents=True, exist_ok=True)
