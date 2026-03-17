@@ -18,7 +18,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,8 +27,27 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install with dev dependencies
+        run: pip install docs/[dev]
+
+      - name: Run tests
+        run: pytest docs/tests/ -v
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install docs package
+        run: pip install --quiet docs/
+
       - name: Generate documentation
-        run: python docs/generate.py
+        run: python -m toolbox_docs
 
       - uses: actions/upload-pages-artifact@v4
         with:

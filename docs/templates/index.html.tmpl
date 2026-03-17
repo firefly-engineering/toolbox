@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Toolbox Package Registry</title>
+  <style>
+$css  </style>
+</head>
+<body>
+  <h1>Toolbox</h1>
+  <p class="subtitle">Self-contained package registry for <a href="https://github.com/firefly-engineering/turnkey" style="color: var(--accent); text-decoration: none;">turnkey</a></p>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-value">$num_packages</div>
+      <div class="stat-label">Packages</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">$total_versions</div>
+      <div class="stat-label">Versions</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">$num_toolchains</div>
+      <div class="stat-label">Toolchains</div>
+    </div>
+  </div>
+
+  <h2>Packages</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Package</th>
+        <th>Versions</th>
+      </tr>
+    </thead>
+    <tbody>
+${package_rows}    </tbody>
+  </table>
+
+  <h2>Toolchain Meta-packages</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Toolchain</th>
+        <th>Versions</th>
+      </tr>
+    </thead>
+    <tbody>
+${toolchain_rows}    </tbody>
+  </table>
+
+  <footer>
+    <p>Generated from <a href="https://github.com/firefly-engineering/toolbox">firefly-engineering/toolbox</a>. Default versions shown in <span style="color: var(--green);">green</span>.</p>
+  </footer>
+</body>
+</html>
