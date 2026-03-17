@@ -1,8 +1,8 @@
 {
   "_meta": { "default": "0.16.2", "releases": "https://github.com/badboy/mdbook-mermaid/releases" },
   "0.16.2": {
-    "sha256": "",
-    "cargoHash": "",
+    "sha256": "sha256-RbicO3TN7cnfm71OdsVbehgA5LJ1EHE26nXg0Gh1U6o=",
+    "cargoHash": "sha256-WMPk/UPNfNXjJKUcczbQPOy9bwy2ZSR5DPmvwtcJ5ys=",
     "rust": "1.92.0"
   }
 }

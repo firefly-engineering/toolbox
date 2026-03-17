@@ -1,8 +1,8 @@
 {
   "_meta": { "default": "1.20.0", "releases": "https://github.com/tommilligan/mdbook-admonish/releases" },
   "1.20.0": {
-    "sha256": "",
-    "cargoHash": "",
+    "sha256": "sha256-5SVYfXXY1EmEMuhPHao3w9OzSayQDOWWvhL+1JoudzA=",
+    "cargoHash": "sha256-PwYtqde8ZccMqlkKy7i/qjWDYsUoxs2cMWOWrChjMM4=",
     "rust": "1.92.0"
   }
 }

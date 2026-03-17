@@ -1,8 +1,8 @@
 {
   "_meta": { "default": "0.2.1", "releases": "https://github.com/dylanowen/mdbook-graphviz/releases" },
   "0.2.1": {
-    "sha256": "",
-    "cargoHash": "",
+    "sha256": "sha256-f02SOyU5REm+uP4/vB/1yG9M0Vg8ShF2hj5NKuh0jLU=",
+    "cargoHash": "sha256-A1pFifxshWynwA88iLTMOm21NKCH8fHl5nFiV4wEG8A=",
     "rust": "1.92.0"
   }
 }
