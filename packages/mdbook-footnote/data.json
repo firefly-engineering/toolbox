@@ -1,0 +1,8 @@
+{
+  "_meta": { "default": "0.1.1", "releases": "https://github.com/daviddrysdale/mdbook-footnote/releases" },
+  "0.1.1": {
+    "sha256": "",
+    "cargoHash": "",
+    "rust": "1.92.0"
+  }
+}

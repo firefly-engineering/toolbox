@@ -1,0 +1,8 @@
+{
+  "_meta": { "default": "0.16.2", "releases": "https://github.com/badboy/mdbook-mermaid/releases" },
+  "0.16.2": {
+    "sha256": "",
+    "cargoHash": "",
+    "rust": "1.92.0"
+  }
+}
