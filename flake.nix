@@ -2,14 +2,15 @@
   description = "Toolbox: self-contained package registry for turnkey";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nix-pins.url = "github:firefly-engineering/nix-pins";
+    nixpkgs.follows = "nix-pins/nixpkgs";
     devenv.url = "github:cachix/devenv";
     devenv-root = {
       url = "file+file:///dev/null";
       flake = false;
     };
     teller.url = "github:firefly-engineering/teller";
-    teller.inputs.nixpkgs.follows = "nixpkgs";
+    teller.inputs.nix-pins.follows = "nix-pins";
   };
 
   outputs =
@@ -19,6 +20,7 @@
       devenv,
       devenv-root,
       teller,
+      ...
     }:
     let
       systems = [
