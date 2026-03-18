@@ -1,6 +1,11 @@
 {
   description = "Toolbox: self-contained package registry for turnkey";
 
+  nixConfig = {
+    extra-substituters = [ "https://firefly-toolbox.cachix.org" ];
+    extra-trusted-public-keys = [ "firefly-toolbox.cachix.org-1:4RgCoc0+CS7QhRarG109VmWlnlYi+rQ5JYrCsRP5aK8=" ];
+  };
+
   inputs = {
     nix-pins.url = "github:firefly-engineering/nix-pins";
     nixpkgs.follows = "nix-pins/nixpkgs";

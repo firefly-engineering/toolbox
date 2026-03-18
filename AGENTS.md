@@ -316,6 +316,20 @@ Once you've identified that a newer version exists:
 3. Update `_meta.default` to the new version.
 4. Test the build and verify the binary.
 
+## Binary Cache (Cachix)
+
+Toolbox packages are cached on [Cachix](https://app.cachix.org/cache/firefly-toolbox) (`firefly-toolbox`). The flake's `nixConfig` automatically configures downstream consumers to use this cache.
+
+### Pushing all packages to the cache
+
+```bash
+nix build --no-link --print-out-paths --impure --expr '
+  builtins.attrValues (builtins.getFlake (toString ./.)).packages.aarch64-darwin
+' | cachix push firefly-toolbox
+```
+
+Replace `aarch64-darwin` with the target system (e.g., `x86_64-linux`) as needed.
+
 ## Verification Checklist
 
 After making changes:
