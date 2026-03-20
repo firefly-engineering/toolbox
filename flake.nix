@@ -116,7 +116,12 @@
             }) (builtins.attrNames entry.versions)
           )
           // {
-            "${name}-default" = entry.versions.${entry.default};
+            # Bare package name points to the default version
+            ${name} = entry.versions.${entry.default};
+            # Deprecated: use bare package name instead (e.g., .#go not .#go-default)
+            "${name}-default" = builtins.trace
+              "warning: toolbox: '${name}-default' is deprecated, use '${name}' instead"
+              entry.versions.${entry.default};
           }
         ) { } (builtins.attrNames reg)
       );
