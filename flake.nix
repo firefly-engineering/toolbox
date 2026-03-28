@@ -85,15 +85,18 @@
         in
         builtins.mapAttrs (
           name: entry:
+          let
+            hasVersions = entry.versions != {};
+          in
           builtins.listToAttrs (
             map (ver: {
               name = versionToAttr ver;
               value = entry.versions.${ver};
             }) (builtins.attrNames entry.versions)
           )
-          // {
+          // (if hasVersions then {
             default = entry.versions.${entry.default};
-          }
+          } else {})
         ) reg
       );
 
@@ -102,11 +105,13 @@
         system:
         let
           reg = self.registry.${system};
+          lib = nixpkgs.lib;
         in
         builtins.foldl' (
           acc: name:
           let
             entry = reg.${name};
+            hasVersions = entry.versions != {};
           in
           acc
           // builtins.listToAttrs (
@@ -115,7 +120,7 @@
               value = entry.versions.${ver};
             }) (builtins.attrNames entry.versions)
           )
-          // {
+          // lib.optionalAttrs hasVersions {
             # Bare package name points to the default version
             ${name} = entry.versions.${entry.default};
             # Deprecated: use bare package name instead (e.g., .#go not .#go-default)

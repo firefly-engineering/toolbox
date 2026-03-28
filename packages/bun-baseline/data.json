@@ -1,0 +1,15 @@
+{
+  "_meta": { "default": "1.3.11", "releases": "https://github.com/oven-sh/bun/releases" },
+  "1.3.6": {
+    "x86_64-linux": { "sha256": "sha256-GVSr7giQDeYQqLRpL1//psaxXYr959HeTT+Iz8YOfV8=" },
+    "x86_64-darwin": { "sha256": "sha256-stiZTUz3BkE2bWm4dCC4BdHZhPTqfhajUt8VaUlHT6U=" }
+  },
+  "1.3.8": {
+    "x86_64-linux": { "sha256": "sha256-u+RjKsA9dJUXfVQuzvqPIfmEknMQZSX2uxMXLsjkqyw=" },
+    "x86_64-darwin": { "sha256": "sha256-mBLl9sf4GO+cSR4Fp3SBqy56ShWAs3hSbhYRwQL+fKM=" }
+  },
+  "1.3.11": {
+    "x86_64-linux": { "sha256": "sha256-q+NG9jQUVHzfazW3pkmkkMcouT0AYiYVaSORioTA5Zs=" },
+    "x86_64-darwin": { "sha256": "sha256-+2c5sIv1RVDtqnyCTNWy3KRbagav70CEQwh6YxBfb40=" }
+  }
+}
