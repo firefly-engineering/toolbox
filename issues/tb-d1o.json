@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-29T21:24:41Z",
+  "description": "Patch bump from 2.11.3 to 2.11.4",
+  "id": "tb-d1o",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Bump golangci-lint to 2.11.4",
+  "type": "task",
+  "updated_at": "2026-03-29T21:24:41Z"
+}
