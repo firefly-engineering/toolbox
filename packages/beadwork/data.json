@@ -1,5 +1,10 @@
 {
-  "_meta": { "default": "0.11.6", "releases": "https://github.com/jallum/beadwork/releases" },
+  "_meta": { "default": "0.11.7", "releases": "https://github.com/jallum/beadwork/releases" },
+  "0.11.7": {
+    "sha256": "sha256-Fbz5DP9IQv5nxyxkLLsUS3+rlkp5X9eoxGvzcimJp80=",
+    "vendorHash": "sha256-/tmJPuL9xHsh3oTtlaW1nUxroAxyX5rhsSB1pkuE9Fo=",
+    "go": "1.26.1"
+  },
   "0.11.6": {
     "sha256": "sha256-+WcNCXOjK8TuozVIbQME2U/cfwGPYgcOLONmmjqfqQ8=",
     "vendorHash": "sha256-/tmJPuL9xHsh3oTtlaW1nUxroAxyX5rhsSB1pkuE9Fo=",
