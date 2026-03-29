@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-03-29T21:24:44Z",
+  "description": "Minor bump from 0.1.1 to 0.2.0",
+  "id": "tb-xhi",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Bump mdbook-footnote to 0.2.0",
+  "type": "task",
+  "updated_at": "2026-03-29T21:24:44Z"
+}
