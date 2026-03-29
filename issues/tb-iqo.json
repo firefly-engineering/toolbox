@@ -2,13 +2,14 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-03-29T21:26:33Z",
   "created": "2026-03-29T21:24:35Z",
   "description": "Update from 2026-03-09 to 2026-03-23",
   "id": "tb-iqo",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Bump rust-analyzer to 2026-03-23",
   "type": "task",
-  "updated_at": "2026-03-29T21:24:35Z"
+  "updated_at": "2026-03-29T21:26:33Z"
 }
