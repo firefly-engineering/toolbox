@@ -1,0 +1,16 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-04-02T18:55:22Z",
+  "description": "bw 0.11.7 → 0.11.8 is available.\n\n## What's new\n\n## 0.11.8 — 2026-04-01\n\n- **`-C \u003cdir\u003e` flag** — run `bw` as if started in `\u003cdir\u003e`, matching `git -C` semantics. The repo is discovered from the specified directory without changing the process working directory. Useful for scripting against a different repo or running `bw` from outside a checkout: `bw -C /path/to/repo list`.\n\n- **`bw onboard` pipe-friendly output** — when stdout is not a TTY (e.g. `bw onboard | pbcopy` or `bw onboard \u003e\u003e CLAUDE.md`), only the raw snippet text is emitted, without headings, code fences, or the \"How it works\" section. TTY output is unchanged.\n\n- Minor prime prompt wording adjustments.\n\n## To upgrade\n\nRun `bw upgrade --yes` or `bw upgrade` for interactive mode.\n",
+  "id": "tb-un7",
+  "labels": [
+    "beadwork-upgrade"
+  ],
+  "priority": 1,
+  "status": "open",
+  "title": "Upgrade bw to 0.11.8",
+  "type": "task",
+  "updated_at": "2026-04-02T18:55:22Z"
+}
