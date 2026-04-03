@@ -1,5 +1,11 @@
 {
   "_meta": { "default": "24.14.0", "releases": "https://nodejs.org/en/download/releases" },
+  "25.9.0": {
+    "x86_64-linux": { "sha256": "sha256-HY231uKR0WfoxGeuQJS+F14aCzlpx64fiVW594JPey4=" },
+    "aarch64-linux": { "sha256": "sha256-vwB78NzC/d2QiI/eN0oa0zwassoq0yTGRd167Q+fFGA=" },
+    "x86_64-darwin": { "sha256": "sha256-gk1mfuiMo+EOmRfJAyk35tH1BCrrMq/9FFcC2f+HdwQ=" },
+    "aarch64-darwin": { "sha256": "sha256-Fe7rA8YGkaR2Tv+mzukgIX9yBYpwvP/l9MEgm75K1aM=" }
+  },
   "24.14.0": {
     "x86_64-linux": { "sha256": "sha256-Qc15u3h3yBYFqeaOxMkVR3dPRqQMZ6F+NNcXnvEXKd8=" },
     "aarch64-linux": { "sha256": "sha256-5638oD2RcydhFKbyIZ3xp9JeG/1rvXcdP4ORGKIFMJQ=" },
