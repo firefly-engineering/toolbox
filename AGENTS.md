@@ -10,7 +10,9 @@ Toolbox is a self-contained, data-driven package registry for [turnkey](https://
 toolbox/
 ├── flake.nix              # Flake assembly: auto-discovers packages/, exposes registry + packages
 ├── lib/
-│   └── default.nix        # Registry helpers (resolveTool, readData, buildVersions, buildToolchain, versionToAttr)
+│   └── default.nix        # Registry helpers (resolveTool, readData, buildVersions, buildToolchain, resolvePatches, versionToAttr)
+├── scripts/
+│   └── generate-patch     # Generate/refresh vendored patches from fork branches
 └── packages/
     ├── go/
     │   ├── default.nix    # Go builder: builds Go from source using pkgs.go as bootstrap
@@ -230,6 +232,89 @@ builders = {
 ```
 
 When `"builder"` is absent, it defaults to `"default"`. Existing versions are never affected by new builders.
+
+## Applying Patches from a Fork
+
+Some packages augment upstream releases with custom patches from a fork. Patches are vendored in the repository for reproducibility, with metadata about their origin for scripted regeneration.
+
+### data.json schema for patches
+
+```json
+{
+  "_meta": { "default": "1.0.0", "releases": "https://github.com/OWNER/REPO/releases" },
+  "1.0.0": {
+    "sha256": "sha256-XXXX",
+    "subPackages": ["cmd/tool", "cmd/tool-extra"],
+    "patches": [
+      {
+        "file": "patches/my-fork-1.0.0.patch",
+        "source": {
+          "owner": "FORK_OWNER",
+          "repo": "REPO",
+          "branch": "feature-branch",
+          "commit": "abc123..."
+        }
+      }
+    ]
+  }
+}
+```
+
+- **`patches[].file`**: Version-specific path relative to the package directory. This is what Nix reads at build time. The filename should include the base version (e.g. `my-fork-1.0.0.patch`) since each upstream release needs its own patch.
+- **`patches[].source`**: Origin metadata for regeneration — not used by Nix, but used by agents/scripts to refresh the patch.
+- **`subPackages`**: Optional, data-driven list of build targets. When absent, the builder uses its own default.
+
+### Using patches in a builder
+
+Builders opt in to patch support via `toolboxLib.resolvePatches`:
+
+```nix
+(pkgs.buildGoModule.override { inherit go; }) {
+  pname = "mypackage";
+  inherit version;
+  src = pkgs.fetchFromGitHub { ... };
+  patches = toolboxLib.resolvePatches ./. versionData;  # [] when no patches
+  subPackages = versionData.subPackages or [ "cmd/tool" ];
+  # ...
+};
+```
+
+`resolvePatches` returns `[]` when `versionData.patches` is absent, so it's safe to add unconditionally — existing versions without patches are unaffected.
+
+### Generating or refreshing a patch
+
+Use `scripts/generate-patch` to create or refresh a vendored patch:
+
+```bash
+# Generate/refresh patch (fetches latest commit on fork branch)
+./scripts/generate-patch packages/beadwork 0.12.3
+
+# Regenerate without updating the pinned commit
+./scripts/generate-patch --no-update packages/beadwork 0.12.3
+
+# Target a specific patch entry (when a version has multiple patches)
+./scripts/generate-patch packages/beadwork 0.12.3 1
+```
+
+The script:
+1. Reads patch source metadata from `data.json`
+2. Resolves the upstream tag (tries `v`-prefixed, then bare)
+3. Fetches the diff from GitHub
+4. Verifies the patch applies cleanly to the upstream source
+5. Updates `source.commit` in `data.json` if it changed
+
+After running, remember to:
+1. `git add` the patch file — Nix flakes require tracked files
+2. Rebuild to discover new `vendorHash` if dependencies changed (set to `""`, build, use the hash from the error)
+
+### Rebasing a patch for a new upstream version
+
+When the upstream releases a new version (e.g. 1.1.0):
+
+1. Ensure the fork branch has been rebased onto the new upstream tag.
+2. Add a new version entry in `data.json` with a new patch file path (e.g. `patches/my-fork-1.1.0.patch`).
+3. Run `./scripts/generate-patch packages/mypackage 1.1.0`.
+4. The old version's patch file remains — older versions stay reproducible.
 
 ## Cross-Package Dependencies
 

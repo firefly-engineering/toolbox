@@ -56,6 +56,13 @@ in
       default = meta.default;
     };
 
+  # Resolve local patch files from version data.
+  # Returns a list of paths suitable for mkDerivation's `patches` attribute.
+  # packageDir: the package's directory (e.g. ./.)
+  # versionData: the version entry from data.json
+  resolvePatches = packageDir: versionData:
+    map (p: packageDir + "/${p.file}") (versionData.patches or []);
+
   # Normalize a version string for use as a Nix attribute name
   # "1.25.6" -> "1_25_6"
   versionToAttr = builtins.replaceStrings [ "." ] [ "_" ];

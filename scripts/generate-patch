@@ -1,0 +1,150 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<EOF
+Usage: $(basename "$0") [OPTIONS] PACKAGE_DIR VERSION [PATCH_INDEX]
+
+Generate or refresh a vendored patch from a fork branch.
+
+Arguments:
+  PACKAGE_DIR   Path to the package directory (e.g. packages/beadwork)
+  VERSION       The upstream version to patch (e.g. 0.12.3)
+  PATCH_INDEX   Index of the patch entry in data.json (default: 0)
+
+Options:
+  --no-update   Keep the current pinned commit instead of fetching the latest
+  -h, --help    Show this help message
+
+The script reads patch source metadata from data.json, fetches the diff
+from GitHub, verifies it applies cleanly, and writes the patch file.
+EOF
+  exit 0
+}
+
+no_update=false
+positional=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --no-update) no_update=true; shift ;;
+    -h|--help) usage ;;
+    *) positional+=("$1"); shift ;;
+  esac
+done
+
+set -- "${positional[@]}"
+
+if [[ $# -lt 2 ]]; then
+  echo "Error: PACKAGE_DIR and VERSION are required" >&2
+  usage
+fi
+
+pkg_dir="$1"
+version="$2"
+patch_index="${3:-0}"
+
+data_file="$pkg_dir/data.json"
+if [[ ! -f "$data_file" ]]; then
+  echo "Error: $data_file not found" >&2
+  exit 1
+fi
+
+# Extract patch metadata from data.json
+patch_entry=$(jq -e --arg v "$version" --argjson i "$patch_index" \
+  '.[$v].patches[$i]' "$data_file") || {
+  echo "Error: no patch entry at index $patch_index for version $version" >&2
+  exit 1
+}
+
+patch_file=$(echo "$patch_entry" | jq -r '.file')
+source_owner=$(echo "$patch_entry" | jq -r '.source.owner')
+source_repo=$(echo "$patch_entry" | jq -r '.source.repo')
+source_branch=$(echo "$patch_entry" | jq -r '.source.branch')
+current_commit=$(echo "$patch_entry" | jq -r '.source.commit')
+
+# Extract upstream repo from _meta.releases URL
+releases_url=$(jq -r '._meta.releases' "$data_file")
+upstream_repo=$(echo "$releases_url" | sed -n 's|https://github.com/\([^/]*/[^/]*\).*|\1|p')
+if [[ -z "$upstream_repo" ]]; then
+  echo "Error: could not extract upstream repo from releases URL: $releases_url" >&2
+  exit 1
+fi
+
+echo "Package:  $pkg_dir"
+echo "Version:  $version"
+echo "Upstream: $upstream_repo"
+echo "Fork:     $source_owner/$source_repo ($source_branch)"
+
+# Determine the upstream tag for this version
+# Try v-prefixed first, then bare version
+if gh api "repos/$upstream_repo/git/ref/tags/v$version" --silent 2>/dev/null; then
+  tag="v$version"
+elif gh api "repos/$upstream_repo/git/ref/tags/$version" --silent 2>/dev/null; then
+  tag="$version"
+else
+  echo "Error: could not find tag v$version or $version in $upstream_repo" >&2
+  exit 1
+fi
+echo "Tag:      $tag"
+
+# Resolve the commit to diff against
+if [[ "$no_update" == true ]]; then
+  commit="$current_commit"
+  echo "Commit:   $commit (pinned, --no-update)"
+else
+  commit=$(gh api "repos/$source_owner/$source_repo/commits/$source_branch" --jq '.sha')
+  echo "Commit:   $commit (latest on $source_branch)"
+fi
+
+# Fetch the diff
+patch_path="$pkg_dir/$patch_file"
+mkdir -p "$(dirname "$patch_path")"
+echo ""
+echo "Fetching diff $tag...$commit ..."
+gh api "repos/$source_owner/$source_repo/compare/$tag...$commit" \
+  -H 'Accept: application/vnd.github.v3.diff' > "$patch_path"
+
+lines=$(wc -l < "$patch_path")
+echo "Wrote $patch_path ($lines lines)"
+
+# Verify the patch applies cleanly against upstream source
+echo ""
+echo "Verifying patch applies cleanly..."
+tmpdir=$(mktemp -d)
+trap 'rm -rf "$tmpdir"' EXIT
+
+archive_url="https://github.com/$upstream_repo/archive/refs/tags/$tag.tar.gz"
+curl -sL "$archive_url" | tar xz -C "$tmpdir"
+
+# GitHub archives extract to REPO-VERSION/ (stripping v prefix from tag)
+extracted=$(ls "$tmpdir")
+cd "$tmpdir/$extracted"
+
+git init -q
+git add -A
+git commit -q -m "init"
+
+if git apply --check "$OLDPWD/$patch_path" 2>&1; then
+  echo "Patch applies cleanly."
+else
+  echo "Error: patch does not apply cleanly!" >&2
+  echo "The fork branch may need rebasing onto $tag." >&2
+  rm -f "$OLDPWD/$patch_path"
+  exit 1
+fi
+
+cd "$OLDPWD"
+
+# Update the commit in data.json
+if [[ "$commit" != "$current_commit" ]]; then
+  jq --arg v "$version" --argjson i "$patch_index" --arg c "$commit" \
+    '.[$v].patches[$i].source.commit = $c' "$data_file" > "$data_file.tmp" \
+    && mv "$data_file.tmp" "$data_file"
+  echo "Updated commit in $data_file"
+fi
+
+echo ""
+echo "Done. Remember to:"
+echo "  1. git add $patch_path"
+echo "  2. Rebuild to check vendorHash: nix build .#$(basename "$pkg_dir")"
