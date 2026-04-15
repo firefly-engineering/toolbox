@@ -17,8 +17,9 @@ let
           rev = "v${version}";
           hash = versionData.sha256;
         };
+        patches = toolboxLib.resolvePatches ./. versionData;
         vendorHash = versionData.vendorHash;
-        subPackages = [ "cmd/bw" ];
+        subPackages = versionData.subPackages or [ "cmd/bw" ];
         doCheck = false;
 
         nativeBuildInputs = [ pkgs.git ];

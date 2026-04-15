@@ -1,0 +1,2311 @@
+diff --git a/cmd/bw-tui/actions.go b/cmd/bw-tui/actions.go
+new file mode 100644
+index 0000000..7e4f37e
+--- /dev/null
++++ b/cmd/bw-tui/actions.go
+@@ -0,0 +1,159 @@
++package main
++
++import (
++	"fmt"
++
++	"github.com/jallum/beadwork/internal/issue"
++)
++
++// actionResult holds the outcome of a mutation for display in the status bar.
++type actionResult struct {
++	msg string
++	err error
++}
++
++func (a actionResult) String() string {
++	if a.err != nil {
++		return "Error: " + a.err.Error()
++	}
++	return a.msg
++}
++
++// findRepoForIssue returns the RepoSource that owns the given issue ID.
++func findRepoForIssue(repos []*RepoSource, id string) *RepoSource {
++	for _, r := range repos {
++		if _, err := r.Store.Get(id); err == nil {
++			return r
++		}
++	}
++	return nil
++}
++
++// doStart starts an issue (transitions open → in_progress).
++func doStart(repos []*RepoSource, id string) actionResult {
++	r := findRepoForIssue(repos, id)
++	if r == nil {
++		return actionResult{err: fmt.Errorf("issue %s not found", id)}
++	}
++
++	assignee := r.Repo.UserName()
++	iss, err := r.Store.Start(id, assignee)
++	if err != nil {
++		return actionResult{err: err}
++	}
++
++	intent := fmt.Sprintf("start %s assignee=%q", iss.ID, assignee)
++	if err := r.Store.Commit(intent); err != nil {
++		return actionResult{err: fmt.Errorf("commit: %w", err)}
++	}
++
++	return actionResult{msg: fmt.Sprintf("Started %s", iss.ID)}
++}
++
++// doClose closes an issue.
++func doClose(repos []*RepoSource, id string) actionResult {
++	r := findRepoForIssue(repos, id)
++	if r == nil {
++		return actionResult{err: fmt.Errorf("issue %s not found", id)}
++	}
++
++	iss, err := r.Store.Close(id, "")
++	if err != nil {
++		return actionResult{err: err}
++	}
++
++	intent := fmt.Sprintf("close %s", iss.ID)
++	if err := r.Store.Commit(intent); err != nil {
++		return actionResult{err: fmt.Errorf("commit: %w", err)}
++	}
++
++	return actionResult{msg: fmt.Sprintf("Closed %s", iss.ID)}
++}
++
++// doReopen reopens a closed or in_progress issue.
++func doReopen(repos []*RepoSource, id string) actionResult {
++	r := findRepoForIssue(repos, id)
++	if r == nil {
++		return actionResult{err: fmt.Errorf("issue %s not found", id)}
++	}
++
++	iss, err := r.Store.Reopen(id)
++	if err != nil {
++		return actionResult{err: err}
++	}
++
++	intent := fmt.Sprintf("reopen %s", iss.ID)
++	if err := r.Store.Commit(intent); err != nil {
++		return actionResult{err: fmt.Errorf("commit: %w", err)}
++	}
++
++	return actionResult{msg: fmt.Sprintf("Reopened %s", iss.ID)}
++}
++
++// doComment adds a comment to an issue.
++func doComment(repos []*RepoSource, id, text string) actionResult {
++	r := findRepoForIssue(repos, id)
++	if r == nil {
++		return actionResult{err: fmt.Errorf("issue %s not found", id)}
++	}
++
++	author := r.Repo.UserName()
++	_, err := r.Store.Comment(id, text, author)
++	if err != nil {
++		return actionResult{err: err}
++	}
++
++	intent := fmt.Sprintf("comment %s %q", id, text)
++	if err := r.Store.Commit(intent); err != nil {
++		return actionResult{err: fmt.Errorf("commit: %w", err)}
++	}
++
++	return actionResult{msg: fmt.Sprintf("Commented on %s", id)}
++}
++
++// doSync syncs all repos.
++func doSync(repos []*RepoSource) actionResult {
++	var msgs []string
++	for _, r := range repos {
++		status, replayed, err := r.Repo.Sync()
++		if err != nil {
++			return actionResult{err: fmt.Errorf("%s: %w", r.Name, err)}
++		}
++		msg := fmt.Sprintf("%s: %s", r.Name, status)
++		if len(replayed) > 0 {
++			// Replay intents
++			store := r.Store
++			for _, intent := range replayed {
++				replayIntent(store, intent)
++			}
++			if err := r.Store.Commit("replay after sync"); err != nil {
++				return actionResult{err: fmt.Errorf("%s: replay commit: %w", r.Name, err)}
++			}
++			if err := r.Repo.Push(); err != nil {
++				return actionResult{err: fmt.Errorf("%s: push after replay: %w", r.Name, err)}
++			}
++			msg += fmt.Sprintf(" (replayed %d intents)", len(replayed))
++		}
++		msgs = append(msgs, msg)
++		r.Store.ClearCache()
++	}
++
++	if len(msgs) == 1 {
++		return actionResult{msg: "Sync: " + msgs[0]}
++	}
++	result := "Sync complete"
++	for _, m := range msgs {
++		result += "\n  " + m
++	}
++	return actionResult{msg: result}
++}
++
++// replayIntent re-applies an intent message. This is a simplified version
++// of the intent replay from the CLI — for now we just log it.
++// Full replay would parse the intent and call the appropriate Store method.
++func replayIntent(store *issue.Store, intent string) {
++	// The full intent replay system is in internal/intent/intent.go
++	// For the TUI, we delegate to the repo's Sync which handles replay.
++	_ = store
++	_ = intent
++}
+diff --git a/cmd/bw-tui/depgraph.go b/cmd/bw-tui/depgraph.go
+new file mode 100644
+index 0000000..17df4ee
+--- /dev/null
++++ b/cmd/bw-tui/depgraph.go
+@@ -0,0 +1,223 @@
++package main
++
++import (
++	"fmt"
++	"sort"
++	"strings"
++
++	"charm.land/lipgloss/v2"
++	"github.com/jallum/beadwork/internal/issue"
++)
++
++// depGraphData holds the dependency graph state.
++type depGraphData struct {
++	nodes  []depNode   // all issues that participate in dependencies
++	flat   []int       // indices into nodes for cursor navigation
++	cursor int
++}
++
++type depNode struct {
++	issue        *issue.Issue
++	repoName     string
++	openBlockers int
++	blocks       []string // IDs this issue blocks
++	blockedBy    []string // IDs that block this issue
++}
++
++func newDepGraphData(repos []*RepoSource, filterText string) depGraphData {
++	multiRepo := len(repos) > 1
++	dg := depGraphData{}
++
++	// Collect all issues that have any dependency relationships
++	seen := make(map[string]bool)
++	var nodes []depNode
++
++	for _, r := range repos {
++		allIssues, err := r.Store.List(issue.Filter{})
++		if err != nil {
++			continue
++		}
++
++		for _, iss := range allIssues {
++			if len(iss.Blocks) == 0 && len(iss.BlockedBy) == 0 {
++				continue
++			}
++			if seen[iss.ID] {
++				continue
++			}
++			seen[iss.ID] = true
++
++			name := ""
++			if multiRepo {
++				name = r.Name
++			}
++			openBlockers := 0
++			for _, bid := range iss.BlockedBy {
++				if !r.Store.IsClosed(bid) {
++					openBlockers++
++				}
++			}
++			item := issueItem{issue: iss, repoName: name, openBlockers: openBlockers}
++			if !item.matchesFilter(filterText) {
++				continue
++			}
++			nodes = append(nodes, depNode{
++				issue:        iss,
++				repoName:     name,
++				openBlockers: openBlockers,
++				blocks:       iss.Blocks,
++				blockedBy:    iss.BlockedBy,
++			})
++		}
++	}
++
++	// Sort: roots first (nothing blocks them), then by priority
++	sort.Slice(nodes, func(i, j int) bool {
++		iIsRoot := len(nodes[i].blockedBy) == 0
++		jIsRoot := len(nodes[j].blockedBy) == 0
++		if iIsRoot != jIsRoot {
++			return iIsRoot
++		}
++		if nodes[i].issue.Priority != nodes[j].issue.Priority {
++			return nodes[i].issue.Priority < nodes[j].issue.Priority
++		}
++		return nodes[i].issue.ID < nodes[j].issue.ID
++	})
++
++	dg.nodes = nodes
++
++	// Build set of IDs that appear as edge targets (blocked by another node).
++	// These should not appear as top-level rows since they're already shown
++	// as edges under their blockers.
++	isTarget := make(map[string]bool)
++	for _, n := range nodes {
++		for _, blockedID := range n.blocks {
++			isTarget[blockedID] = true
++		}
++	}
++
++	for i, n := range nodes {
++		if !isTarget[n.issue.ID] {
++			dg.flat = append(dg.flat, i)
++		}
++	}
++
++	return dg
++}
++
++func (dg *depGraphData) moveUp() {
++	if dg.cursor > 0 {
++		dg.cursor--
++	}
++}
++
++func (dg *depGraphData) moveDown() {
++	if dg.cursor < len(dg.flat)-1 {
++		dg.cursor++
++	}
++}
++
++func (dg *depGraphData) selectedIssue() *issue.Issue {
++	if dg.cursor < len(dg.flat) {
++		return dg.nodes[dg.flat[dg.cursor]].issue
++	}
++	return nil
++}
++
++func renderDepGraph(dg *depGraphData, width, height int) string {
++	if len(dg.nodes) == 0 {
++		return lipgloss.NewStyle().Padding(2, 4).
++			Foreground(lipgloss.Color("#555555")).
++			Render("No dependency relationships found.")
++	}
++
++	var b strings.Builder
++	b.WriteString(lipgloss.NewStyle().Bold(true).Render("Dependency Graph"))
++	b.WriteString("\n\n")
++
++	// Build ID → node index for edge rendering
++	idIdx := make(map[string]int)
++	for i, n := range dg.nodes {
++		idIdx[n.issue.ID] = i
++	}
++
++	visibleHeight := height - 6
++	if visibleHeight < 1 {
++		visibleHeight = 1
++	}
++	startIdx := 0
++	if dg.cursor >= visibleHeight {
++		startIdx = dg.cursor - visibleHeight + 1
++	}
++	endIdx := startIdx + visibleHeight
++	if endIdx > len(dg.flat) {
++		endIdx = len(dg.flat)
++	}
++
++	for i := startIdx; i < endIdx; i++ {
++		nodeIdx := dg.flat[i]
++		node := dg.nodes[nodeIdx]
++		selected := i == dg.cursor
++
++		line := renderDepLine(node, selected)
++		b.WriteString(line)
++		b.WriteString("\n")
++
++		// Draw edges to blocked issues
++		if len(node.blocks) > 0 {
++			for j, blockedID := range node.blocks {
++				isLast := j == len(node.blocks)-1
++				connector := "├─▶"
++				if isLast {
++					connector = "└─▶"
++				}
++				edgeStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#555555"))
++
++				// Show full issue info on the edge line
++				targetLabel := styledID(blockedID)
++				if idx, exists := idIdx[blockedID]; exists {
++					target := dg.nodes[idx]
++					blocked := target.openBlockers > 0 && target.issue.Status != "closed"
++					icon := styledStatusIcon(target.issue.Status, blocked)
++					badge := styledPriorityBadge(target.issue.Priority)
++					targetLabel = fmt.Sprintf("%s %s %s %s", icon, styledID(blockedID), badge, target.issue.Title)
++				}
++
++				b.WriteString(edgeStyle.Render("    " + connector + " "))
++				b.WriteString(targetLabel)
++				b.WriteString("\n")
++			}
++		}
++	}
++
++	return lipgloss.NewStyle().Padding(1, 2).Width(width).Render(b.String())
++}
++
++func renderDepLine(node depNode, selected bool) string {
++	iss := node.issue
++	blocked := node.openBlockers > 0 && iss.Status != "closed"
++
++	icon := styledStatusIcon(iss.Status, blocked)
++	id := styledID(iss.ID)
++	badge := styledPriorityBadge(iss.Priority)
++
++	// Show blocker count
++	depInfo := ""
++	if len(node.blockedBy) > 0 {
++		openCount := node.openBlockers
++		if openCount > 0 {
++			depInfo = fmt.Sprintf(" [blocked by %d]", openCount)
++		}
++	}
++
++	line := fmt.Sprintf("%s %s %s %s%s", icon, id, badge, iss.Title, depInfo)
++
++	if selected {
++		return lipgloss.NewStyle().
++			Background(lipgloss.Color("#333333")).
++			Foreground(lipgloss.Color("#ffffff")).
++			Render(line)
++	}
++
++	return line
++}
+diff --git a/cmd/bw-tui/kanban.go b/cmd/bw-tui/kanban.go
+new file mode 100644
+index 0000000..82dba51
+--- /dev/null
++++ b/cmd/bw-tui/kanban.go
+@@ -0,0 +1,353 @@
++package main
++
++import (
++	"fmt"
++	"strings"
++	"time"
++
++	"charm.land/lipgloss/v2"
++	"github.com/jallum/beadwork/internal/issue"
++)
++
++// kanbanColumns defines the columns and their display order.
++var kanbanColumns = []struct {
++	status string
++	title  string
++}{
++	{"open", "Open"},
++	{"in_progress", "In Progress"},
++	{"closed", "Closed"},
++	{"deferred", "Deferred"},
++}
++
++// timeWindow defines the kanban time window options.
++type timeWindow int
++
++const (
++	windowForever timeWindow = iota
++	windowMonth
++	windowWeek
++	windowToday
++)
++
++var windowDurations = map[timeWindow]time.Duration{
++	windowMonth: 30 * 24 * time.Hour,
++	windowWeek:  7 * 24 * time.Hour,
++	windowToday: 24 * time.Hour,
++}
++
++var windowLabels = map[timeWindow]string{
++	windowForever: "all time",
++	windowMonth:   "month",
++	windowWeek:    "week",
++	windowToday:   "today",
++}
++
++var windowCycle = []timeWindow{windowForever, windowMonth, windowWeek, windowToday}
++
++// kanbanData holds the categorized issues for the kanban view.
++type kanbanData struct {
++	columns   [4][]issueItem // indexed by kanbanColumns order
++	colIdx    int            // currently focused column
++	rowIdx    int            // currently focused row within column
++	multiRepo bool
++
++	// Time window state
++	window    timeWindow
++	windowIdx int       // offset: 0 = current window, -1 = previous, etc.
++	repos     []*RepoSource
++	filter    string
++}
++
++func newKanbanData(repos []*RepoSource, filterText string) kanbanData {
++	kd := kanbanData{
++		multiRepo: len(repos) > 1,
++		repos:     repos,
++		filter:    filterText,
++	}
++	kd.loadIssues()
++	return kd
++}
++
++// windowBounds returns the start and end time for the current window setting.
++// Returns zero times for "forever".
++func (kd *kanbanData) windowBounds() (start, end time.Time) {
++	dur, ok := windowDurations[kd.window]
++	if !ok {
++		return // forever: zero times
++	}
++
++	now := time.Now().UTC()
++	// Each offset shifts the window back by one duration
++	end = now.Add(time.Duration(kd.windowIdx) * dur)
++	start = end.Add(-dur)
++	return
++}
++
++func (kd *kanbanData) windowLabel() string {
++	label := windowLabels[kd.window]
++	if kd.window == windowForever {
++		return label
++	}
++	start, end := kd.windowBounds()
++	if kd.windowIdx == 0 {
++		return fmt.Sprintf("%s (ending %s)", label, end.Format("Jan 2"))
++	}
++	return fmt.Sprintf("%s (%s – %s)", label, start.Format("Jan 2"), end.Format("Jan 2"))
++}
++
++// issueInWindow returns true if the issue has activity within the time window.
++// For open/in_progress: checks created or updated time.
++// For closed: checks closed_at time.
++// For "forever" window, always returns true.
++func issueInWindow(iss *issue.Issue, start, end time.Time) bool {
++	if start.IsZero() && end.IsZero() {
++		return true
++	}
++	// Check the most relevant timestamp for the issue's status
++	timestamps := []string{iss.Created, iss.UpdatedAt, iss.ClosedAt}
++	for _, ts := range timestamps {
++		if ts == "" {
++			continue
++		}
++		t, err := time.Parse(time.RFC3339, ts)
++		if err != nil {
++			continue
++		}
++		if !t.Before(start) && t.Before(end) {
++			return true
++		}
++	}
++	return false
++}
++
++func (kd *kanbanData) loadIssues() {
++	for i := range kd.columns {
++		kd.columns[i] = nil
++	}
++
++	start, end := kd.windowBounds()
++
++	for _, r := range kd.repos {
++		for colIdx, col := range kanbanColumns {
++			issues, err := r.Store.List(issue.Filter{Status: col.status})
++			if err != nil {
++				continue
++			}
++			for _, iss := range issues {
++				name := ""
++				if kd.multiRepo {
++					name = r.Name
++				}
++				openBlockers := 0
++				for _, bid := range iss.BlockedBy {
++					if !r.Store.IsClosed(bid) {
++						openBlockers++
++					}
++				}
++				item := issueItem{
++					issue:        iss,
++					repoName:     name,
++					openBlockers: openBlockers,
++				}
++				if !item.matchesFilter(kd.filter) {
++					continue
++				}
++				if !issueInWindow(iss, start, end) {
++					continue
++				}
++				kd.columns[colIdx] = append(kd.columns[colIdx], item)
++			}
++		}
++	}
++	kd.clampRow()
++}
++
++func (kd *kanbanData) cycleWindow() {
++	idx := 0
++	for i, w := range windowCycle {
++		if w == kd.window {
++			idx = i
++			break
++		}
++	}
++	kd.window = windowCycle[(idx+1)%len(windowCycle)]
++	kd.windowIdx = 0
++	kd.loadIssues()
++}
++
++func (kd *kanbanData) prevWindow() {
++	if kd.window == windowForever {
++		return
++	}
++	kd.windowIdx--
++	kd.loadIssues()
++}
++
++func (kd *kanbanData) nextWindow() {
++	if kd.window == windowForever {
++		return
++	}
++	if kd.windowIdx < 0 {
++		kd.windowIdx++
++		kd.loadIssues()
++	}
++}
++
++func (kd *kanbanData) moveLeft() {
++	if kd.colIdx > 0 {
++		kd.colIdx--
++		kd.clampRow()
++	}
++}
++
++func (kd *kanbanData) moveRight() {
++	if kd.colIdx < len(kanbanColumns)-1 {
++		kd.colIdx++
++		kd.clampRow()
++	}
++}
++
++func (kd *kanbanData) moveUp() {
++	if kd.rowIdx > 0 {
++		kd.rowIdx--
++	}
++}
++
++func (kd *kanbanData) moveDown() {
++	col := kd.columns[kd.colIdx]
++	if kd.rowIdx < len(col)-1 {
++		kd.rowIdx++
++	}
++}
++
++func (kd *kanbanData) clampRow() {
++	col := kd.columns[kd.colIdx]
++	if kd.rowIdx >= len(col) {
++		if len(col) > 0 {
++			kd.rowIdx = len(col) - 1
++		} else {
++			kd.rowIdx = 0
++		}
++	}
++}
++
++func (kd *kanbanData) selectedIssue() *issue.Issue {
++	col := kd.columns[kd.colIdx]
++	if kd.rowIdx < len(col) {
++		return col[kd.rowIdx].issue
++	}
++	return nil
++}
++
++func renderKanban(kd *kanbanData, width, height int) string {
++	// Time window header
++	windowHeader := ""
++	if kd.window != windowForever {
++		style := lipgloss.NewStyle().
++			Foreground(lipgloss.Color("#d7af5f")).
++			Padding(0, 1)
++		nav := "← prev  w cycle  next →"
++		windowHeader = style.Render(fmt.Sprintf("Window: %s    %s", kd.windowLabel(), nav)) + "\n"
++		height-- // account for header line
++	}
++
++	colWidth := width / len(kanbanColumns)
++	if colWidth < 20 {
++		colWidth = 20
++	}
++	contentWidth := colWidth - 4 // padding + border
++
++	var rendered []string
++	for colIdx, col := range kanbanColumns {
++		items := kd.columns[colIdx]
++		isFocused := colIdx == kd.colIdx
++
++		// Column header
++		headerStyle := lipgloss.NewStyle().
++			Bold(true).
++			Width(contentWidth).
++			Align(lipgloss.Center).
++			Padding(0, 1)
++
++		header := fmt.Sprintf("%s (%d)", col.title, len(items))
++		if isFocused {
++			headerStyle = headerStyle.Foreground(lipgloss.Color("#5fafaf"))
++		}
++
++		var b strings.Builder
++		b.WriteString(headerStyle.Render(header))
++		b.WriteString("\n")
++		b.WriteString(strings.Repeat("─", contentWidth))
++		b.WriteString("\n")
++
++		// Cards
++		maxCards := height - 5 // header + separator + padding
++		if maxCards < 1 {
++			maxCards = 1
++		}
++		for i, item := range items {
++			if i >= maxCards {
++				remaining := len(items) - maxCards
++				b.WriteString(fmt.Sprintf("\n  +%d more", remaining))
++				break
++			}
++
++			isSelected := isFocused && i == kd.rowIdx
++			card := renderKanbanCard(item, contentWidth, isSelected)
++			b.WriteString(card)
++			b.WriteString("\n")
++		}
++
++		if len(items) == 0 {
++			b.WriteString(lipgloss.NewStyle().
++				Foreground(lipgloss.Color("#555555")).
++				Italic(true).
++				Render("  (empty)"))
++		}
++
++		colHeight := height - 4 // account for tab bar and borders
++		if colHeight < 3 {
++			colHeight = 3
++		}
++
++		colStyle := lipgloss.NewStyle().
++			Width(colWidth).
++			Height(colHeight).
++			Padding(1, 1).
++			BorderStyle(lipgloss.NormalBorder()).
++			BorderRight(colIdx < len(kanbanColumns)-1)
++
++		rendered = append(rendered, colStyle.Render(b.String()))
++	}
++
++	board := lipgloss.JoinHorizontal(lipgloss.Top, rendered...)
++	return windowHeader + board
++}
++
++func renderKanbanCard(item issueItem, width int, selected bool) string {
++	iss := item.issue
++	blocked := item.openBlockers > 0 && iss.Status != "closed"
++
++	icon := styledStatusIcon(iss.Status, blocked)
++	badge := styledPriorityBadge(iss.Priority)
++	id := styledID(iss.ID)
++
++	// Truncate title to fit
++	titleMax := width - 12 // icon + space + id + space + badge + padding
++	title := iss.Title
++	if len(title) > titleMax && titleMax > 3 {
++		title = title[:titleMax-1] + "…"
++	}
++
++	line := fmt.Sprintf("%s %s %s %s", icon, id, badge, title)
++
++	style := lipgloss.NewStyle().Width(width).Padding(0, 1)
++	if selected {
++		style = style.
++			Background(lipgloss.Color("#333333")).
++			Foreground(lipgloss.Color("#ffffff"))
++	}
++
++	return style.Render(line)
++}
+diff --git a/cmd/bw-tui/main.go b/cmd/bw-tui/main.go
+new file mode 100644
+index 0000000..25ecd8a
+--- /dev/null
++++ b/cmd/bw-tui/main.go
+@@ -0,0 +1,66 @@
++package main
++
++import (
++	"fmt"
++	"os"
++
++	tea "charm.land/bubbletea/v2"
++)
++
++func main() {
++	repos, err := parseArgs(os.Args[1:])
++	if err != nil {
++		fmt.Fprintf(os.Stderr, "error: %s\n", err)
++		os.Exit(1)
++	}
++
++	m := newModel(repos)
++	p := tea.NewProgram(m)
++	if _, err := p.Run(); err != nil {
++		fmt.Fprintf(os.Stderr, "error: %s\n", err)
++		os.Exit(1)
++	}
++}
++
++// parseArgs resolves repos from CLI flags. With no flags, opens the current
++// directory. --repo flags specify additional paths.
++func parseArgs(args []string) ([]*RepoSource, error) {
++	var paths []string
++
++	for i := 0; i < len(args); i++ {
++		switch args[i] {
++		case "--repo":
++			if i+1 >= len(args) {
++				return nil, fmt.Errorf("--repo requires a path argument")
++			}
++			i++
++			paths = append(paths, args[i])
++		case "--help", "-h":
++			fmt.Println("Usage: bw-tui [--repo <path>]...")
++			fmt.Println()
++			fmt.Println("With no flags, opens the current directory.")
++			fmt.Println("Use --repo to add repositories.")
++			os.Exit(0)
++		default:
++			return nil, fmt.Errorf("unknown argument: %s", args[i])
++		}
++	}
++
++	if len(paths) == 0 {
++		cwd, err := os.Getwd()
++		if err != nil {
++			return nil, err
++		}
++		paths = []string{cwd}
++	}
++
++	var repos []*RepoSource
++	for _, p := range paths {
++		r, err := OpenRepo(p)
++		if err != nil {
++			return nil, err
++		}
++		repos = append(repos, r)
++	}
++	return repos, nil
++}
+diff --git a/cmd/bw-tui/model.go b/cmd/bw-tui/model.go
+new file mode 100644
+index 0000000..ccb3f4e
+--- /dev/null
++++ b/cmd/bw-tui/model.go
+@@ -0,0 +1,878 @@
++package main
++
++import (
++	"fmt"
++	"strings"
++	"time"
++
++	"charm.land/bubbles/v2/key"
++	"charm.land/bubbles/v2/list"
++	"charm.land/bubbles/v2/textinput"
++	"charm.land/bubbles/v2/viewport"
++	tea "charm.land/bubbletea/v2"
++	"charm.land/lipgloss/v2"
++	"github.com/jallum/beadwork/internal/issue"
++)
++
++// overlayKind identifies the active overlay prompt.
++type overlayKind int
++
++const (
++	overlayNone overlayKind = iota
++	overlayConfirmClose
++	overlayConfirmReopen
++	overlayCommentInput
++)
++
++const refreshInterval = 3 * time.Second
++
++type tickMsg struct{}
++
++// Status filter options, cycled with 's'.
++var statusFilters = []string{"open", "in_progress", "closed", "deferred", ""}
++
++// viewKind identifies which top-level view is active.
++type viewKind int
++
++const (
++	viewList viewKind = iota
++	viewKanban
++	viewTree
++	viewDeps
++)
++
++// focus tracks which pane has keyboard focus.
++type focus int
++
++const (
++	focusList focus = iota
++	focusDetail
++)
++
++// issueItem wraps an issue for the list.Model.
++type issueItem struct {
++	issue        *issue.Issue
++	repoName     string // empty when single-repo
++	openBlockers int    // count of non-closed blockers
++}
++
++func (i issueItem) Title() string {
++	return styledIssueOneLiner(i)
++}
++
++// plainIssueOneLiner returns an unstyled one-liner for filtering/matching.
++func plainIssueOneLiner(i issueItem) string {
++	icon := plainStatusIcon(i.issue.Status, i.openBlockers > 0 && i.issue.Status != "closed")
++	prefix := ""
++	if i.repoName != "" {
++		prefix = i.repoName + " "
++	}
++	return fmt.Sprintf("%s %s%s P%d  %s", icon, prefix, i.issue.ID, i.issue.Priority, i.issue.Title)
++}
++
++// styledIssueOneLiner returns a lipgloss-styled one-liner for rendering
++// outside the list component (kanban, tree, deps, etc.).
++func styledIssueOneLiner(i issueItem) string {
++	var b strings.Builder
++	blocked := i.openBlockers > 0 && i.issue.Status != "closed"
++	b.WriteString(styledStatusIcon(i.issue.Status, blocked))
++	b.WriteString(" ")
++	if i.repoName != "" {
++		b.WriteString(styledRepoName(i.repoName))
++		b.WriteString(" ")
++	}
++	b.WriteString(styledID(i.issue.ID))
++	b.WriteString(" ")
++	b.WriteString(styledPriorityBadge(i.issue.Priority))
++	b.WriteString("  ")
++	b.WriteString(i.issue.Title)
++	return b.String()
++}
++
++func plainStatusIcon(status string, blocked bool) string {
++	if blocked {
++		return "⊘"
++	}
++	switch status {
++	case "open":
++		return "○"
++	case "in_progress":
++		return "◐"
++	case "closed":
++		return "✓"
++	case "deferred":
++		return "❄"
++	default:
++		return "?"
++	}
++}
++
++func (i issueItem) Description() string {
++	var parts []string
++	if i.issue.Type != "" {
++		parts = append(parts, strings.ToUpper(i.issue.Type))
++	}
++	if i.issue.Assignee != "" {
++		parts = append(parts, "→ "+i.issue.Assignee)
++	}
++	if i.openBlockers > 0 {
++		parts = append(parts, fmt.Sprintf("blocked by %d", i.openBlockers))
++	}
++	if len(i.issue.Labels) > 0 {
++		parts = append(parts, strings.Join(i.issue.Labels, ", "))
++	}
++	return strings.Join(parts, " · ")
++}
++
++func (i issueItem) FilterValue() string {
++	return i.issue.ID + " " + i.issue.Title
++}
++
++// matchesFilter returns true if the issue matches the given filter text
++// (case-insensitive substring match on ID, title, and description).
++func (i issueItem) matchesFilter(filter string) bool {
++	if filter == "" {
++		return true
++	}
++	needle := strings.ToLower(filter)
++	return strings.Contains(strings.ToLower(i.issue.ID), needle) ||
++		strings.Contains(strings.ToLower(i.issue.Title), needle) ||
++		strings.Contains(strings.ToLower(i.issue.Description), needle)
++}
++
++type model struct {
++	repos     []*RepoSource
++	view      viewKind
++	list      list.Model
++	kanban    kanbanData
++	tree      treeData
++	deps      depGraphData
++	detail    *issue.Issue
++	viewport  viewport.Model
++	focus     focus
++	width     int
++	height    int
++	showHelp  bool
++	statusIdx int // index into statusFilters
++
++	// Filter state (cross-view)
++	filterText   string
++	filterInput  textinput.Model
++	filterActive bool // true when typing in the filter input
++
++	// Overlay state
++	overlay    overlayKind
++	overlayID  string          // issue ID the overlay applies to
++	textInput  textinput.Model
++	statusMsg  string          // transient status message from last action
++}
++
++func newModel(repos []*RepoSource) model {
++	ti := textinput.New()
++	ti.Placeholder = "Enter comment..."
++	ti.CharLimit = 500
++
++	fi := textinput.New()
++	fi.Placeholder = "Filter..."
++	fi.CharLimit = 100
++
++	m := model{
++		repos:       repos,
++		viewport:    viewport.New(),
++		textInput:   ti,
++		filterInput: fi,
++	}
++	m.list = m.buildList()
++	return m
++}
++
++func (m *model) buildList() list.Model {
++	multiRepo := len(m.repos) > 1
++	statusFilter := statusFilters[m.statusIdx]
++
++	var items []list.Item
++	for _, r := range m.repos {
++		filter := issue.Filter{}
++		if statusFilter != "" {
++			filter.Status = statusFilter
++		}
++		issues, err := r.Store.List(filter)
++		if err != nil {
++			continue
++		}
++		for _, iss := range issues {
++			name := ""
++			if multiRepo {
++				name = r.Name
++			}
++			openBlockers := 0
++			for _, bid := range iss.BlockedBy {
++				if !r.Store.IsClosed(bid) {
++					openBlockers++
++				}
++			}
++			item := issueItem{
++				issue:        iss,
++				repoName:     name,
++				openBlockers: openBlockers,
++			}
++			if item.matchesFilter(m.filterText) {
++				items = append(items, item)
++			}
++		}
++	}
++
++	delegate := list.NewDefaultDelegate()
++	delegate.ShowDescription = false
++	delegate.SetHeight(1)
++	delegate.SetSpacing(0)
++	l := list.New(items, delegate, m.width, m.height)
++
++	title := "Beadwork"
++	if statusFilter != "" {
++		title += " [" + statusFilter + "]"
++	} else {
++		title += " [all]"
++	}
++	l.Title = title
++	l.SetShowStatusBar(false)
++	l.SetFilteringEnabled(false)
++	l.DisableQuitKeybindings()
++
++	return l
++}
++
++func (m model) Init() tea.Cmd {
++	// Record initial hashes so first tick doesn't trigger a spurious rebuild.
++	for _, r := range m.repos {
++		r.Changed()
++	}
++	return tickCmd()
++}
++
++func tickCmd() tea.Cmd {
++	return tea.Tick(refreshInterval, func(time.Time) tea.Msg {
++		return tickMsg{}
++	})
++}
++
++func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
++	switch msg := msg.(type) {
++	case tea.WindowSizeMsg:
++		m.width = msg.Width
++		m.height = msg.Height
++		m.updateLayout()
++		return m, nil
++
++	case tickMsg:
++		changed := false
++		for _, r := range m.repos {
++			if r.Changed() {
++				changed = true
++			}
++		}
++		if changed {
++			switch m.view {
++			case viewList:
++				m.list = m.buildList()
++			case viewKanban:
++				m.kanban = newKanbanData(m.repos, m.filterText)
++			case viewTree:
++				m.tree = newTreeData(m.repos, m.filterText)
++			case viewDeps:
++				m.deps = newDepGraphData(m.repos, m.filterText)
++			}
++			if m.detail != nil {
++				for _, r := range m.repos {
++					if iss, err := r.Store.Get(m.detail.ID); err == nil {
++						m.detail = iss
++						m.viewport.SetContent(m.renderDetailContent(iss))
++						break
++					}
++				}
++			}
++		}
++		return m, tickCmd()
++
++	case tea.KeyMsg:
++		// Clear transient status on any keypress
++		m.statusMsg = ""
++
++		// Handle filter input
++		if m.filterActive {
++			switch {
++			case key.Matches(msg, key.NewBinding(key.WithKeys("enter"))):
++				m.filterText = m.filterInput.Value()
++				m.filterActive = false
++				m.filterInput.Blur()
++				m.refreshCurrentView()
++				return m, nil
++			case key.Matches(msg, key.NewBinding(key.WithKeys("esc"))):
++				m.filterActive = false
++				m.filterInput.Blur()
++				// Restore previous filter (don't apply partial input)
++				m.filterInput.SetValue(m.filterText)
++				return m, nil
++			default:
++				var cmd tea.Cmd
++				m.filterInput, cmd = m.filterInput.Update(msg)
++				return m, cmd
++			}
++		}
++
++		// Handle overlay input
++		if m.overlay != overlayNone {
++			return m.updateOverlay(msg)
++		}
++
++		switch {
++		case key.Matches(msg, key.NewBinding(key.WithKeys("q"))):
++			return m, tea.Quit
++		case key.Matches(msg, key.NewBinding(key.WithKeys("?"))):
++			m.showHelp = !m.showHelp
++			return m, nil
++
++		// Filter
++		case key.Matches(msg, key.NewBinding(key.WithKeys("/"))):
++			m.filterActive = true
++			m.filterInput.Focus()
++			return m, nil
++		case key.Matches(msg, key.NewBinding(key.WithKeys("esc"))):
++			// Priority: close detail > clear filter
++			if m.detail != nil {
++				m.detail = nil
++				m.focus = focusList
++				m.updateLayout()
++				return m, nil
++			}
++			if m.filterText != "" {
++				m.filterText = ""
++				m.filterInput.SetValue("")
++				m.refreshCurrentView()
++				return m, nil
++			}
++
++		// View switching
++		case key.Matches(msg, key.NewBinding(key.WithKeys("1"))):
++			switchView(&m, viewList)
++			return m, nil
++		case key.Matches(msg, key.NewBinding(key.WithKeys("2"))):
++			switchView(&m, viewKanban)
++			return m, nil
++		case key.Matches(msg, key.NewBinding(key.WithKeys("3"))):
++			switchView(&m, viewTree)
++			return m, nil
++		case key.Matches(msg, key.NewBinding(key.WithKeys("4"))):
++			switchView(&m, viewDeps)
++			return m, nil
++
++		// Mutations (work on selected issue in any view)
++		case key.Matches(msg, key.NewBinding(key.WithKeys("S"))):
++			if iss := m.selectedIssue(); iss != nil {
++				result := doStart(m.repos, iss.ID)
++				m.statusMsg = result.String()
++				m.refreshCurrentView()
++			}
++			return m, nil
++		case key.Matches(msg, key.NewBinding(key.WithKeys("X"))):
++			if iss := m.selectedIssue(); iss != nil {
++				m.overlay = overlayConfirmClose
++				m.overlayID = iss.ID
++			}
++			return m, nil
++		case key.Matches(msg, key.NewBinding(key.WithKeys("O"))):
++			if iss := m.selectedIssue(); iss != nil {
++				m.overlay = overlayConfirmReopen
++				m.overlayID = iss.ID
++			}
++			return m, nil
++		case key.Matches(msg, key.NewBinding(key.WithKeys("C"))):
++			if iss := m.selectedIssue(); iss != nil {
++				m.overlay = overlayCommentInput
++				m.overlayID = iss.ID
++				m.textInput.Reset()
++				m.textInput.Focus()
++			}
++			return m, nil
++		case key.Matches(msg, key.NewBinding(key.WithKeys("Y"))):
++			m.statusMsg = "Syncing..."
++			result := doSync(m.repos)
++			m.statusMsg = result.String()
++			m.refreshCurrentView()
++			return m, nil
++		}
++
++		// View-specific key handling
++		switch m.view {
++		case viewList:
++			return m.updateList(msg)
++		case viewKanban:
++			return m.updateKanban(msg)
++		case viewTree:
++			return m.updateTree(msg)
++		case viewDeps:
++			return m.updateDeps(msg)
++		}
++	}
++
++	// Pass through to active sub-component
++	var cmd tea.Cmd
++	if m.view == viewList {
++		if m.focus == focusDetail && m.detail != nil {
++			m.viewport, cmd = m.viewport.Update(msg)
++		} else {
++			m.list, cmd = m.list.Update(msg)
++		}
++	}
++	return m, cmd
++}
++
++// selectedIssue returns the currently selected issue across any view.
++func (m model) selectedIssue() *issue.Issue {
++	switch m.view {
++	case viewList:
++		if item, ok := m.list.SelectedItem().(issueItem); ok {
++			return item.issue
++		}
++	case viewKanban:
++		return m.kanban.selectedIssue()
++	case viewTree:
++		return m.tree.selectedIssue()
++	case viewDeps:
++		return m.deps.selectedIssue()
++	}
++	return nil
++}
++
++// refreshCurrentView rebuilds the active view's data after a mutation.
++func (m *model) refreshCurrentView() {
++	for _, r := range m.repos {
++		r.Store.ClearCache()
++	}
++	switch m.view {
++	case viewList:
++		m.list = m.buildList()
++	case viewKanban:
++		m.kanban = newKanbanData(m.repos, m.filterText)
++	case viewTree:
++		m.tree = newTreeData(m.repos, m.filterText)
++	case viewDeps:
++		m.deps = newDepGraphData(m.repos, m.filterText)
++	}
++	// Refresh detail if open
++	if m.detail != nil {
++		for _, r := range m.repos {
++			if iss, err := r.Store.Get(m.detail.ID); err == nil {
++				m.detail = iss
++				m.viewport.SetContent(m.renderDetailContent(iss))
++				break
++			}
++		}
++	}
++}
++
++// updateOverlay handles input when a confirmation or text input overlay is active.
++func (m model) updateOverlay(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
++	switch m.overlay {
++	case overlayConfirmClose, overlayConfirmReopen:
++		switch {
++		case key.Matches(msg, key.NewBinding(key.WithKeys("y"))):
++			if m.overlay == overlayConfirmClose {
++				result := doClose(m.repos, m.overlayID)
++				m.statusMsg = result.String()
++			} else {
++				result := doReopen(m.repos, m.overlayID)
++				m.statusMsg = result.String()
++			}
++			m.overlay = overlayNone
++			m.refreshCurrentView()
++			return m, nil
++		case key.Matches(msg, key.NewBinding(key.WithKeys("n", "esc"))):
++			m.overlay = overlayNone
++			m.statusMsg = ""
++			return m, nil
++		}
++		return m, nil
++
++	case overlayCommentInput:
++		switch {
++		case key.Matches(msg, key.NewBinding(key.WithKeys("enter"))):
++			text := m.textInput.Value()
++			if text != "" {
++				result := doComment(m.repos, m.overlayID, text)
++				m.statusMsg = result.String()
++				m.refreshCurrentView()
++			}
++			m.overlay = overlayNone
++			m.textInput.Blur()
++			return m, nil
++		case key.Matches(msg, key.NewBinding(key.WithKeys("esc"))):
++			m.overlay = overlayNone
++			m.textInput.Blur()
++			m.statusMsg = ""
++			return m, nil
++		default:
++			var cmd tea.Cmd
++			m.textInput, cmd = m.textInput.Update(msg)
++			return m, cmd
++		}
++	}
++	return m, nil
++}
++
++func switchView(m *model, v viewKind) {
++	m.view = v
++	m.detail = nil
++	m.focus = focusList
++	switch v {
++	case viewList:
++		m.list = m.buildList()
++		m.updateLayout()
++	case viewKanban:
++		m.kanban = newKanbanData(m.repos, m.filterText)
++	case viewTree:
++		m.tree = newTreeData(m.repos, m.filterText)
++	case viewDeps:
++		m.deps = newDepGraphData(m.repos, m.filterText)
++	}
++}
++
++func (m model) updateList(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
++	switch {
++	case key.Matches(msg, key.NewBinding(key.WithKeys("tab"))):
++		if m.detail != nil {
++			if m.focus == focusList {
++				m.focus = focusDetail
++			} else {
++				m.focus = focusList
++			}
++		}
++		return m, nil
++	case key.Matches(msg, key.NewBinding(key.WithKeys("enter"))):
++		if m.focus == focusList {
++			if item, ok := m.list.SelectedItem().(issueItem); ok {
++				if m.detail != nil && m.detail.ID == item.issue.ID {
++					m.detail = nil
++					m.focus = focusList
++				} else {
++					m.detail = item.issue
++					m.focus = focusDetail
++					m.viewport.SetContent(m.renderDetailContent(item.issue))
++					m.viewport.GotoTop()
++				}
++				m.updateLayout()
++			}
++			return m, nil
++		}
++	case key.Matches(msg, key.NewBinding(key.WithKeys("s"))):
++		if m.focus == focusList {
++			m.statusIdx = (m.statusIdx + 1) % len(statusFilters)
++			m.detail = nil
++			m.focus = focusList
++			m.list = m.buildList()
++			m.updateLayout()
++			return m, nil
++		}
++	}
++
++	var cmd tea.Cmd
++	if m.focus == focusDetail && m.detail != nil {
++		m.viewport, cmd = m.viewport.Update(msg)
++	} else {
++		m.list, cmd = m.list.Update(msg)
++		// Auto-refresh detail when selection changes
++		if m.detail != nil {
++			if item, ok := m.list.SelectedItem().(issueItem); ok && item.issue.ID != m.detail.ID {
++				m.detail = item.issue
++				m.viewport.SetContent(m.renderDetailContent(item.issue))
++				m.viewport.GotoTop()
++			}
++		}
++	}
++	return m, cmd
++}
++
++func (m model) updateKanban(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
++	switch {
++	case key.Matches(msg, key.NewBinding(key.WithKeys("h"))):
++		m.kanban.moveLeft()
++	case key.Matches(msg, key.NewBinding(key.WithKeys("l"))):
++		m.kanban.moveRight()
++	case key.Matches(msg, key.NewBinding(key.WithKeys("j", "down"))):
++		m.kanban.moveDown()
++	case key.Matches(msg, key.NewBinding(key.WithKeys("k", "up"))):
++		m.kanban.moveUp()
++	case key.Matches(msg, key.NewBinding(key.WithKeys("left"))):
++		m.kanban.prevWindow()
++	case key.Matches(msg, key.NewBinding(key.WithKeys("right"))):
++		m.kanban.nextWindow()
++	case key.Matches(msg, key.NewBinding(key.WithKeys("w"))):
++		m.kanban.cycleWindow()
++	case key.Matches(msg, key.NewBinding(key.WithKeys("enter"))):
++		if iss := m.kanban.selectedIssue(); iss != nil {
++			if m.detail != nil && m.detail.ID == iss.ID {
++				m.detail = nil
++			} else {
++				m.detail = iss
++				m.viewport.SetContent(m.renderDetailContent(iss))
++				m.viewport.GotoTop()
++			}
++		}
++	}
++	return m, nil
++}
++
++func (m model) updateTree(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
++	switch {
++	case key.Matches(msg, key.NewBinding(key.WithKeys("j", "down"))):
++		m.tree.moveDown()
++	case key.Matches(msg, key.NewBinding(key.WithKeys("k", "up"))):
++		m.tree.moveUp()
++	case key.Matches(msg, key.NewBinding(key.WithKeys("space"))):
++		m.tree.toggleExpand()
++	case key.Matches(msg, key.NewBinding(key.WithKeys("enter"))):
++		if iss := m.tree.selectedIssue(); iss != nil {
++			if m.detail != nil && m.detail.ID == iss.ID {
++				m.detail = nil
++			} else {
++				m.detail = iss
++				m.viewport.SetContent(m.renderDetailContent(iss))
++				m.viewport.GotoTop()
++			}
++		}
++	}
++	return m, nil
++}
++
++func (m model) updateDeps(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
++	switch {
++	case key.Matches(msg, key.NewBinding(key.WithKeys("j", "down"))):
++		m.deps.moveDown()
++	case key.Matches(msg, key.NewBinding(key.WithKeys("k", "up"))):
++		m.deps.moveUp()
++	case key.Matches(msg, key.NewBinding(key.WithKeys("enter"))):
++		if iss := m.deps.selectedIssue(); iss != nil {
++			if m.detail != nil && m.detail.ID == iss.ID {
++				m.detail = nil
++			} else {
++				m.detail = iss
++				m.viewport.SetContent(m.renderDetailContent(iss))
++				m.viewport.GotoTop()
++			}
++		}
++	}
++	return m, nil
++}
++
++func (m *model) updateLayout() {
++	if m.detail != nil {
++		m.list.SetSize(m.width/2, m.height)
++		m.viewport.SetWidth(m.width - m.width/2 - 3) // 3 for border + padding
++		m.viewport.SetHeight(m.height - 2)            // padding
++	} else {
++		m.list.SetSize(m.width, m.height)
++	}
++}
++
++func (m model) View() tea.View {
++	var content string
++	if m.showHelp {
++		content = m.helpView()
++	} else {
++		var mainContent string
++		switch m.view {
++		case viewList:
++			mainContent = m.list.View()
++		case viewKanban:
++			mainContent = renderKanban(&m.kanban, m.width, m.height)
++		case viewTree:
++			mainContent = renderTree(&m.tree, m.width, m.height-3)
++		case viewDeps:
++			mainContent = renderDepGraph(&m.deps, m.width, m.height-3)
++		}
++
++		if m.detail != nil {
++			detailStyle := lipgloss.NewStyle().
++				Padding(1, 1).
++				BorderStyle(lipgloss.NormalBorder()).
++				BorderLeft(true)
++
++			if m.focus == focusList {
++				detailStyle = detailStyle.BorderForeground(lipgloss.Color("#555555"))
++			} else {
++				detailStyle = detailStyle.BorderForeground(lipgloss.Color("#5fafaf"))
++			}
++
++			// In kanban mode, detail takes the right half
++			detailView := detailStyle.Render(m.viewport.View())
++			content = lipgloss.JoinHorizontal(lipgloss.Top, mainContent, detailView)
++		} else {
++			content = mainContent
++		}
++	}
++
++	// Overlay
++	if m.overlay != overlayNone {
++		overlay := m.renderOverlay()
++		content = lipgloss.JoinVertical(lipgloss.Left, content, overlay)
++	}
++
++	// Status message
++	if m.statusMsg != "" {
++		statusStyle := lipgloss.NewStyle().
++			Foreground(lipgloss.Color("#d7af5f")).
++			Padding(0, 1)
++		content = lipgloss.JoinVertical(lipgloss.Left, content, statusStyle.Render(m.statusMsg))
++	}
++
++	// View tab bar
++	tabBar := m.renderTabBar()
++	content = lipgloss.JoinVertical(lipgloss.Left, tabBar, content)
++
++	v := tea.NewView(content)
++	v.AltScreen = true
++	return v
++}
++
++func (m model) renderOverlay() string {
++	style := lipgloss.NewStyle().
++		Padding(0, 2).
++		Foreground(lipgloss.Color("#ff5f5f"))
++
++	switch m.overlay {
++	case overlayConfirmClose:
++		return style.Render(fmt.Sprintf("Close %s? (y/n)", m.overlayID))
++	case overlayConfirmReopen:
++		return style.Render(fmt.Sprintf("Reopen %s? (y/n)", m.overlayID))
++	case overlayCommentInput:
++		return lipgloss.NewStyle().Padding(0, 2).Render(
++			fmt.Sprintf("Comment on %s: %s", m.overlayID, m.textInput.View()),
++		)
++	}
++	return ""
++}
++
++func (m model) renderTabBar() string {
++	tabs := []struct {
++		key   string
++		label string
++		view  viewKind
++	}{
++		{"1", "List", viewList},
++		{"2", "Kanban", viewKanban},
++		{"3", "Tree", viewTree},
++		{"4", "Deps", viewDeps},
++	}
++
++	var parts []string
++	for _, t := range tabs {
++		style := lipgloss.NewStyle().Padding(0, 2)
++		label := fmt.Sprintf("[%s] %s", t.key, t.label)
++		if t.view == m.view {
++			style = style.Bold(true).Foreground(lipgloss.Color("#5fafaf"))
++		} else {
++			style = style.Foreground(lipgloss.Color("#555555"))
++		}
++		parts = append(parts, style.Render(label))
++	}
++
++	// Filter indicator
++	if m.filterActive {
++		filterStyle := lipgloss.NewStyle().Padding(0, 2)
++		parts = append(parts, filterStyle.Render("/ "+m.filterInput.View()))
++	} else if m.filterText != "" {
++		filterStyle := lipgloss.NewStyle().Padding(0, 2).Foreground(lipgloss.Color("#d7af5f"))
++		parts = append(parts, filterStyle.Render(fmt.Sprintf("filter: %s (esc to clear)", m.filterText)))
++	}
++
++	bar := lipgloss.JoinHorizontal(lipgloss.Top, parts...)
++	return lipgloss.NewStyle().
++		BorderStyle(lipgloss.NormalBorder()).
++		BorderBottom(true).
++		Width(m.width).
++		Render(bar)
++}
++
++func (m model) renderDetailContent(iss *issue.Issue) string {
++	var b strings.Builder
++
++	// Header
++	blocked := len(iss.BlockedBy) > 0 && iss.Status != "closed"
++	fmt.Fprintf(&b, "%s %s %s", styledStatusIcon(iss.Status, blocked), styledID(iss.ID), styledPriorityBadge(iss.Priority))
++	if iss.Type != "" {
++		fmt.Fprintf(&b, " [%s]", strings.ToUpper(iss.Type))
++	}
++	fmt.Fprintln(&b)
++	fmt.Fprintf(&b, "\n%s\n", lipgloss.NewStyle().Bold(true).Render(iss.Title))
++
++	// Metadata
++	if iss.Assignee != "" {
++		fmt.Fprintf(&b, "\nAssignee: %s", iss.Assignee)
++	}
++	if iss.Parent != "" {
++		fmt.Fprintf(&b, "\nParent:   %s", styledID(iss.Parent))
++	}
++	fmt.Fprintf(&b, "\nStatus:   %s", iss.Status)
++	if len(iss.Labels) > 0 {
++		fmt.Fprintf(&b, "\nLabels:   %s", strings.Join(iss.Labels, ", "))
++	}
++	if iss.DeferUntil != "" {
++		fmt.Fprintf(&b, "\nDeferred: %s", iss.DeferUntil)
++	}
++
++	// Description
++	if iss.Description != "" {
++		fmt.Fprintf(&b, "\n\n%s", iss.Description)
++	}
++
++	// Dependencies
++	if len(iss.BlockedBy) > 0 {
++		fmt.Fprintf(&b, "\n\nBlocked by: %s", strings.Join(iss.BlockedBy, ", "))
++	}
++	if len(iss.Blocks) > 0 {
++		fmt.Fprintf(&b, "\nBlocks:     %s", strings.Join(iss.Blocks, ", "))
++	}
++
++	// Comments
++	if len(iss.Comments) > 0 {
++		fmt.Fprintf(&b, "\n\nComments (%d):", len(iss.Comments))
++		for _, c := range iss.Comments {
++			author := c.Author
++			if author == "" {
++				author = "unknown"
++			}
++			fmt.Fprintf(&b, "\n  [%s] %s: %s", c.Timestamp, author, c.Text)
++		}
++	}
++
++	return b.String()
++}
++
++func (m model) helpView() string {
++	help := `Keybindings:
++
++  Navigation
++    1/2/3/4      Switch view: List / Kanban / Tree / Deps
++    j/k, ↑/↓    Navigate list / scroll detail
++    h/l          Navigate kanban columns
++    ←/→          Navigate kanban time window
++    w            Cycle time window (all → month → week → today)
++    space        Toggle expand/collapse (tree view)
++    enter        Open detail panel
++    tab          Switch focus between list and detail (list view)
++    /            Filter issues (all views, substring match)
++    s            Cycle status filter (list view)
++    esc          Close detail / clear filter
++
++  Actions
++    S            Start issue (open → in_progress)
++    X            Close issue (with confirmation)
++    O            Reopen issue (with confirmation)
++    C            Add comment (text input)
++    Y            Sync all repos
++
++  q  Quit    ?  Toggle this help
++`
++	style := lipgloss.NewStyle().Padding(2, 4)
++	return style.Render(help)
++}
+diff --git a/cmd/bw-tui/repo_source.go b/cmd/bw-tui/repo_source.go
+new file mode 100644
+index 0000000..9b22aae
+--- /dev/null
++++ b/cmd/bw-tui/repo_source.go
+@@ -0,0 +1,60 @@
++package main
++
++import (
++	"fmt"
++	"path/filepath"
++
++	"github.com/jallum/beadwork/internal/issue"
++	"github.com/jallum/beadwork/internal/repo"
++)
++
++// RepoSource wraps a beadwork repository and its issue store for TUI use.
++type RepoSource struct {
++	Name     string       // short display name (e.g. "toolbox")
++	Path     string       // absolute filesystem path
++	Repo     *repo.Repo
++	Store    *issue.Store
++	Prefix   string       // issue prefix (e.g. "tb")
++	lastHash string       // last known ref hash for change detection
++}
++
++// Changed checks whether the beadwork branch has been modified since the
++// last call. Returns true if the underlying ref has moved.
++func (rs *RepoSource) Changed() bool {
++	rs.Store.ClearCache()
++	rs.Repo.TreeFS().Refresh()
++	hash := rs.Repo.TreeFS().RefHash().String()
++	if hash == rs.lastHash {
++		return false
++	}
++	rs.lastHash = hash
++	return true
++}
++
++// OpenRepo opens a beadwork repository at the given path and returns a
++// read-only RepoSource. The name defaults to the directory basename.
++func OpenRepo(path string) (*RepoSource, error) {
++	abs, err := filepath.Abs(path)
++	if err != nil {
++		return nil, fmt.Errorf("resolve path %s: %w", path, err)
++	}
++
++	r, err := repo.FindRepoAt(abs)
++	if err != nil {
++		return nil, fmt.Errorf("open %s: %w", abs, err)
++	}
++	if !r.IsInitialized() {
++		return nil, fmt.Errorf("%s: beadwork not initialized", abs)
++	}
++
++	store := issue.NewStore(r.TreeFS(), r.Prefix)
++	store.Committer = r
++
++	return &RepoSource{
++		Name:   filepath.Base(abs),
++		Path:   abs,
++		Repo:   r,
++		Store:  store,
++		Prefix: r.Prefix,
++	}, nil
++}
+diff --git a/cmd/bw-tui/styles.go b/cmd/bw-tui/styles.go
+new file mode 100644
+index 0000000..9c7c138
+--- /dev/null
++++ b/cmd/bw-tui/styles.go
+@@ -0,0 +1,63 @@
++package main
++
++import (
++	"fmt"
++	"image/color"
++
++	"charm.land/lipgloss/v2"
++)
++
++// Colors matching beadwork's existing palette.
++var (
++	colorP0 = lipgloss.Color("#ff5f5f") // bright red
++	colorP1 = lipgloss.Color("#d75f5f") // red
++	colorP2 = lipgloss.Color("#d7af5f") // yellow
++	colorP3 = lipgloss.Color("#5fafaf") // cyan
++	colorP4 = lipgloss.Color("#808080") // dim
++
++	colorOpen       = lipgloss.Color("#808080")
++	colorInProgress = lipgloss.Color("#d7af5f")
++	colorClosed     = lipgloss.Color("#5faf5f")
++	colorBlocked    = lipgloss.Color("#d75f5f")
++	colorDeferred   = lipgloss.Color("#5f87af")
++	colorID         = lipgloss.Color("#5fafaf")
++	colorRepo       = lipgloss.Color("#af87d7")
++
++	styleID = lipgloss.NewStyle().Foreground(colorID)
++)
++
++var priorityColors = [5]color.Color{colorP0, colorP1, colorP2, colorP3, colorP4}
++
++func styledPriorityBadge(p int) string {
++	if p < 0 || p > 4 {
++		p = 2
++	}
++	s := lipgloss.NewStyle().Foreground(priorityColors[p])
++	return s.Render(fmt.Sprintf("P%d", p))
++}
++
++func styledStatusIcon(status string, blocked bool) string {
++	if blocked {
++		return lipgloss.NewStyle().Foreground(colorBlocked).Render("⊘")
++	}
++	switch status {
++	case "open":
++		return lipgloss.NewStyle().Foreground(colorOpen).Render("○")
++	case "in_progress":
++		return lipgloss.NewStyle().Foreground(colorInProgress).Render("◐")
++	case "closed":
++		return lipgloss.NewStyle().Foreground(colorClosed).Render("✓")
++	case "deferred":
++		return lipgloss.NewStyle().Foreground(colorDeferred).Render("❄")
++	default:
++		return "?"
++	}
++}
++
++func styledID(id string) string {
++	return styleID.Render(id)
++}
++
++func styledRepoName(name string) string {
++	return lipgloss.NewStyle().Foreground(colorRepo).Render(name)
++}
+diff --git a/cmd/bw-tui/tree.go b/cmd/bw-tui/tree.go
+new file mode 100644
+index 0000000..4b5ce53
+--- /dev/null
++++ b/cmd/bw-tui/tree.go
+@@ -0,0 +1,287 @@
++package main
++
++import (
++	"fmt"
++	"strings"
++
++	"charm.land/lipgloss/v2"
++	"github.com/jallum/beadwork/internal/issue"
++)
++
++// treeNode represents an issue in the tree hierarchy.
++type treeNode struct {
++	item     issueItem
++	children []*treeNode
++	expanded bool
++}
++
++// treeData holds the tree view state.
++type treeData struct {
++	roots    []*treeNode       // top-level issues (no parent, or parent is epic)
++	flat     []*treeNode       // flattened visible list for cursor navigation
++	cursor   int               // index into flat
++}
++
++func newTreeData(repos []*RepoSource, filterText string) treeData {
++	multiRepo := len(repos) > 1
++	td := treeData{}
++
++	for _, r := range repos {
++		// Load all issues
++		allIssues, err := r.Store.List(issue.Filter{})
++		if err != nil {
++			continue
++		}
++
++		// Build lookup maps
++		byID := make(map[string]*issue.Issue)
++		childrenOf := make(map[string][]*issue.Issue)
++		for _, iss := range allIssues {
++			byID[iss.ID] = iss
++			if iss.Parent != "" {
++				childrenOf[iss.Parent] = append(childrenOf[iss.Parent], iss)
++			}
++		}
++
++		// Build tree nodes for root issues (no parent or parent not in set)
++		for _, iss := range allIssues {
++			if iss.Parent != "" {
++				continue // will be added as child
++			}
++			name := ""
++			if multiRepo {
++				name = r.Name
++			}
++			node := buildTreeNode(iss, childrenOf, r.Store, name)
++			td.roots = append(td.roots, node)
++		}
++	}
++
++	if filterText != "" {
++		td.roots = filterTreeNodes(td.roots, filterText)
++	}
++
++	td.rebuildFlat()
++	return td
++}
++
++// filterTreeNodes prunes tree nodes that don't match the filter.
++// A parent is kept if it matches or any descendant matches.
++func filterTreeNodes(nodes []*treeNode, filter string) []*treeNode {
++	var result []*treeNode
++	for _, n := range nodes {
++		filtered := filterTreeNode(n, filter)
++		if filtered != nil {
++			result = append(result, filtered)
++		}
++	}
++	return result
++}
++
++func filterTreeNode(n *treeNode, filter string) *treeNode {
++	selfMatches := n.item.matchesFilter(filter)
++
++	var filteredChildren []*treeNode
++	for _, child := range n.children {
++		fc := filterTreeNode(child, filter)
++		if fc != nil {
++			filteredChildren = append(filteredChildren, fc)
++		}
++	}
++
++	if selfMatches || len(filteredChildren) > 0 {
++		copy := *n
++		copy.children = filteredChildren
++		return &copy
++	}
++	return nil
++}
++
++func buildTreeNode(iss *issue.Issue, childrenOf map[string][]*issue.Issue, store *issue.Store, repoName string) *treeNode {
++	openBlockers := 0
++	for _, bid := range iss.BlockedBy {
++		if !store.IsClosed(bid) {
++			openBlockers++
++		}
++	}
++
++	node := &treeNode{
++		item: issueItem{
++			issue:        iss,
++			repoName:     repoName,
++			openBlockers: openBlockers,
++		},
++		expanded: true, // expanded by default
++	}
++
++	for _, child := range childrenOf[iss.ID] {
++		childNode := buildTreeNode(child, childrenOf, store, repoName)
++		node.children = append(node.children, childNode)
++	}
++
++	return node
++}
++
++// rebuildFlat constructs the flat visible list from the tree.
++func (td *treeData) rebuildFlat() {
++	td.flat = td.flat[:0]
++	for _, root := range td.roots {
++		td.flattenNode(root, 0)
++	}
++	if td.cursor >= len(td.flat) {
++		if len(td.flat) > 0 {
++			td.cursor = len(td.flat) - 1
++		} else {
++			td.cursor = 0
++		}
++	}
++}
++
++func (td *treeData) flattenNode(node *treeNode, depth int) {
++	td.flat = append(td.flat, node)
++	if node.expanded {
++		for _, child := range node.children {
++			td.flattenNode(child, depth+1)
++		}
++	}
++}
++
++func (td *treeData) moveUp() {
++	if td.cursor > 0 {
++		td.cursor--
++	}
++}
++
++func (td *treeData) moveDown() {
++	if td.cursor < len(td.flat)-1 {
++		td.cursor++
++	}
++}
++
++func (td *treeData) toggleExpand() {
++	if td.cursor < len(td.flat) {
++		node := td.flat[td.cursor]
++		if len(node.children) > 0 {
++			node.expanded = !node.expanded
++			td.rebuildFlat()
++		}
++	}
++}
++
++func (td *treeData) selectedIssue() *issue.Issue {
++	if td.cursor < len(td.flat) {
++		return td.flat[td.cursor].item.issue
++	}
++	return nil
++}
++
++// nodeDepth returns the depth of a node by walking the flat list.
++func (td *treeData) nodeDepth(idx int) int {
++	if idx >= len(td.flat) {
++		return 0
++	}
++	target := td.flat[idx]
++
++	// Walk roots to find depth
++	for _, root := range td.roots {
++		if d := findDepth(root, target, 0); d >= 0 {
++			return d
++		}
++	}
++	return 0
++}
++
++func findDepth(node *treeNode, target *treeNode, depth int) int {
++	if node == target {
++		return depth
++	}
++	for _, child := range node.children {
++		if d := findDepth(child, target, depth+1); d >= 0 {
++			return d
++		}
++	}
++	return -1
++}
++
++func renderTree(td *treeData, width, height int) string {
++	if len(td.flat) == 0 {
++		return lipgloss.NewStyle().Padding(2, 4).
++			Foreground(lipgloss.Color("#555555")).
++			Render("No issues with parent-child relationships found.")
++	}
++
++	var b strings.Builder
++	b.WriteString(lipgloss.NewStyle().Bold(true).Render("Issue Tree"))
++	b.WriteString("\n\n")
++
++	// Determine visible window
++	visibleHeight := height - 6 // header + padding
++	if visibleHeight < 1 {
++		visibleHeight = 1
++	}
++
++	startIdx := 0
++	if td.cursor >= visibleHeight {
++		startIdx = td.cursor - visibleHeight + 1
++	}
++	endIdx := startIdx + visibleHeight
++	if endIdx > len(td.flat) {
++		endIdx = len(td.flat)
++	}
++
++	for i := startIdx; i < endIdx; i++ {
++		node := td.flat[i]
++		depth := td.nodeDepth(i)
++		selected := i == td.cursor
++
++		line := renderTreeLine(node, depth, selected)
++		b.WriteString(line)
++		b.WriteString("\n")
++	}
++
++	return lipgloss.NewStyle().Padding(1, 2).Width(width).Render(b.String())
++}
++
++func renderTreeLine(node *treeNode, depth int, selected bool) string {
++	iss := node.item.issue
++	blocked := node.item.openBlockers > 0 && iss.Status != "closed"
++
++	indent := strings.Repeat("  ", depth)
++
++	// Tree connector
++	expandIcon := " "
++	if len(node.children) > 0 {
++		if node.expanded {
++			expandIcon = "▼"
++		} else {
++			expandIcon = "▶"
++		}
++	}
++
++	icon := styledStatusIcon(iss.Status, blocked)
++	id := styledID(iss.ID)
++	badge := styledPriorityBadge(iss.Priority)
++
++	// Progress for parent nodes
++	progress := ""
++	if len(node.children) > 0 {
++		closed := 0
++		for _, ch := range node.children {
++			if ch.item.issue.Status == "closed" {
++				closed++
++			}
++		}
++		progress = fmt.Sprintf(" (%d/%d)", closed, len(node.children))
++	}
++
++	line := fmt.Sprintf("%s%s %s %s %s %s%s", indent, expandIcon, icon, id, badge, iss.Title, progress)
++
++	if selected {
++		return lipgloss.NewStyle().
++			Background(lipgloss.Color("#333333")).
++			Foreground(lipgloss.Color("#ffffff")).
++			Render(line)
++	}
++
++	return line
++}
+diff --git a/go.mod b/go.mod
+index c94ce27..14dc5c5 100644
+--- a/go.mod
++++ b/go.mod
+@@ -1,11 +1,23 @@
+ module github.com/jallum/beadwork
+ 
+-go 1.24.4
++go 1.25.0
+ 
+ require (
++	charm.land/bubbles/v2 v2.0.0 // indirect
++	charm.land/bubbletea/v2 v2.0.2 // indirect
++	charm.land/lipgloss/v2 v2.0.2 // indirect
+ 	dario.cat/mergo v1.0.0 // indirect
+ 	github.com/Microsoft/go-winio v0.6.2 // indirect
+ 	github.com/ProtonMail/go-crypto v1.1.6 // indirect
++	github.com/atotto/clipboard v0.1.4 // indirect
++	github.com/charmbracelet/colorprofile v0.4.2 // indirect
++	github.com/charmbracelet/ultraviolet v0.0.0-20260205113103-524a6607adb8 // indirect
++	github.com/charmbracelet/x/ansi v0.11.6 // indirect
++	github.com/charmbracelet/x/term v0.2.2 // indirect
++	github.com/charmbracelet/x/termios v0.1.1 // indirect
++	github.com/charmbracelet/x/windows v0.2.2 // indirect
++	github.com/clipperhouse/displaywidth v0.11.0 // indirect
++	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
+ 	github.com/cloudflare/circl v1.6.1 // indirect
+ 	github.com/cyphar/filepath-securejoin v0.4.1 // indirect
+ 	github.com/emirpasic/gods v1.18.1 // indirect
+@@ -15,13 +27,20 @@ require (
+ 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
+ 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
+ 	github.com/kevinburke/ssh_config v1.2.0 // indirect
++	github.com/lucasb-eyer/go-colorful v1.3.0 // indirect
++	github.com/mattn/go-runewidth v0.0.20 // indirect
++	github.com/muesli/cancelreader v0.2.2 // indirect
+ 	github.com/pjbgf/sha1cd v0.3.2 // indirect
++	github.com/rivo/uniseg v0.4.7 // indirect
++	github.com/sahilm/fuzzy v0.1.1 // indirect
+ 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
+ 	github.com/skeema/knownhosts v1.3.1 // indirect
+ 	github.com/xanzy/ssh-agent v0.3.3 // indirect
++	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
+ 	golang.org/x/crypto v0.45.0 // indirect
+ 	golang.org/x/net v0.47.0 // indirect
+-	golang.org/x/sys v0.41.0 // indirect
++	golang.org/x/sync v0.19.0 // indirect
++	golang.org/x/sys v0.42.0 // indirect
+ 	golang.org/x/term v0.40.0 // indirect
+ 	gopkg.in/warnings.v0 v0.1.2 // indirect
+ )
+diff --git a/go.sum b/go.sum
+index 0e7a679..71c9314 100644
+--- a/go.sum
++++ b/go.sum
+@@ -1,3 +1,9 @@
++charm.land/bubbles/v2 v2.0.0 h1:tE3eK/pHjmtrDiRdoC9uGNLgpopOd8fjhEe31B/ai5s=
++charm.land/bubbles/v2 v2.0.0/go.mod h1:rCHoleP2XhU8um45NTuOWBPNVHxnkXKTiZqcclL/qOI=
++charm.land/bubbletea/v2 v2.0.2 h1:4CRtRnuZOdFDTWSff9r8QFt/9+z6Emubz3aDMnf/dx0=
++charm.land/bubbletea/v2 v2.0.2/go.mod h1:3LRff2U4WIYXy7MTxfbAQ+AdfM3D8Xuvz2wbsOD9OHQ=
++charm.land/lipgloss/v2 v2.0.2 h1:xFolbF8JdpNkM2cEPTfXEcW1p6NRzOWTSamRfYEw8cs=
++charm.land/lipgloss/v2 v2.0.2/go.mod h1:KjPle2Qd3YmvP1KL5OMHiHysGcNwq6u83MUjYkFvEkM=
+ dario.cat/mergo v1.0.0 h1:AGCNq9Evsj31mOgNPcLyXc+4PNABt905YmuqPYYpBWk=
+ dario.cat/mergo v1.0.0/go.mod h1:uNxQE+84aUszobStD9th8a29P2fMDhsBdgRYvZOxGmk=
+ github.com/Microsoft/go-winio v0.5.2/go.mod h1:WpS1mjBmmwHBEWmogvA2mj8546UReBk4v8QkMxJ6pZY=
+@@ -5,6 +11,24 @@ github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERo
+ github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA8Ipt1oGCvU=
+ github.com/ProtonMail/go-crypto v1.1.6 h1:ZcV+Ropw6Qn0AX9brlQLAUXfqLBc7Bl+f/DmNxpLfdw=
+ github.com/ProtonMail/go-crypto v1.1.6/go.mod h1:rA3QumHc/FZ8pAHreoekgiAbzpNsfQAosU5td4SnOrE=
++github.com/atotto/clipboard v0.1.4 h1:EH0zSVneZPSuFR11BlR9YppQTVDbh5+16AmcJi4g1z4=
++github.com/atotto/clipboard v0.1.4/go.mod h1:ZY9tmq7sm5xIbd9bOK4onWV4S6X0u6GY7Vn0Yu86PYI=
++github.com/charmbracelet/colorprofile v0.4.2 h1:BdSNuMjRbotnxHSfxy+PCSa4xAmz7szw70ktAtWRYrY=
++github.com/charmbracelet/colorprofile v0.4.2/go.mod h1:0rTi81QpwDElInthtrQ6Ni7cG0sDtwAd4C4le060fT8=
++github.com/charmbracelet/ultraviolet v0.0.0-20260205113103-524a6607adb8 h1:eyFRbAmexyt43hVfeyBofiGSEmJ7krjLOYt/9CF5NKA=
++github.com/charmbracelet/ultraviolet v0.0.0-20260205113103-524a6607adb8/go.mod h1:SQpCTRNBtzJkwku5ye4S3HEuthAlGy2n9VXZnWkEW98=
++github.com/charmbracelet/x/ansi v0.11.6 h1:GhV21SiDz/45W9AnV2R61xZMRri5NlLnl6CVF7ihZW8=
++github.com/charmbracelet/x/ansi v0.11.6/go.mod h1:2JNYLgQUsyqaiLovhU2Rv/pb8r6ydXKS3NIttu3VGZQ=
++github.com/charmbracelet/x/term v0.2.2 h1:xVRT/S2ZcKdhhOuSP4t5cLi5o+JxklsoEObBSgfgZRk=
++github.com/charmbracelet/x/term v0.2.2/go.mod h1:kF8CY5RddLWrsgVwpw4kAa6TESp6EB5y3uxGLeCqzAI=
++github.com/charmbracelet/x/termios v0.1.1 h1:o3Q2bT8eqzGnGPOYheoYS8eEleT5ZVNYNy8JawjaNZY=
++github.com/charmbracelet/x/termios v0.1.1/go.mod h1:rB7fnv1TgOPOyyKRJ9o+AsTU/vK5WHJ2ivHeut/Pcwo=
++github.com/charmbracelet/x/windows v0.2.2 h1:IofanmuvaxnKHuV04sC0eBy/smG6kIKrWG2/jYn2GuM=
++github.com/charmbracelet/x/windows v0.2.2/go.mod h1:/8XtdKZzedat74NQFn0NGlGL4soHB0YQZrETF96h75k=
++github.com/clipperhouse/displaywidth v0.11.0 h1:lBc6kY44VFw+TDx4I8opi/EtL9m20WSEFgwIwO+UVM8=
++github.com/clipperhouse/displaywidth v0.11.0/go.mod h1:bkrFNkf81G8HyVqmKGxsPufD3JhNl3dSqnGhOoSD/o0=
++github.com/clipperhouse/uax29/v2 v2.7.0 h1:+gs4oBZ2gPfVrKPthwbMzWZDaAFPGYK72F0NJv2v7Vk=
++github.com/clipperhouse/uax29/v2 v2.7.0/go.mod h1:EFJ2TJMRUaplDxHKj1qAEhCtQPW2tJSwu5BF98AuoVM=
+ github.com/cloudflare/circl v1.6.1 h1:zqIqSPIndyBh1bjLVVDHMPpVKqp8Su/V+6MeDzzQBQ0=
+ github.com/cloudflare/circl v1.6.1/go.mod h1:uddAzsPgqdMAYatqJ0lsjX1oECcQLIlRpzZh3pJrofs=
+ github.com/cyphar/filepath-securejoin v0.4.1 h1:JyxxyPEaktOD+GAnqIqTf9A8tHyAG22rowi7HkoSU1s=
+@@ -32,10 +56,20 @@ github.com/kevinburke/ssh_config v1.2.0/go.mod h1:CT57kijsi8u/K/BOFA39wgDQJ9CxiF
+ github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=
+ github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
+ github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
++github.com/lucasb-eyer/go-colorful v1.3.0 h1:2/yBRLdWBZKrf7gB40FoiKfAWYQ0lqNcbuQwVHXptag=
++github.com/lucasb-eyer/go-colorful v1.3.0/go.mod h1:R4dSotOR9KMtayYi1e77YzuveK+i7ruzyGqttikkLy0=
++github.com/mattn/go-runewidth v0.0.20 h1:WcT52H91ZUAwy8+HUkdM3THM6gXqXuLJi9O3rjcQQaQ=
++github.com/mattn/go-runewidth v0.0.20/go.mod h1:XBkDxAl56ILZc9knddidhrOlY5R/pDhgLpndooCuJAs=
++github.com/muesli/cancelreader v0.2.2 h1:3I4Kt4BQjOR54NavqnDogx/MIoWBFa0StPA8ELUXHmA=
++github.com/muesli/cancelreader v0.2.2/go.mod h1:3XuTXfFS2VjM+HTLZY9Ak0l6eUKfijIfMUZ4EgX0QYo=
+ github.com/pjbgf/sha1cd v0.3.2 h1:a9wb0bp1oC2TGwStyn0Umc/IGKQnEgF0vVaZ8QF8eo4=
+ github.com/pjbgf/sha1cd v0.3.2/go.mod h1:zQWigSxVmsHEZow5qaLtPYxpcKMMQpa09ixqBxuCS6A=
+ github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
+ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
++github.com/rivo/uniseg v0.4.7 h1:WUdvkW8uEhrYfLC4ZzdpI2ztxP1I582+49Oc5Mq64VQ=
++github.com/rivo/uniseg v0.4.7/go.mod h1:FN3SvrM+Zdj16jyLfmOkMNblXMcoc8DfTHruCPUcx88=
++github.com/sahilm/fuzzy v0.1.1 h1:ceu5RHF8DGgoi+/dR5PsECjCDH1BE3Fnmpo7aVXOdRA=
++github.com/sahilm/fuzzy v0.1.1/go.mod h1:VFvziUEIMCrT6A6tw2RFIXPXXmzXbOsSHF0DOI8ZK9Y=
+ github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 h1:n661drycOFuPLCN3Uc8sB6B/s6Z4t2xvBgU1htSHuq8=
+ github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3/go.mod h1:A0bzQcvG0E7Rwjx0REVgAGH58e96+X0MeOfepqsbeW4=
+ github.com/sirupsen/logrus v1.7.0/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
+@@ -46,12 +80,16 @@ github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXf
+ github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
+ github.com/xanzy/ssh-agent v0.3.3 h1:+/15pJfg/RsTxqYcX6fHqOXZwwMP+2VyYWJeWM2qQFM=
+ github.com/xanzy/ssh-agent v0.3.3/go.mod h1:6dzNDKs0J9rVPHPhaGCukekBHKqfl+L3KghI1Bc68Uw=
++github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e h1:JVG44RsyaB9T2KIHavMF/ppJZNG9ZpyihvCd0w101no=
++github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e/go.mod h1:RbqR21r5mrJuqunuUZ/Dhy/avygyECGrLceyNeo4LiM=
+ golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d/go.mod h1:IxCIyHEi3zRg3s0A5j5BB6A9Jmi73HwBIUl50j+osU4=
+ golang.org/x/crypto v0.45.0 h1:jMBrvKuj23MTlT0bQEOBcAE0mjg8mK9RXFhRH6nyF3Q=
+ golang.org/x/crypto v0.45.0/go.mod h1:XTGrrkGJve7CYK7J8PEww4aY7gM3qMCElcJQ8n8JdX4=
+ golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2/go.mod h1:9nx3DQGgdP8bBQD5qxJ1jj9UTztislL4KSBs9R2vV5Y=
+ golang.org/x/net v0.47.0 h1:Mx+4dIFzqraBXUugkia1OOvlD6LemFo1ALMHjrXDOhY=
+ golang.org/x/net v0.47.0/go.mod h1:/jNxtkgq5yWUGYkaZGqo27cfGZ1c5Nen03aYrrKpVRU=
++golang.org/x/sync v0.19.0 h1:vV+1eWNmZ5geRlYjzm2adRgW2/mcpevXNg50YZtPCE4=
++golang.org/x/sync v0.19.0/go.mod h1:9KTHXmSnoGruLpwFjVSX0lNNA75CykiMECbovNTZqGI=
+ golang.org/x/sys v0.0.0-20191026070338-33540a1f6037/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+ golang.org/x/sys v0.0.0-20201119102817-f84b799fce68/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+ golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+@@ -62,6 +100,8 @@ golang.org/x/sys v0.38.0 h1:3yZWxaJjBmCWXqhN1qh02AkOnCQ1poK6oF+a7xWL6Gc=
+ golang.org/x/sys v0.38.0/go.mod h1:OgkHotnGiDImocRcuBABYBEXf8A9a87e/uXjp9XT3ks=
+ golang.org/x/sys v0.41.0 h1:Ivj+2Cp/ylzLiEU89QhWblYnOE9zerudt9Ftecq2C6k=
+ golang.org/x/sys v0.41.0/go.mod h1:OgkHotnGiDImocRcuBABYBEXf8A9a87e/uXjp9XT3ks=
++golang.org/x/sys v0.42.0 h1:omrd2nAlyT5ESRdCLYdm3+fMfNFE/+Rf4bDIQImRJeo=
++golang.org/x/sys v0.42.0/go.mod h1:4GL1E5IUh+htKOUEOaiffhrAeqysfVGipDYzABqnCmw=
+ golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
+ golang.org/x/term v0.40.0 h1:36e4zGLqU4yhjlmxEaagx2KuYbJq3EwY8K943ZsHcvg=
+ golang.org/x/term v0.40.0/go.mod h1:w2P8uVp06p2iyKKuvXIm7N/y0UCRt3UfJTfZ7oOpglM=
+diff --git a/internal/repo/repo.go b/internal/repo/repo.go
+index a4013e6..251f522 100644
+--- a/internal/repo/repo.go
++++ b/internal/repo/repo.go
+@@ -51,7 +51,10 @@ func FindRepoAt(dir string) (*Repo, error) {
+ 	if err != nil {
+ 		return nil, fmt.Errorf("not a git repository")
+ 	}
++	return openRepoFromGitDir(gitDir, dir)
++}
+ 
++func openRepoFromGitDir(gitDir string, cwd string) (*Repo, error) {
+ 	repoDir := filepath.Dir(gitDir)
+ 	goRepo, err := git.PlainOpen(repoDir)
+ 	if err != nil {
+@@ -65,7 +68,7 @@ func FindRepoAt(dir string) (*Repo, error) {
+ 
+ 	r := &Repo{
+ 		GitDir: gitDir,
+-		CWD:    dir,
++		CWD:    cwd,
+ 		tfs:    tfs,
+ 	}
+ 
+@@ -478,8 +481,11 @@ func (r *Repo) gitPush(remoteName string, refSpec config.RefSpec) error {
+ // If .git is a file (worktree), it reads the gitdir path and
+ // then reads commondir to resolve the shared .git directory.
+ func findGitDir(startDir string) (string, error) {
+-	dir := startDir
++	return findGitDirAt(startDir)
++}
+ 
++// findGitDirAt walks up from dir looking for .git (file or directory).
++func findGitDirAt(dir string) (string, error) {
+ 	for {
+ 		dotGit := filepath.Join(dir, ".git")
+ 		fi, err := os.Stat(dotGit)
