@@ -131,6 +131,26 @@
         ) { } (builtins.attrNames reg)
       );
 
+      # Flake templates for downstream consumers
+      templates = {
+        default = {
+          path = ./templates/devshell;
+          description = "Dev shell with toolbox packages";
+        };
+        devshell = {
+          path = ./templates/devshell;
+          description = "Dev shell with toolbox packages";
+        };
+        go = {
+          path = ./templates/go;
+          description = "Go project with toolbox Go toolchain";
+        };
+        rust = {
+          path = ./templates/rust;
+          description = "Rust project with toolbox Rust toolchain";
+        };
+      };
+
       # Development shell via devenv (activated by direnv)
       devShells = forAllSystems (
         system:
