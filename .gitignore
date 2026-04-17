@@ -2,7 +2,8 @@ result
 result-*
 .devenv*
 .direnv
-.claude/
+.claude/*
+!.claude/skills/
 docs/_site/
 __pycache__/
 *.pyc

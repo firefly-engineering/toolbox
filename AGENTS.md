@@ -11,8 +11,6 @@ toolbox/
 ├── flake.nix              # Flake assembly: auto-discovers packages/, exposes registry + packages
 ├── lib/
 │   └── default.nix        # Registry helpers (resolveTool, readData, buildVersions, buildToolchain, resolvePatches, versionToAttr)
-├── scripts/
-│   └── generate-patch     # Generate/refresh vendored patches from fork branches
 └── packages/
     ├── go/
     │   ├── default.nix    # Go builder: builds Go from source using pkgs.go as bootstrap
@@ -281,40 +279,18 @@ Builders opt in to patch support via `toolboxLib.resolvePatches`:
 
 `resolvePatches` returns `[]` when `versionData.patches` is absent, so it's safe to add unconditionally — existing versions without patches are unaffected.
 
-### Generating or refreshing a patch
+### Generating, refreshing, or rebasing patches
 
-Use `scripts/generate-patch` to create or refresh a vendored patch:
+Use the `/manage-patches` skill to manage the full patch lifecycle:
 
-```bash
-# Generate/refresh patch (fetches latest commit on fork branch)
-./scripts/generate-patch packages/beadwork 0.12.3
-
-# Regenerate without updating the pinned commit
-./scripts/generate-patch --no-update packages/beadwork 0.12.3
-
-# Target a specific patch entry (when a version has multiple patches)
-./scripts/generate-patch packages/beadwork 0.12.3 1
+```
+/manage-patches refresh beadwork          # refresh patch for default version
+/manage-patches refresh beadwork 0.12.3   # refresh patch for specific version
+/manage-patches rebase beadwork 0.13.0    # create patch for new upstream version
+/manage-patches init mypackage 1.0.0 fork-owner repo branch  # set up patches on a new package
 ```
 
-The script:
-1. Reads patch source metadata from `data.json`
-2. Resolves the upstream tag (tries `v`-prefixed, then bare)
-3. Fetches the diff from GitHub
-4. Verifies the patch applies cleanly to the upstream source
-5. Updates `source.commit` in `data.json` if it changed
-
-After running, remember to:
-1. `git add` the patch file — Nix flakes require tracked files
-2. Rebuild to discover new `vendorHash` if dependencies changed (set to `""`, build, use the hash from the error)
-
-### Rebasing a patch for a new upstream version
-
-When the upstream releases a new version (e.g. 1.1.0):
-
-1. Ensure the fork branch has been rebased onto the new upstream tag.
-2. Add a new version entry in `data.json` with a new patch file path (e.g. `patches/my-fork-1.1.0.patch`).
-3. Run `./scripts/generate-patch packages/mypackage 1.1.0`.
-4. The old version's patch file remains — older versions stay reproducible.
+The skill runs `generate-patch` (bundled in the skill directory), which fetches the diff from GitHub, verifies it applies cleanly, and updates the commit SHA in `data.json`. It then handles staging, building, and vendorHash discovery.
 
 ## Cross-Package Dependencies
 
