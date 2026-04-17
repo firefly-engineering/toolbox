@@ -1,0 +1,8 @@
+{
+  "_meta": { "default": "0.19.2", "releases": "https://github.com/dandavison/delta/releases" },
+  "0.19.2": {
+    "x86_64-linux": { "sha256": "sha256-5NnxV8LK7d2oPMOk9c6My+KodVYrmSKiXnjUALgS7NE=" },
+    "aarch64-linux": { "sha256": "sha256-392xNqPc2YMWr68yatpZKW80OO9KeVVXg2+gcFAL6JE=" },
+    "aarch64-darwin": { "sha256": "sha256-m+NmEqWhPp44bcSY+45Q3IfHLuQrY9sOoFsy+Zpyppo=" }
+  }
+}
