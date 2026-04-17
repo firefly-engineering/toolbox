@@ -1,0 +1,9 @@
+{
+  "_meta": { "default": "0.68.0", "releases": "https://github.com/Wilfred/difftastic/releases" },
+  "0.68.0": {
+    "x86_64-linux": { "sha256": "sha256-HSjFD0eUCar9CLI104uU8sBHkC6Q41SSoguu4UxohHo=" },
+    "aarch64-linux": { "sha256": "sha256-EbCFIyaHxmyOyGAw1nwJeuUV+7P1xABSoMoJJpKvG3c=" },
+    "x86_64-darwin": { "sha256": "sha256-qLY6AiWkHonBlEU17TQGEtKQoMUlMghpOupJFlYqo4w=" },
+    "aarch64-darwin": { "sha256": "sha256-Nd95BK8cGuyVcPCOGnglMB7jF/MTG2tO2/P22NIJzYw=" }
+  }
+}
