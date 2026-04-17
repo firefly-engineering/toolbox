@@ -62,11 +62,26 @@ Where `mkPrebuilt` and `mkFromSource` are defined as `let` bindings in the same 
 1. `mkdir packages/$0`
 2. Create `data.json` with `_meta` (default version, releases URL) and the version entry
 3. Create `default.nix` following the chosen pattern
-4. Compute hashes:
-   - Prebuilt: `nix-prefetch-url --type sha256 --unpack <url>` then `nix hash convert --hash-algo sha256 --to sri <hash>`
-   - **Important**: `nix-prefetch-url` hashes often differ from what nix uses at build time. Set the hash, attempt a build, and use the correct hash from the error if it mismatches.
-   - Source (Go): set `vendorHash` to `""`, build, use hash from error
-   - Source (Rust): set `cargoHash` to `""`, build, use hash from error
+4. Compute hashes — match the prefetch tool to the Nix fetcher:
+
+   **`fetchurl`** (prebuilt binaries — .tar.gz, .zip, single files):
+   `fetchurl` hashes the raw downloaded file. The builder's `unpackPhase` extracts it later.
+   ```bash
+   nix-prefetch-url --type sha256 <url>
+   nix hash convert --hash-algo sha256 --to sri <hash>
+   ```
+   Do NOT use `--unpack` — that hashes the extracted content, which is wrong for `fetchurl`.
+
+   **`fetchFromGitHub`** (source builds from GitHub):
+   `fetchFromGitHub` internally uses `fetchzip`, which unpacks and strips the top-level directory. The hash is of the unpacked content.
+   ```bash
+   nix-prefetch-url --type sha256 --unpack https://github.com/OWNER/REPO/archive/refs/tags/TAG.tar.gz
+   nix hash convert --hash-algo sha256 --to sri <hash>
+   ```
+   Here `--unpack` IS correct because `fetchFromGitHub` hashes unpacked content.
+
+   **`vendorHash` / `cargoHash`** (Go/Rust dependency hashes):
+   These can't be computed upfront. Set to `""`, attempt a build, and use the hash from the error output.
 5. `git add packages/$0` — Nix flakes require tracked files
 6. Build and verify: `nix build .#$0.default -o result-$0 && ./result-$0/bin/$0 --version`
 

@@ -47,17 +47,21 @@ Each package directory has a `data.json` with version entries and a `_meta` key:
 
 ### 1. Compute the source hash
 
-For a Go source tarball:
-```bash
-nix-prefetch-url --type sha256 --unpack https://go.dev/dl/go1.25.7.src.tar.gz
-# Convert to SRI: nix hash convert --hash-algo sha256 --to sri <hash>
-```
+**Match the prefetch tool to the Nix fetcher used in `default.nix`:**
 
-For a GitHub release:
+For `fetchFromGitHub` / `fetchzip` (hashes unpacked content — use `--unpack`):
 ```bash
 nix-prefetch-url --type sha256 --unpack https://github.com/OWNER/REPO/archive/refs/tags/vX.Y.Z.tar.gz
 nix hash convert --hash-algo sha256 --to sri <hash>
 ```
+
+For `fetchurl` (hashes the raw downloaded file — do NOT use `--unpack`):
+```bash
+nix-prefetch-url --type sha256 https://example.com/package-X.Y.Z.tar.gz
+nix hash convert --hash-algo sha256 --to sri <hash>
+```
+
+`fetchurl` downloads the file as-is; the builder's `unpackPhase` extracts it. `fetchFromGitHub` unpacks and strips the top-level directory before hashing. Using the wrong prefetch mode produces a hash mismatch at build time.
 
 ### 2. Add the version entry to `data.json`
 
