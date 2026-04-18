@@ -158,7 +158,7 @@
           pkgs = nixpkgs.legacyPackages.${system};
           reg = self.registry.${system};
           beadwork = reg.beadwork.versions.${reg.beadwork.default};
-          jj-toolchain = reg.jj-toolchain.versions.${reg.jj-toolchain.default};
+          vcs-toolchain = reg.vcs-toolchain.versions.${reg.vcs-toolchain.default};
         in
         {
           default = devenv.lib.mkShell {
@@ -171,7 +171,7 @@
                   in
                   pkgs.lib.mkIf (devenvRootFileContent != "") devenvRootFileContent;
 
-                packages = [ beadwork jj-toolchain ];
+                packages = [ beadwork vcs-toolchain ];
 
                 languages.nix.enable = true;
                 languages.python.enable = true;
