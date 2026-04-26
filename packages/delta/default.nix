@@ -45,6 +45,7 @@ let
 
       buildInputs = lib.optionals pkgs.stdenv.hostPlatform.isLinux [
         pkgs.stdenv.cc.cc.lib
+        pkgs.zlib
       ];
 
       installPhase = ''
