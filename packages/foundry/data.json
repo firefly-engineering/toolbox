@@ -1,5 +1,11 @@
 {
-  "_meta": { "default": "v1.5.1", "releases": "https://github.com/foundry-rs/foundry/releases" },
+  "_meta": { "default": "v1.7.1", "releases": "https://github.com/foundry-rs/foundry/releases" },
+  "v1.7.1": {
+    "x86_64-linux": { "sha256": "sha256-z35ojtDExIrf/KeItJYHbjEGC2esWv4eQ9u1SZwgyIs=" },
+    "aarch64-linux": { "sha256": "sha256-yP6PoJrjq6LIG1EMb52jqdRoApuVgOaQskWz8K6mh64=" },
+    "x86_64-darwin": { "sha256": "sha256-x/0fXJv3GNMLXLb8lOrGBQOd4qpQr8TFRaTd3B5BGss=" },
+    "aarch64-darwin": { "sha256": "sha256-6s3Gdxj6yFfK2eGcf2cp3YDecx0J34GFY5HQk8/KtUc=" }
+  },
   "v1.5.1": {
     "x86_64-linux": { "sha256": "sha256-c2QLAb2e0p/bSWUIUJk3H4zw277D4ghs9UVk78Tc/og=" },
     "aarch64-linux": { "sha256": "sha256-zM8ovfICKJ6Dep4h7SE7K4DcHoBuEvFxe8mKRDFcMx4=" },
