@@ -8,9 +8,15 @@
   "labels": [
     "beadwork-upgrade"
   ],
+  "comments": [
+    {
+      "text": "Duplicate of tb-un7 — done in c91b1eda.",
+      "timestamp": "2026-05-12T07:21:57Z"
+    }
+  ],
   "priority": 1,
   "status": "open",
   "title": "Upgrade bw to 0.13.0",
   "type": "task",
-  "updated_at": "2026-05-12T07:20:50Z"
+  "updated_at": "2026-05-12T07:21:57Z"
 }
