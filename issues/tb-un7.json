@@ -8,9 +8,15 @@
   "labels": [
     "beadwork-upgrade"
   ],
+  "comments": [
+    {
+      "text": "Done in c91b1eda — bumped to 0.13.0 with sigma/tui patch rebased on v0.13.0.",
+      "timestamp": "2026-05-12T07:20:49Z"
+    }
+  ],
   "priority": 1,
   "status": "open",
   "title": "Upgrade bw to 0.13.0",
   "type": "task",
-  "updated_at": "2026-05-12T06:51:29Z"
+  "updated_at": "2026-05-12T07:20:49Z"
 }
