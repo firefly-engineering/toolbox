@@ -1,5 +1,11 @@
 {
-  "_meta": { "default": "0.68.3", "releases": "https://github.com/github/gh-aw/releases" },
+  "_meta": { "default": "0.74.0", "releases": "https://github.com/github/gh-aw/releases" },
+  "0.74.0": {
+    "x86_64-linux": { "sha256": "sha256-IBw0l0Sil3Xq0qF7i95Txi11JEUjXyT8puJT/ke5CqE=" },
+    "aarch64-linux": { "sha256": "sha256-7HWTjDxJd0HOfh6LMJ4yIWJqX29Z3cT32ikpqe8ue6c=" },
+    "x86_64-darwin": { "sha256": "sha256-oX8ueuUC5GC93n7kizG7oDpVuL5KSAVCTKFFArxzDfM=" },
+    "aarch64-darwin": { "sha256": "sha256-eLaHoEjP3eoLkGZmT8Opv87fHBJCofdecDgxl3i5O2I=" }
+  },
   "0.68.3": {
     "x86_64-linux": { "sha256": "sha256-KfB3g2q7HFIKDn6KuW3vk/FI69ivdfQPwP5XEoc2vRM=" },
     "aarch64-linux": { "sha256": "sha256-2y1OVJaMUgVO3TcHR+qr57pA3xqYzVIq8ilkd32YWqM=" },
