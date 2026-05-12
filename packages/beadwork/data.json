@@ -1,10 +1,36 @@
 {
-  "_meta": { "default": "0.12.3", "releases": "https://github.com/jallum/beadwork/releases" },
+  "_meta": {
+    "default": "0.13.0",
+    "releases": "https://github.com/jallum/beadwork/releases"
+  },
+  "0.13.0": {
+    "sha256": "sha256-SuIQygsd/X8khQ1+S/af5haREBxsznFfcefLwsJRv/g=",
+    "vendorHash": "sha256-oWF8f6pUitM0zdfC6UonhU5BgDdh/fnljDohVVbyk+Q=",
+    "go": "1.26.1",
+    "subPackages": [
+      "cmd/bw",
+      "cmd/bw-tui"
+    ],
+    "patches": [
+      {
+        "file": "patches/sigma-tui-0.13.0.patch",
+        "source": {
+          "owner": "sigma",
+          "repo": "beadwork",
+          "branch": "tui",
+          "commit": "9ccad924a1a395a8abb0510d0420db666d444d4f"
+        }
+      }
+    ]
+  },
   "0.12.3": {
     "sha256": "sha256-gpG7LxgQmPEhum4MeCk0g0DaNOMNSss+OfOqkr4V110=",
     "vendorHash": "sha256-Xbtst+ZLTwkkpbiYNALXFJFExybTZztKumlNghj69iE=",
     "go": "1.26.1",
-    "subPackages": ["cmd/bw", "cmd/bw-tui"],
+    "subPackages": [
+      "cmd/bw",
+      "cmd/bw-tui"
+    ],
     "patches": [
       {
         "file": "patches/sigma-tui-0.12.3.patch",
