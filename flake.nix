@@ -159,6 +159,8 @@
           reg = self.registry.${system};
           beadwork = reg.beadwork.versions.${reg.beadwork.default};
           vcs-toolchain = reg.vcs-toolchain.versions.${reg.vcs-toolchain.default};
+          just = reg.just.versions.${reg.just.default};
+          nix = reg.nix.versions.${reg.nix.default};
         in
         {
           default = devenv.lib.mkShell {
@@ -171,7 +173,7 @@
                   in
                   pkgs.lib.mkIf (devenvRootFileContent != "") devenvRootFileContent;
 
-                packages = [ beadwork vcs-toolchain ];
+                packages = [ beadwork vcs-toolchain just nix ];
 
                 languages.nix.enable = true;
                 languages.python.enable = true;
