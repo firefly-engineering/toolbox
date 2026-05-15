@@ -3,12 +3,12 @@
   "blocked_by": [],
   "blocks": [],
   "created": "2026-03-29T21:24:43Z",
-  "description": "Patch bump from 24.14.0 to 24.14.1",
+  "description": "nodejs LTS 24.14.0 → 24.15.0 (was originally 24.14.1; upstream LTS has moved further)",
   "id": "tb-lfm",
   "labels": [],
   "priority": 2,
   "status": "open",
-  "title": "Bump nodejs to 24.14.1",
+  "title": "Bump nodejs LTS to 24.15.0",
   "type": "task",
-  "updated_at": "2026-03-29T21:24:43Z"
+  "updated_at": "2026-05-15T07:33:15Z"
 }
