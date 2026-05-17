@@ -1,0 +1,22 @@
+{
+  "_meta": {
+    "default": "0.4.1",
+    "releases": "https://github.com/laulauland/jj-hunk/releases"
+  },
+  "0.4.1": {
+    "sha256": "sha256-lFuYTg6TW/Lsz4wwaaWFi37F2aGKpLwQgq40VTdDUKE=",
+    "cargoHash": "sha256-I+vtsCPdx/PZ3QhIFjM15WGao//oVeBm3QLJjV2SmbU=",
+    "rust": "1.95.0",
+    "patches": [
+      {
+        "file": "patches/sigma-dev-0.4.1.patch",
+        "source": {
+          "owner": "sigma",
+          "repo": "jj-hunk",
+          "branch": "dev",
+          "commit": "68441660bcf40968b59d0395eb78cdef31492e19"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,4938 @@
+diff --git a/.claude/memory/project_hunkset_language.md b/.claude/memory/project_hunkset_language.md
+new file mode 100644
+index 0000000..d8e39a0
+--- /dev/null
++++ b/.claude/memory/project_hunkset_language.md
+@@ -0,0 +1,22 @@
++---
++name: Hunkset query language
++description: Design decisions for the hunkset algebraic query language for selecting hunks, modeled after jj filesets/revsets
++type: project
++---
++
++Hunkset is an algebraic query language for selecting hunks, introduced as an alternative to JSON/YAML specs.
++
++**Key design decisions:**
++- No `index()` function — indices are unstable and defeat the purpose of a query language
++- `id()` is the only direct-addressing mechanism (via stable SHA256 hunk IDs)
++- `file("x") & type(insert)` uses intersection naturally since hunks belong to exactly one file
++- Tree-sitter is planned for `function()` and `scope()` semantic predicates — not feature-gated, standard dependency
++- Unsupported languages fall back to empty sets with a warning
++- Auto-detected vs JSON/YAML by checking if input starts with an identifier, `~`, or `(`
++- Pattern prefixes follow jj conventions: `exact:`, `substring:`, `glob:`, `regex:`
++
++**Why:** User wants human-friendly hunk selection that aligns with jj's fileset/revset design philosophy, rather than requiring JSON objects.
++
++**How to apply:** When extending the hunkset language, follow jj's algebraic set patterns (union `|`, intersection `&`, difference `~`, negation `~x`). Keep function signatures consistent with filesets.
++
++**Next steps:** Add tree-sitter integration (src/semantic.rs) to populate `enclosing_function` and `enclosing_scope` metadata on enriched hunks.
+diff --git a/Cargo.lock b/Cargo.lock
+index 2cea651..347a135 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -2,6 +2,15 @@
+ # It is not intended for manual editing.
+ version = 4
+ 
++[[package]]
++name = "aho-corasick"
++version = "1.1.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ddd31a130427c27518df266943a5308ed92d4b226cc639f5a8f1002816174301"
++dependencies = [
++ "memchr",
++]
++
+ [[package]]
+ name = "anstream"
+ version = "0.6.21"
+@@ -67,6 +76,16 @@ dependencies = [
+  "generic-array",
+ ]
+ 
++[[package]]
++name = "cc"
++version = "1.2.60"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "43c5703da9466b66a946814e1adf53ea2c90f10063b86290cc9eb67ce3478a20"
++dependencies = [
++ "find-msvc-tools",
++ "shlex",
++]
++
+ [[package]]
+ name = "cfg-if"
+ version = "1.0.4"
+@@ -154,6 +173,12 @@ version = "1.0.2"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
+ 
++[[package]]
++name = "find-msvc-tools"
++version = "0.1.9"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "5baebc0774151f905a1a2cc41989300b1e6fbb29aff0ceffa1064fdd3088d582"
++
+ [[package]]
+ name = "generic-array"
+ version = "0.14.7"
+@@ -204,11 +229,34 @@ version = "0.4.1"
+ dependencies = [
+  "anyhow",
+  "clap",
++ "regex",
+  "serde",
+  "serde_json",
+  "serde_yaml",
+  "sha2",
+  "similar",
++ "thiserror",
++ "tree-sitter",
++ "tree-sitter-bash",
++ "tree-sitter-c",
++ "tree-sitter-c-sharp",
++ "tree-sitter-cpp",
++ "tree-sitter-elixir",
++ "tree-sitter-erlang",
++ "tree-sitter-go",
++ "tree-sitter-haskell",
++ "tree-sitter-java",
++ "tree-sitter-javascript",
++ "tree-sitter-lua",
++ "tree-sitter-ocaml",
++ "tree-sitter-php",
++ "tree-sitter-python",
++ "tree-sitter-ruby",
++ "tree-sitter-rust",
++ "tree-sitter-scala",
++ "tree-sitter-swift",
++ "tree-sitter-typescript",
++ "tree-sitter-zig",
+  "walkdir",
+ ]
+ 
+@@ -248,6 +296,35 @@ dependencies = [
+  "proc-macro2",
+ ]
+ 
++[[package]]
++name = "regex"
++version = "1.12.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "e10754a14b9137dd7b1e3e5b0493cc9171fdd105e0ab477f51b72e7f3ac0e276"
++dependencies = [
++ "aho-corasick",
++ "memchr",
++ "regex-automata",
++ "regex-syntax",
++]
++
++[[package]]
++name = "regex-automata"
++version = "0.4.14"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "6e1dd4122fc1595e8162618945476892eefca7b88c52820e74af6262213cae8f"
++dependencies = [
++ "aho-corasick",
++ "memchr",
++ "regex-syntax",
++]
++
++[[package]]
++name = "regex-syntax"
++version = "0.8.10"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "dc897dd8d9e8bd1ed8cdad82b5966c3e0ecae09fb1907d58efaa013543185d0a"
++
+ [[package]]
+ name = "ryu"
+ version = "1.0.22"
+@@ -299,6 +376,7 @@ version = "1.0.149"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "83fc039473c5595ace860d8c4fafa220ff474b3fc6bfdb4293327f1a37e94d86"
+ dependencies = [
++ "indexmap",
+  "itoa",
+  "memchr",
+  "serde",
+@@ -330,12 +408,24 @@ dependencies = [
+  "digest",
+ ]
+ 
++[[package]]
++name = "shlex"
++version = "1.3.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "0fda2ff0d084019ba4d7c6f371c95d8fd75ce3524c3cb8fb653a3023f6323e64"
++
+ [[package]]
+ name = "similar"
+ version = "2.7.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "bbbb5d9659141646ae647b42fe094daf6c6192d1620870b449d9557f748b2daa"
+ 
++[[package]]
++name = "streaming-iterator"
++version = "0.1.9"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "2b2231b7c3057d5e4ad0156fb3dc807d900806020c5ffa3ee6ff2c8c76fb8520"
++
+ [[package]]
+ name = "strsim"
+ version = "0.11.1"
+@@ -353,6 +443,246 @@ dependencies = [
+  "unicode-ident",
+ ]
+ 
++[[package]]
++name = "thiserror"
++version = "2.0.18"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "4288b5bcbc7920c07a1149a35cf9590a2aa808e0bc1eafaade0b80947865fbc4"
++dependencies = [
++ "thiserror-impl",
++]
++
++[[package]]
++name = "thiserror-impl"
++version = "2.0.18"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ebc4ee7f67670e9b64d05fa4253e753e016c6c95ff35b89b7941d6b856dec1d5"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn",
++]
++
++[[package]]
++name = "tree-sitter"
++version = "0.25.10"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "78f873475d258561b06f1c595d93308a7ed124d9977cb26b148c2084a4a3cc87"
++dependencies = [
++ "cc",
++ "regex",
++ "regex-syntax",
++ "serde_json",
++ "streaming-iterator",
++ "tree-sitter-language",
++]
++
++[[package]]
++name = "tree-sitter-bash"
++version = "0.25.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "9e5ec769279cc91b561d3df0d8a5deb26b0ad40d183127f409494d6d8fc53062"
++dependencies = [
++ "cc",
++ "tree-sitter-language",
++]
++
++[[package]]
++name = "tree-sitter-c"
++version = "0.24.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "a9b2eb57a55fed6b00812912e730b7a275cf4fe98bfd6a5d76263d4438371728"
++dependencies = [
++ "cc",
++ "tree-sitter-language",
++]
++
++[[package]]
++name = "tree-sitter-c-sharp"
++version = "0.23.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "c1aac67f1ad71de1d6d39708d34811081c26dfa495658de6c14c34200849357c"
++dependencies = [
++ "cc",
++ "tree-sitter-language",
++]
++
++[[package]]
++name = "tree-sitter-cpp"
++version = "0.23.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "df2196ea9d47b4ab4a31b9297eaa5a5d19a0b121dceb9f118f6790ad0ab94743"
++dependencies = [
++ "cc",
++ "tree-sitter-language",
++]
++
++[[package]]
++name = "tree-sitter-elixir"
++version = "0.3.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "66dd064a762ed95bfc29857fa3cb7403bb1e5cb88112de0f6341b7e47284ba40"
++dependencies = [
++ "cc",
++ "tree-sitter-language",
++]
++
++[[package]]
++name = "tree-sitter-erlang"
++version = "0.15.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "f2091cce4eda19c03d77928c608ac6617445a6a25691dde1e93ac0102467a6be"
++dependencies = [
++ "cc",
++ "tree-sitter-language",
++]
++
++[[package]]
++name = "tree-sitter-go"
++version = "0.25.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "c8560a4d2f835cc0d4d2c2e03cbd0dde2f6114b43bc491164238d333e28b16ea"
++dependencies = [
++ "cc",
++ "tree-sitter-language",
++]
++
++[[package]]
++name = "tree-sitter-haskell"
++version = "0.23.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "977c51e504548cba13fc27cb5a2edab2124cf6716a1934915d07ab99523b05a4"
++dependencies = [
++ "cc",
++ "tree-sitter-language",
++]
++
++[[package]]
++name = "tree-sitter-java"
++version = "0.23.5"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "0aa6cbcdc8c679b214e616fd3300da67da0e492e066df01bcf5a5921a71e90d6"
++dependencies = [
++ "cc",
++ "tree-sitter-language",
++]
++
++[[package]]
++name = "tree-sitter-javascript"
++version = "0.25.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "68204f2abc0627a90bdf06e605f5c470aa26fdcb2081ea553a04bdad756693f5"
++dependencies = [
++ "cc",
++ "tree-sitter-language",
++]
++
++[[package]]
++name = "tree-sitter-language"
++version = "0.1.7"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "009994f150cc0cd50ff54917d5bc8bffe8cad10ca10d81c34da2ec421ae61782"
++
++[[package]]
++name = "tree-sitter-lua"
++version = "0.5.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "8daaf5f4235188a58603c39760d5fa5d4b920d36a299c934adddae757f32a10c"
++dependencies = [
++ "cc",
++ "tree-sitter-language",
++]
++
++[[package]]
++name = "tree-sitter-ocaml"
++version = "0.24.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "7d19db582b3855f56b5f9ec484170fbfb9ee60b938ec7720d76d2ee788e8b640"
++dependencies = [
++ "cc",
++ "tree-sitter-language",
++]
++
++[[package]]
++name = "tree-sitter-php"
++version = "0.24.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "0d8c17c3ab69052c5eeaa7ff5cd972dd1bc25d1b97ee779fec391ad3b5df5592"
++dependencies = [
++ "cc",
++ "tree-sitter-language",
++]
++
++[[package]]
++name = "tree-sitter-python"
++version = "0.25.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "6bf85fd39652e740bf60f46f4cda9492c3a9ad75880575bf14960f775cb74a1c"
++dependencies = [
++ "cc",
++ "tree-sitter-language",
++]
++
++[[package]]
++name = "tree-sitter-ruby"
++version = "0.23.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "be0484ea4ef6bb9c575b4fdabde7e31340a8d2dbc7d52b321ac83da703249f95"
++dependencies = [
++ "cc",
++ "tree-sitter-language",
++]
++
++[[package]]
++name = "tree-sitter-rust"
++version = "0.24.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "439e577dbe07423ec2582ac62c7531120dbfccfa6e5f92406f93dd271a120e45"
++dependencies = [
++ "cc",
++ "tree-sitter-language",
++]
++
++[[package]]
++name = "tree-sitter-scala"
++version = "0.26.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "de5a4a7ff23a55474ce6a741d52aaeca7a82fe9421bb982b86e98c6ac8629397"
++dependencies = [
++ "cc",
++ "tree-sitter-language",
++]
++
++[[package]]
++name = "tree-sitter-swift"
++version = "0.7.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "4ef216011c3e3df4fa864736f347cb8d509b1066cf0c8549fb1fd81ac9832e59"
++dependencies = [
++ "cc",
++ "tree-sitter-language",
++]
++
++[[package]]
++name = "tree-sitter-typescript"
++version = "0.23.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "6c5f76ed8d947a75cc446d5fccd8b602ebf0cde64ccf2ffa434d873d7a575eff"
++dependencies = [
++ "cc",
++ "tree-sitter-language",
++]
++
++[[package]]
++name = "tree-sitter-zig"
++version = "1.1.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ab11fc124851b0db4dd5e55983bbd9631192e93238389dcd44521715e5d53e28"
++dependencies = [
++ "cc",
++ "tree-sitter-language",
++]
++
+ [[package]]
+ name = "typenum"
+ version = "1.19.0"
+diff --git a/Cargo.toml b/Cargo.toml
+index d80711b..d3056dd 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -6,6 +6,32 @@ description = "Programmatic hunk selection for jj"
+ license = "MIT"
+ repository = "https://github.com/laulauland/jj-hunk"
+ 
++[features]
++default = ["semantic"]
++semantic = [
++    "dep:tree-sitter",
++    "dep:tree-sitter-rust",
++    "dep:tree-sitter-python",
++    "dep:tree-sitter-javascript",
++    "dep:tree-sitter-typescript",
++    "dep:tree-sitter-go",
++    "dep:tree-sitter-c",
++    "dep:tree-sitter-cpp",
++    "dep:tree-sitter-java",
++    "dep:tree-sitter-ruby",
++    "dep:tree-sitter-c-sharp",
++    "dep:tree-sitter-scala",
++    "dep:tree-sitter-swift",
++    "dep:tree-sitter-php",
++    "dep:tree-sitter-bash",
++    "dep:tree-sitter-elixir",
++    "dep:tree-sitter-erlang",
++    "dep:tree-sitter-haskell",
++    "dep:tree-sitter-ocaml",
++    "dep:tree-sitter-zig",
++    "dep:tree-sitter-lua",
++]
++
+ [dependencies]
+ clap = { version = "4", features = ["derive"] }
+ serde = { version = "1", features = ["derive"] }
+@@ -15,3 +41,26 @@ anyhow = "1"
+ walkdir = "2"
+ serde_yaml = "0.9"
+ sha2 = "0.10"
++regex = "1"
++thiserror = "2"
++tree-sitter = { version = "0.25", optional = true }
++tree-sitter-rust = { version = "0.24", optional = true }
++tree-sitter-python = { version = "0.25", optional = true }
++tree-sitter-javascript = { version = "0.25", optional = true }
++tree-sitter-typescript = { version = "0.23", optional = true }
++tree-sitter-go = { version = "0.25", optional = true }
++tree-sitter-c = { version = "0.24", optional = true }
++tree-sitter-cpp = { version = "0.23", optional = true }
++tree-sitter-java = { version = "0.23", optional = true }
++tree-sitter-ruby = { version = "0.23", optional = true }
++tree-sitter-c-sharp = { version = "0.23", optional = true }
++tree-sitter-scala = { version = "0.26", optional = true }
++tree-sitter-swift = { version = "0.7", optional = true }
++tree-sitter-php = { version = "0.24", optional = true }
++tree-sitter-bash = { version = "0.25", optional = true }
++tree-sitter-elixir = { version = "0.3", optional = true }
++tree-sitter-erlang = { version = "0.15", optional = true }
++tree-sitter-haskell = { version = "0.23", optional = true }
++tree-sitter-ocaml = { version = "0.24", optional = true }
++tree-sitter-zig = { version = "1.1", optional = true }
++tree-sitter-lua = { version = "0.5", optional = true }
+diff --git a/README.md b/README.md
+index 6d283a7..37d2a74 100644
+--- a/README.md
++++ b/README.md
+@@ -37,7 +37,10 @@ jj-hunk list --files
+ # Emit a spec template using stable ids
+ jj-hunk list --spec-template --format yaml
+ 
+-# Split changes: hunks 0,1 of foo.rs → first commit, rest → second
++# Split using hunkset query: all insertions in foo.rs
++jj-hunk split 'type(insert) & file("src/foo.rs")' "new code in foo"
++
++# Split using JSON spec: hunks 0,1 of foo.rs → first commit, rest → second
+ jj-hunk split '{"files": {"src/foo.rs": {"hunks": [0, 1]}}, "default": "reset"}' "first commit"
+ 
+ # Split a specific revision (not just working copy)
+@@ -76,12 +79,11 @@ List options:
+ - `--include <glob>` / `--exclude <glob>` — filter paths (repeatable, supports `**`, `*`, `?`)
+ - `--group none|directory|extension|status` — group output
+ - `--binary skip|mark|include` — binary handling (default: mark)
+-- `--max-bytes <n>` / `--max-lines <n>` — truncate before diffing
+-- `--spec <json|yaml>` / `--spec-file <path>` — preview using a spec filter
++- `--spec <hunkset|json|yaml>` / `--spec-file <path>` — filter output with a hunkset expression or JSON/YAML spec
+ - `--files` — list files with hunk counts only
+ - `--spec-template` — emit a spec template (JSON/YAML only)
+ 
+-`<spec>` may be an inline JSON/YAML string or `-` to read from stdin. Use `--spec-file <path>` to read a JSON/YAML file (omit `<spec>` when using `--spec-file`).
++`<spec>` may be a hunkset expression (e.g. `'type(insert) & file("src/*.rs")'`), an inline JSON/YAML string, or `-` to read from stdin. The format is auto-detected. Use `--spec-file <path>` to read a JSON/YAML file (omit `<spec>` when using `--spec-file`).
+ 
+ ## Spec Format
+ 
+@@ -107,6 +109,129 @@ Specs can be **JSON or YAML**. Inline JSON is convenient for short specs; use `-
+ 
+ `ids` and `hunks` are merged if both are provided. Use `jj-hunk list --spec-template` to generate an id-based starting spec.
+ 
++## Hunkset Query Language
++
++As an alternative to JSON/YAML specs, jj-hunk supports a **hunkset** query language inspired by jj's [filesets](https://docs.jj-vcs.dev/latest/filesets/) and [revsets](https://docs.jj-vcs.dev/latest/revsets/). Hunkset expressions are auto-detected (anything that doesn't start with `{` or `[`).
++
++```bash
++# Split: all insertions in Rust files
++jj-hunk split 'type(insert) & glob("src/**/*.rs")' "add new code"
++
++# List only hunks inside a specific function
++jj-hunk list --spec 'function("parse_spec")'
++
++# Verify a selection covers all changes in a scope
++jj-hunk list --spec 'function("apply") ~ id("hunk-7c3d...")'
++# Empty output = the id covers everything in that function
++```
++
++### Operators
++
++Hunkset expressions compose using set algebra, from lowest to highest precedence:
++
++| Operator | Meaning | Example |
++|----------|---------|---------|
++| `x \| y` | Union | `type(insert) \| type(delete)` |
++| `x & y` | Intersection | `type(insert) & glob("src/**")` |
++| `x ~ y` | Difference (x but not y) | `all() ~ type(delete)` |
++| `~x` | Negation (complement) | `~type(delete)` |
++| `(x)` | Grouping | `(type(insert) \| type(replace)) & file("x")` |
++
++### Functions
++
++#### File predicates
++
++| Function | Description |
++|----------|-------------|
++| `file("path")` | Hunks in file matching path (exact match) |
++| `glob("pattern")` | Hunks in files matching glob pattern |
++| `extension("rs")` | Hunks in files with given extension |
++| `status(modified)` | Hunks in files with given status (modified, added, removed, renamed, copied) |
++
++#### Hunk type
++
++| Function | Description |
++|----------|-------------|
++| `type(insert)` | Insertions only |
++| `type(delete)` | Deletions only |
++| `type(replace)` | Replacements only |
++
++#### Line ranges
++
++| Function | Description |
++|----------|-------------|
++| `lines(10..20)` | Hunks touching lines 10-20 (before or after) |
++| `before_line(10..20)` | Hunks in the "before" line range |
++| `after_line(10..20)` | Hunks in the "after" line range |
++
++#### Content matching
++
++| Function | Description |
++|----------|-------------|
++| `content("text")` | Hunks where added or removed text contains "text" |
++| `added("text")` | Hunks where added text contains "text" |
++| `removed("text")` | Hunks where removed text contains "text" |
++
++#### Identity
++
++| Function | Description |
++|----------|-------------|
++| `id("hunk-...")` | Select by stable hunk ID (from `jj-hunk list`) |
++
++#### Semantic (tree-sitter powered)
++
++These predicates use tree-sitter to parse source files and extract structural information. Supported languages: Rust, Python, JavaScript, TypeScript, Go, C, C++, Java, Ruby, C#, Scala, Swift, PHP, Bash, Elixir, Erlang, Haskell, OCaml, Zig, Lua.
++
++| Function | Description |
++|----------|-------------|
++| `function("name")` | Hunks inside a function/method with given name |
++| `scope("name")` | Hunks inside a scope (class, struct, impl, module, etc.) |
++| `annotation("test")` | Hunks inside functions/scopes with matching annotation/decorator |
++| `decorator("route")` | Alias for `annotation()` |
++| `doc()` | Hunks that are doc comments |
++| `import()` | Hunks that are import/use/require statements |
++| `toplevel()` | Hunks not inside any function or scope |
++| `depth(0)` | Hunks at nesting depth 0 (top-level); accepts ranges like `depth(0..1)` |
++| `all()` | All hunks |
++| `none()` | No hunks |
++
++For unsupported languages, `function()`, `scope()`, and other semantic predicates return empty sets with a warning.
++
++### Pattern syntax
++
++String arguments support pattern prefixes, following jj conventions:
++
++| Prefix | Meaning | Example |
++|--------|---------|---------|
++| (none) | Substring for content, exact for identifiers | `added("TODO")` |
++| `exact:"text"` | Exact match | `file(exact:"src/lib.rs")` |
++| `substring:"text"` | Substring match | `function(substring:"test")` |
++| `glob:"pattern"` | Glob pattern | `file(glob:"src/**/*.rs")` |
++| `regex:"pattern"` | Regular expression | `added(regex:"fn\\s+\\w+")` |
++
++### Examples
++
++```bash
++# Separate test changes from implementation
++jj-hunk split 'annotation("test")' "test: add unit tests"
++jj-hunk split 'all() ~ annotation("test")' "feat: implementation"
++
++# Commit only import changes
++jj-hunk split 'import()' "chore: update imports"
++
++# Commit doc changes separately
++jj-hunk split 'doc()' "docs: update documentation"
++
++# All changes in a specific class
++jj-hunk split 'scope("UserService")' "refactor: update UserService"
++
++# Top-level changes only (constants, types, not inside functions)
++jj-hunk split 'toplevel() ~ import()' "refactor: update type definitions"
++
++# Hunks adding TODO/FIXME comments
++jj-hunk list --spec 'added(regex:"(TODO|FIXME)")'
++```
++
+ ## Example Output
+ 
+ ```bash
+@@ -125,7 +250,9 @@ $ jj-hunk list --format json
+           "added": "new_fn()\n",
+           "before": {"start": 10, "lines": 1},
+           "after": {"start": 10, "lines": 1},
+-          "context": {"pre": "// prev\n", "post": "// next\n"}
++          "context": {"pre": "// prev\n", "post": "// next\n"},
++          "enclosing_function": "my_func",
++          "enclosing_scope": "MyStruct"
+         }
+       ]
+     },
+@@ -150,6 +277,7 @@ $ jj-hunk list --format json
+ 
+ - `files` is a list of file entries. Each entry includes `status`, optional `rename`, and `hunks`.
+ - Each hunk includes a stable `id` (sha256), `index`, line ranges (`before`/`after`), and optional `context`.
++- When tree-sitter can parse the file, hunks include `enclosing_function`, `enclosing_scope`, `annotations`, `is_doc_comment`, `is_import`, `is_toplevel`, and `nesting_depth` (all omitted when empty/false/zero).
+ - When grouped (`--group`), output uses `groups: [{name, files}]` instead of `files`.
+ 
+ ### List Modes
+@@ -172,7 +300,7 @@ jj-hunk list --include 'src/**' --exclude '**/*.test.rs' --group directory
+ 
+ jj-hunk integrates with jj's `--tool` mechanism:
+ 
+-1. You run `jj-hunk split/commit/squash` with a JSON/YAML spec
++1. You run `jj-hunk split/commit/squash` with a hunkset expression or JSON/YAML spec
+ 2. jj-hunk writes the spec to a temp file and sets `JJ_HUNK_SELECTION` env var
+ 3. jj-hunk passes temporary `merge-tools.jj-hunk` config to jj when needed
+ 4. jj invokes `jj-hunk select $left $right` as the diff tool
+diff --git a/SKILL.md b/SKILL.md
+index d9075de..e59d35b 100644
+--- a/SKILL.md
++++ b/SKILL.md
+@@ -1,17 +1,18 @@
+ ---
+ name: jj-hunk
+-description: Programmatic hunk selection for jj (Jujutsu). Use when splitting commits, making partial commits, or selectively squashing changes without interactive UI.
++description: Programmatic hunk selection for jj (Jujutsu). Use when splitting commits, making partial commits, selectively squashing changes, or coordinating concurrent agent work into clean history.
+ ---
+ 
+ # jj-hunk: Programmatic Hunk Selection
+ 
+-Use `jj-hunk` for non-interactive hunk selection in jj. Essential for AI agents that need to create clean, logical commits from mixed changes.
++Use `jj-hunk` for non-interactive hunk selection in jj. Essential for AI agents that need to create clean, logical commits from mixed changes — especially when multiple agents work concurrently.
+ 
+ ## When to Use This Skill
+ 
+ - Splitting a commit into multiple logical commits
+ - Committing only specific hunks (partial commit)
+ - Squashing only certain changes into parent
++- Coordinating concurrent agent work into clean, independent branches
+ - Any hunk selection that would normally require `jj split -i` or `jj squash -i`
+ 
+ ## Setup
+@@ -27,319 +28,259 @@ program = "jj-hunk"
+ edit-args = ["select", "$left", "$right"]
+ ```
+ 
+-## Core Workflow
++## Hunkset Query Language
+ 
+-### 1. List Hunks
++jj-hunk supports an algebraic query language (hunkset) for selecting hunks, inspired by jj's filesets and revsets. This is the recommended way to select hunks — it's more readable, composable, and semantically aware than JSON specs.
+ 
+-```bash
+-jj-hunk list
++### Operators
+ 
+-# List hunks for a specific revision (diff vs parent)
+-# Note: revset must resolve to a single revision
+-jj-hunk list --rev @
++| Operator | Meaning | Example |
++|----------|---------|---------|
++| `x \| y` | Union | `type(insert) \| type(delete)` |
++| `x & y` | Intersection | `type(insert) & glob("src/**")` |
++| `x ~ y` | Difference | `all() ~ type(delete)` |
++| `~x` | Negation | `~type(delete)` |
++| `(x)` | Grouping | `(type(insert) \| type(replace)) & file("x")` |
+ 
+-# Emit YAML instead of JSON
+-jj-hunk list --format yaml
+-```
++### Functions
+ 
+-Options:
+-- `--rev <revset>` — diff the revision against its parent (revset must resolve to a single revision)
+-- `--format json|yaml|text` — output format (default: json)
+-- `--include <glob>` / `--exclude <glob>` — filter paths (repeatable)
+-- `--group none|directory|extension|status` — group output
+-- `--binary skip|mark|include` — binary handling (default: mark)
+-- `--max-bytes <n>` / `--max-lines <n>` — truncate before diffing
+-- `--spec <json|yaml>` / `--spec-file <path>` — preview using a spec filter
+-- `--files` — list files with hunk counts only
+-- `--spec-template` — emit a spec template (JSON/YAML only)
+-
+-Output (JSON):
+-```json
+-{
+-  "files": [
+-    {
+-      "path": "src/foo.rs",
+-      "status": "modified",
+-      "hunks": [
+-        {
+-          "id": "hunk-7c3d...",
+-          "index": 0,
+-          "type": "replace",
+-          "removed": "old\n",
+-          "added": "new\n",
+-          "before": {"start": 1, "lines": 1},
+-          "after": {"start": 1, "lines": 1}
+-        },
+-        {
+-          "id": "hunk-2f91...",
+-          "index": 1,
+-          "type": "insert",
+-          "removed": "",
+-          "added": "// added\n",
+-          "before": {"start": 2, "lines": 0},
+-          "after": {"start": 2, "lines": 1}
+-        }
+-      ]
+-    },
+-    {
+-      "path": "src/bar.rs",
+-      "status": "modified",
+-      "hunks": [
+-        {
+-          "id": "hunk-aa12...",
+-          "index": 0,
+-          "type": "delete",
+-          "removed": "removed\n",
+-          "added": "",
+-          "before": {"start": 3, "lines": 1},
+-          "after": {"start": 3, "lines": 0}
+-        }
+-      ]
+-    }
+-  ]
+-}
+-```
++**File predicates:**
+ 
+-Each hunk includes a stable `id` (sha256) alongside the 0-based `index`.
++| Function | Description |
++|----------|-------------|
++| `file("path")` | Exact file path match |
++| `glob("src/**/*.rs")` | Glob pattern on file path |
++| `extension("rs")` | File extension |
++| `status(modified)` | File status (modified, added, removed, renamed, copied) |
+ 
+-### 2. Build a Spec
++**Hunk type:**
+ 
+-Select hunks by index or `id` (emitted as `hunk-<sha256>`), or use file-level actions. Specs can be JSON or YAML:
+-
+-```json
+-{
+-  "files": {
+-    "src/foo.rs": {"hunks": [0, "hunk-7c3d..."]},
+-    "src/bar.rs": {"ids": ["hunk-aa12..."]},
+-    "src/baz.rs": {"action": "keep"},
+-    "src/qux.rs": {"action": "reset"}
+-  },
+-  "default": "reset"
+-}
+-```
++| Function | Description |
++|----------|-------------|
++| `type(insert)` | Insertions only |
++| `type(delete)` | Deletions only |
++| `type(replace)` | Replacements only |
+ 
+-| Spec | Effect |
+-|------|--------|
+-| `{"hunks": [0, 2]}` | Include only hunks 0 and 2 |
+-| `{"hunks": ["hunk-..."]}` | Include hunks by id string |
+-| `{"ids": ["hunk-..."]}` | Include hunks by stable id |
+-| `{"action": "keep"}` | Include all changes |
+-| `{"action": "reset"}` | Discard all changes |
+-| `"default": "reset"` | Unlisted files are discarded |
+-| `"default": "keep"` | Unlisted files are kept |
++**Content matching:**
+ 
+-`ids` and `hunks` are merged if both are provided.
++| Function | Description |
++|----------|-------------|
++| `content("text")` | Added or removed text contains "text" |
++| `added("text")` | Added text contains "text" |
++| `removed("text")` | Removed text contains "text" |
+ 
+-### 3. Execute
++**Line ranges:**
+ 
+-Specs can be provided inline, read from stdin with `-`, or loaded via `--spec-file` (omit `<spec>` when using `--spec-file`).
++| Function | Description |
++|----------|-------------|
++| `lines(10..20)` | Hunks touching lines 10-20 |
+ 
+-```bash
+-# Split: selected hunks → first commit, rest → second commit
+-jj-hunk split '<spec>' "commit message"
++**Identity (stable across concurrent changes):**
+ 
+-# Read spec from a file (JSON or YAML)
+-jj-hunk split --spec-file spec.yaml "commit message"
++| Function | Description |
++|----------|-------------|
++| `id("hunk-7c3d...")` | Select by stable hunk ID (supports prefix matching) |
++| `all()` / `none()` | Everything / nothing |
+ 
+-# Commit: selected hunks committed, rest stays in working copy
+-jj-hunk commit '<spec>' "commit message"
++**Semantic (tree-sitter powered, requires `semantic` feature):**
+ 
+-# Read spec from stdin
+-cat spec.json | jj-hunk commit - "commit message"
++| Function | Description |
++|----------|-------------|
++| `function("name")` | Hunks inside a function/method |
++| `scope("ClassName")` | Hunks inside a class/struct/impl/module |
++| `annotation("test")` | Hunks in annotated/decorated functions |
++| `doc()` | Hunks that are doc comments |
++| `import()` | Hunks that are import/use/require statements |
++| `toplevel()` | Hunks not inside any function or scope |
++| `depth(0..1)` | Hunks at nesting depth 0 or 1 |
+ 
+-# Squash: selected hunks squashed into parent
+-jj-hunk squash '<spec>'
+-```
++**Pattern prefixes** (on string arguments):
++- Bare identifier: exact match — `type(insert)`
++- Quoted string: substring match — `added("TODO")`
++- `exact:"text"`, `substring:"text"`, `glob:"pattern"`, `regex:"pattern"`
+ 
+-## Examples
++### Examples
+ 
+-### Split Mixed Changes into Logical Commits
++```bash
++# All insertions in Rust files
++jj-hunk split 'type(insert) & glob("src/**/*.rs")' "add new code"
+ 
+-You have refactoring and a new feature mixed together:
++# Everything inside UserService class
++jj-hunk split 'scope("UserService")' "refactor: update UserService"
+ 
+-```bash
+-# 1. See what hunks exist
+-jj-hunk list
++# All test functions
++jj-hunk split 'annotation("test")' "test: add unit tests"
+ 
+-# 2. Split out the refactoring first
+-jj-hunk split '{"files": {"src/lib.rs": {"hunks": [0, 1]}}, "default": "reset"}' \
+-  "refactor: extract helper function"
++# Imports only
++jj-hunk split 'import()' "chore: update imports"
+ 
+-# 3. Remaining changes become second commit
+-jj describe -m "feat: add new feature"
++# Everything except docs
++jj-hunk split 'all() ~ doc()' "feat: implementation"
+ ```
+ 
+-### Commit Only Part of Your Changes
+-
+-Keep experimental code in working copy while committing the fix:
++## Output Formats
+ 
+ ```bash
+-jj-hunk commit '{"files": {"src/bug.rs": {"action": "keep"}}, "default": "reset"}' \
+-  "fix: handle null case"
++jj-hunk list --format json    # Structured data (default)
++jj-hunk list --format yaml    # YAML variant
++jj-hunk list --format text    # Human-readable summary with semantic context
++jj-hunk list --format diff    # Unified diff with hunk IDs and semantic context
+ ```
+ 
+-### Squash Specific Files into Parent
++The `diff` format produces a unified patch annotated with hunk IDs and enclosing function/scope names:
+ 
+-```bash
+-jj-hunk squash '{"files": {"src/tests.rs": {"action": "keep"}}, "default": "reset"}'
++```diff
++--- a/src/commands.rs
+++++ b/src/commands.rs
++@@ -211,1 +211,2 @@ list [hunk-162b7798da21...]
++-        if !include.is_empty() && !matches_any(&include, &fh.path) {
+++        let paths_to_check = fh.all_paths();
+++        if !include.is_empty() && !paths_to_check.iter().any(|p| matches_any(&include, p)) {
+ ```
+ 
+-### Keep Everything Except One File
++This format is useful when you need to apply changes outside a pure jj workflow (e.g., `git am`), or when you want to inspect or archive the exact patch before applying.
++
++## Core Workflow
++
++### 1. Explore hunks with hunkset queries
+ 
+ ```bash
+-jj-hunk split '{"files": {"src/wip.rs": {"action": "reset"}}, "default": "keep"}' \
+-  "feat: complete implementation"
++# See all hunks
++jj-hunk list --format text
++
++# Preview what a query would select
++jj-hunk list --spec 'scope("UserService")' --format text
++
++# Verify a selection covers everything you expect
++jj-hunk list --spec 'scope("UserService") ~ id("hunk-7c3d...")' --format text
++# Empty output = the id covers everything in that scope
+ ```
+ 
+-## Direct jj --tool Usage
++### 2. Select and split
+ 
+-The commands above are wrappers. For direct control:
++Use hunkset expressions directly with split/commit/squash:
+ 
+ ```bash
+-# Write spec to file
+-echo '{"files": {"src/foo.rs": {"hunks": [0]}}, "default": "reset"}' > /tmp/spec.json
++# Split by semantic scope
++jj-hunk split 'scope("UserService") & ~import()' "refactor: update UserService"
++
++# Split by file pattern
++jj-hunk split 'glob("src/api/**")' "feat: add API endpoints"
+ 
+-# Run jj with the tool
+-JJ_HUNK_SELECTION=/tmp/spec.json jj split -i --tool=jj-hunk -m "message"
++# Split by content
++jj-hunk split 'added("TODO") | added("FIXME")' "chore: add TODOs"
+ ```
+ 
+-## Hunk Types
++### 3. Use stable IDs for safety
+ 
+-| Type | Meaning |
+-|------|---------|
+-| `insert` | New lines added |
+-| `delete` | Lines removed |
+-| `replace` | Lines changed (removed + added) |
++When other changes may arrive concurrently, **always resolve your hunkset query to stable IDs before executing the split**. This protects against new hunks appearing between the query and the split:
+ 
+-## Agent Workflow Examples
++```bash
++# Step 1: Query to find the hunks you want
++jj-hunk list --spec 'function("handle_request") & glob("src/api/**")' --format json
+ 
+-### Understanding the Output
++# Step 2: Note the hunk IDs from the output, then split using IDs
++jj-hunk split 'id("hunk-7c3d...", "hunk-9a2b...", "hunk-ff01...")' "feat: handle_request implementation"
++```
+ 
+-Always start by inspecting what hunks exist:
++Hunk IDs are stable SHA256 hashes of the hunk content — they won't change even if other hunks are added to the same file by concurrent work.
+ 
+-```bash
+-jj-hunk list
+-```
++### 4. JSON specs (alternative)
++
++For complex selections or when building specs programmatically:
+ 
+-Example output:
+ ```json
+ {
+-  "files": [
+-    {
+-      "path": "src/db/schema.ts",
+-      "status": "modified",
+-      "hunks": [
+-        {"id": "hunk-98af...", "index": 0, "type": "insert", "removed": "", "added": "import { pgTable }...\n", "before": {"start": 1, "lines": 0}, "after": {"start": 1, "lines": 1}},
+-        {"id": "hunk-21b3...", "index": 1, "type": "insert", "removed": "", "added": "export const users = pgTable...\n", "before": {"start": 2, "lines": 0}, "after": {"start": 2, "lines": 1}}
+-      ]
+-    },
+-    {
+-      "path": "src/api/routes.ts",
+-      "status": "modified",
+-      "hunks": [
+-        {"id": "hunk-cc19...", "index": 0, "type": "replace", "removed": "// TODO\n", "added": "app.get('/users', ...);\n", "before": {"start": 10, "lines": 1}, "after": {"start": 10, "lines": 1}},
+-        {"id": "hunk-4b20...", "index": 1, "type": "insert", "removed": "", "added": "app.get('/posts', ...);\n", "before": {"start": 11, "lines": 0}, "after": {"start": 11, "lines": 1}}
+-      ]
+-    },
+-    {
+-      "path": "src/lib/utils.ts",
+-      "status": "modified",
+-      "hunks": [
+-        {"id": "hunk-11bf...", "index": 0, "type": "replace", "removed": "function old()...\n", "added": "function new()...\n", "before": {"start": 5, "lines": 1}, "after": {"start": 5, "lines": 1}},
+-        {"id": "hunk-ee43...", "index": 1, "type": "insert", "removed": "", "added": "export function helper()...\n", "before": {"start": 6, "lines": 0}, "after": {"start": 6, "lines": 1}},
+-        {"id": "hunk-09ad...", "index": 2, "type": "delete", "removed": "// dead code\n", "added": "", "before": {"start": 20, "lines": 1}, "after": {"start": 20, "lines": 0}}
+-      ]
+-    }
+-  ]
++  "files": {
++    "src/foo.rs": {"ids": ["hunk-7c3d...", "hunk-2f91..."]},
++    "src/bar.rs": {"action": "keep"},
++    "src/qux.rs": {"action": "reset"}
++  },
++  "default": "reset"
+ }
+ ```
+ 
+-### File-Level Selection
++Hunkset expressions and JSON specs are auto-detected — use whichever is clearer for the situation.
+ 
+-When all hunks in a file belong to the same logical change:
++## Multi-Agent Concurrent Workflow
+ 
+-```bash
+-# Keep entire file, reset everything else
+-jj-hunk split '{"files": {"src/db/schema.ts": {"action": "keep"}}, "default": "reset"}' "feat: add database schema"
+-```
++When multiple agents work in parallel on different tasks, their changes tend to intermingle in the working copy. jj-hunk enables each agent to retrospectively extract its own changes into clean, independent branches.
+ 
+-### Hunk-Level Selection
++### Setup: Create the merge structure
+ 
+-When a single file has mixed concerns (most powerful feature):
++Before agents start working, establish the topology:
+ 
+ ```bash
+-# src/lib/utils.ts has:
+-#   - hunks 0, 2: refactoring (rename + delete dead code)
+-#   - hunk 1: new feature (helper function)
+-
+-# Extract just the refactoring
+-jj-hunk split '{"files": {"src/lib/utils.ts": {"hunks": [0, 2]}}, "default": "reset"}' "refactor: clean up utils"
+-
+-# Hunk 1 remains in working copy for the next commit
+-jj describe -m "feat: add helper function"
++# Create the merge point that will combine all agent work
++jj new main -m "merge: combine agent work"
++# Save its change ID
++MERGE=$(jj log -r @ --template 'change_id' --no-graph)
+ ```
+ 
+-### Mixed Selection
++### Each agent's workflow
+ 
+-Combine file-level and hunk-level in one spec:
++Each agent works at the head (or a descendant of the merge), then cleans up:
+ 
+ ```bash
+-# Keep all of schema.ts + only hunk 0 from routes.ts
+-jj-hunk split '{"files": {"src/db/schema.ts": {"action": "keep"}, "src/api/routes.ts": {"hunks": [0]}}, "default": "reset"}' "feat: add users table and endpoint"
++# 1. Make changes normally (code, tests, etc.)
++#    Changes land in the working copy alongside other agents' work.
+ 
+-# Next: remaining routes.ts hunk
+-jj-hunk split '{"files": {"src/api/routes.ts": {"action": "keep"}}, "default": "reset"}' "feat: add posts endpoint"
++# 2. Query to identify YOUR changes using semantic context
++jj-hunk list --spec 'scope("UserService") & glob("src/api/**")' --format text
+ 
+-# Final: utils changes
+-jj describe -m "refactor: utils cleanup"
+-```
++# 3. Verify the query captures exactly your work — refine if needed
++#    Combine predicates for precision:
++jj-hunk list --spec 'function("handle_request") & file("src/api/handler.rs")' --format text
+ 
+-### Complete Workflow Example
++# 4. Resolve to stable IDs (protects against concurrent changes)
++#    Collect the hunk IDs from the output above.
+ 
+-Starting with a messy commit containing schema, API, and refactoring changes:
++# 5. Split your changes into a clean commit
++jj-hunk split 'id("hunk-7c3d...", "hunk-9a2b...")' "feat: add request handler"
+ 
+-```bash
+-# 1. Edit the commit
+-jj edit <revision>
++# 6. Rebase the clean commit to its proper place in the graph
++jj rebase -r <new_change> -d main
+ 
+-# 2. Inspect all hunks
+-jj-hunk list
++# 7. Update the merge to include your branch
++jj rebase -r $MERGE -d <new_change> -d <other_branches...>
++```
+ 
+-# 3. Split in narrative order
++### Verification
+ 
+-# Infrastructure first
+-jj-hunk split '{"files": {"src/db/schema.ts": {"action": "keep"}}, "default": "reset"}' "feat: add database schema"
++After each agent finishes, verify the merge is clean:
+ 
+-# Refactoring second (specific hunks from utils.ts)
+-jj-hunk split '{"files": {"src/lib/utils.ts": {"hunks": [0, 2]}}, "default": "reset"}' "refactor: clean up utils"
++```bash
++jj diff -r $MERGE
++# Should be empty (or contain only conflict resolutions)
++```
+ 
+-# Feature using the refactored code
+-jj-hunk split '{"files": {"src/lib/utils.ts": {"action": "keep"}, "src/api/routes.ts": {"hunks": [0]}}, "default": "reset"}' "feat: add users endpoint"
++If the merge has unexpected content, an agent's split was incomplete — use `jj-hunk list -r $MERGE` to see what's left and dispatch it.
+ 
+-# Remaining changes
+-jj describe -m "feat: add posts endpoint"
++### Example: Three agents working concurrently
+ 
+-# 4. Verify
+-jj log -r 'trunk()..@'
++```
++main
++├── agent-1: feat: add database schema
++│   (created by: jj-hunk split 'glob("src/db/**")' ...)
++├── agent-2: feat: add API endpoints  
++│   (created by: jj-hunk split 'scope("Router") & glob("src/api/**")' ...)
++├── agent-3: refactor: update shared utils
++│   (created by: jj-hunk split 'function("parse_config") | function("validate")' ...)
++└── merge: combine agent work (should be empty)
+ ```
+ 
+-### Verifying Splits
+-
+-After splitting, verify each commit has the right content:
+-
+-```bash
+-# Check stats for each commit
+-jj diff -r <rev1> --stat
+-jj diff -r <rev2> --stat
++### Key principles
+ 
+-# Or view the log
+-jj log
+-```
++- **Query first, split by ID**: Use hunkset queries to explore, but resolve to stable hunk IDs before executing the split. IDs are content-addressed (SHA256) and immune to concurrent modifications.
++- **Combine predicates for precision**: Use `&` to intersect scope and file queries — `scope("MyClass") & file("src/models.rs")` is safer than either alone, because it won't accidentally capture unrelated changes that happen to be in the same file or an identically-named scope in a different file.
++- **Verify the merge**: After splitting, the merge change should be empty. If it's not, something was missed — use `jj-hunk list -r $MERGE` to find and dispatch remaining hunks.
++- **Rebase, don't move**: After `jj-hunk split` creates a new change, use `jj rebase` to position it in the graph. The split creates the change as a child of the current revision; rebasing moves it to its logical location.
+ 
+ ## Tips
+ 
+-- **Always list first**: Run `jj-hunk list` to see hunk indices/ids before building specs
+-- **Prefer ids for stability**: Use `ids` when hunks might shift between list and apply
+-- **Use default wisely**: `"default": "reset"` is safer (explicit inclusion), `"default": "keep"` is convenient for excluding specific files
+-- **Combine with jj**: After splitting, use `jj describe` to refine commit messages
+-- **Exact paths required**: File paths must match exactly (e.g., `"src/lib.rs"` not `"src/"`)
++- **Prefer hunkset over JSON**: Hunkset expressions are more readable and composable. Reserve JSON specs for programmatic generation.
++- **Use `--format text` for exploration**: Shows semantic context (enclosing function/scope) inline, making it easy to identify which hunks belong to which logical change.
++- **Use `--format diff` for export**: Produces a unified patch with hunk IDs that can be applied via `git am` or archived for review.
++- **Prefer IDs for stability**: Hunk IDs (SHA256) are immune to concurrent changes. Always resolve queries to IDs before executing splits in concurrent workflows.
++- **Use `--spec` on `list` to verify**: Preview what a split would select before executing it. An empty result means your query matches nothing; refine it.
++- **`"default": "reset"` is safer**: Explicitly include what you want rather than excluding what you don't.
+diff --git a/src/commands.rs b/src/commands.rs
+index c6baa8b..1d42cc3 100644
+--- a/src/commands.rs
++++ b/src/commands.rs
+@@ -1,4 +1,8 @@
+ use crate::diff::{apply_selected_hunks, get_hunks, Hunk, HunkSelection};
++use crate::glob::glob_match;
++use crate::hunkset::{self, EnrichedHunk};
++#[cfg(feature = "semantic")]
++use crate::semantic;
+ use crate::spec::{Action, DefaultAction, FileSpec, Spec};
+ use anyhow::{Context, Result};
+ use clap::ValueEnum;
+@@ -19,6 +23,7 @@ pub enum ListFormat {
+     Json,
+     Yaml,
+     Text,
++    Diff,
+ }
+ 
+ impl Default for ListFormat {
+@@ -78,8 +83,6 @@ pub struct ListOptions {
+     pub spec: Option<String>,
+     pub spec_file: Option<String>,
+     pub binary: BinaryMode,
+-    pub max_bytes: Option<usize>,
+-    pub max_lines: Option<usize>,
+ }
+ 
+ impl Default for ListOptions {
+@@ -94,8 +97,6 @@ impl Default for ListOptions {
+             spec: None,
+             spec_file: None,
+             binary: BinaryMode::default(),
+-            max_bytes: None,
+-            max_lines: None,
+         }
+     }
+ }
+@@ -132,8 +133,6 @@ struct FileEntry {
+     hunks: Vec<Hunk>,
+     #[serde(skip_serializing_if = "Option::is_none")]
+     binary: Option<bool>,
+-    #[serde(skip_serializing_if = "Option::is_none")]
+-    truncated: Option<bool>,
+ }
+ 
+ #[derive(Debug, Serialize, Clone)]
+@@ -165,8 +164,6 @@ struct FileSummary {
+     hunk_count: usize,
+     #[serde(skip_serializing_if = "Option::is_none")]
+     binary: Option<bool>,
+-    #[serde(skip_serializing_if = "Option::is_none")]
+-    truncated: Option<bool>,
+ }
+ 
+ #[derive(Debug, Serialize)]
+@@ -198,94 +195,53 @@ where
+     T: Into<ListOptions>,
+ {
+     let options = options.into();
+-    let spec = resolve_optional_spec(options.spec.as_deref(), options.spec_file.as_deref())?
+-        .map(|content| Spec::from_str(&content))
+-        .transpose()?;
++    let resolved_spec_input = resolve_optional_spec(options.spec.as_deref(), options.spec_file.as_deref())?;
++    let spec = match &resolved_spec_input {
++        Some(content) if hunkset::is_hunkset(content) => {
++            let json = evaluate_hunkset(content, options.rev.as_deref())?;
++            Some(Spec::from_str(&json)?)
++        }
++        Some(content) => Some(Spec::from_str(content)?),
++        None => None,
++    };
+ 
+     let include = normalize_patterns(&options.include);
+     let exclude = normalize_patterns(&options.exclude);
+ 
+-    let summary_entries = read_diff_summary(options.rev.as_deref())?;
+-    let (before_rev, after_rev) = resolve_revisions(options.rev.as_deref());
++    let all_file_hunks = load_file_hunks(options.rev.as_deref(), options.binary)?;
+ 
+     let mut files = Vec::new();
+ 
+-    for entry in summary_entries {
+-        let path = primary_path(&entry);
+-        if path.is_empty() {
++    for fh in all_file_hunks {
++        let paths_to_check = fh.all_paths();
++        if !include.is_empty() && !paths_to_check.iter().any(|p| matches_any(&include, p)) {
+             continue;
+         }
+-
+-        if !should_include_entry(&entry, &include, &exclude) {
++        if !exclude.is_empty() && paths_to_check.iter().any(|p| matches_any(&exclude, p)) {
+             continue;
+         }
+ 
+-        let decision = spec_decision(spec.as_ref(), &path);
++        let decision = spec_decision(spec.as_ref(), &fh.path);
+         if matches!(decision, SpecDecision::Skip) {
+             continue;
+         }
+ 
+-        let file_paths = file_paths_for_entry(&entry, &path);
+-        let before_bytes = file_paths
+-            .before
+-            .as_deref()
+-            .map(|p| read_jj_file(before_rev.as_deref(), p))
+-            .unwrap_or_default();
+-        let after_bytes = file_paths
+-            .after
+-            .as_deref()
+-            .map(|p| read_jj_file(after_rev.as_deref(), p))
+-            .unwrap_or_default();
+-
+-        let is_binary = is_binary_data(&before_bytes) || is_binary_data(&after_bytes);
+-        if is_binary && options.binary == BinaryMode::Skip {
+-            continue;
+-        }
+-
+-        let should_diff = !(is_binary && options.binary == BinaryMode::Mark);
+-        let (before_text, before_truncated) = if should_diff {
+-            truncate_text(
+-                &String::from_utf8_lossy(&before_bytes),
+-                options.max_bytes,
+-                options.max_lines,
+-            )
+-        } else {
+-            (String::new(), false)
+-        };
+-        let (after_text, after_truncated) = if should_diff {
+-            truncate_text(
+-                &String::from_utf8_lossy(&after_bytes),
+-                options.max_bytes,
+-                options.max_lines,
+-            )
+-        } else {
+-            (String::new(), false)
+-        };
+-
+-        let mut hunks = if should_diff {
+-            get_hunks(&before_text, &after_text)
+-        } else {
+-            Vec::new()
+-        };
++        let mut hunks = fh.hunks;
+ 
+         if let SpecDecision::KeepSelection(selection) = &decision {
+             hunks = filter_hunks(hunks, selection);
+         }
+ 
+-        if hunks.is_empty() && !is_binary {
++        if hunks.is_empty() && !fh.is_binary {
+             continue;
+         }
+ 
+-        let rename = rename_info(&entry);
+-        let truncated = before_truncated || after_truncated;
+-
+         files.push(FileEntry {
+-            path,
+-            status: entry.status.clone(),
+-            rename,
++            path: fh.path,
++            status: fh.status,
++            rename: fh.rename,
+             hunks,
+-            binary: if is_binary { Some(true) } else { None },
+-            truncated: if truncated { Some(true) } else { None },
++            binary: if fh.is_binary { Some(true) } else { None },
+         });
+     }
+ 
+@@ -314,6 +270,9 @@ where
+                 ListFormat::Text => {
+                     print!("{}", render_text_output(&output));
+                 }
++                ListFormat::Diff => {
++                    print!("{}", render_diff_output(&output));
++                }
+             }
+         }
+         ListMode::Files => {
+@@ -325,13 +284,13 @@ where
+                 ListFormat::Yaml => {
+                     println!("{}", serde_yaml::to_string(&summary)?);
+                 }
+-                ListFormat::Text => {
++                ListFormat::Text | ListFormat::Diff => {
+                     print!("{}", render_text_summary_output(&summary));
+                 }
+             }
+         }
+         ListMode::SpecTemplate => {
+-            if matches!(options.format, ListFormat::Text) {
++            if matches!(options.format, ListFormat::Text | ListFormat::Diff) {
+                 anyhow::bail!("--spec-template does not support text output (use json or yaml)");
+             }
+             let template = build_spec_template(files);
+@@ -342,7 +301,7 @@ where
+                 ListFormat::Yaml => {
+                     println!("{}", serde_yaml::to_string(&template)?);
+                 }
+-                ListFormat::Text => {}
++                ListFormat::Text | ListFormat::Diff => {}
+             }
+         }
+     }
+@@ -363,6 +322,72 @@ enum SpecDecision {
+     KeepSelection(HunkSelection),
+ }
+ 
++#[cfg(feature = "semantic")]
++fn enrich_hunks_with_semantics(
++    hunks: &mut [Hunk],
++    path: &str,
++    before_text: &str,
++    after_text: &str,
++) {
++    if hunks.is_empty() {
++        return;
++    }
++
++    let ext = semantic::extension_from_path(path);
++    if ext.is_empty() {
++        return;
++    }
++
++    // Parse both source texts lazily. For each hunk, we pick the appropriate
++    // parsed tree and line number:
++    // - Hunks with before_range.length > 0 reference lines in the original file.
++    // - Pure insertions (before_range.length == 0) or added files reference
++    //   lines in the after file.
++    let before_parsed = if !before_text.is_empty() {
++        semantic::ParsedFile::parse(ext, before_text)
++    } else {
++        None
++    };
++    let after_parsed = if !after_text.is_empty() {
++        semantic::ParsedFile::parse(ext, after_text)
++    } else {
++        None
++    };
++
++    for hunk in hunks.iter_mut() {
++        let ctx = if hunk.before_range.length > 0 {
++            before_parsed
++                .as_ref()
++                .map(|p| p.context_at_line(hunk.before_range.start))
++        } else {
++            after_parsed
++                .as_ref()
++                .map(|p| p.context_at_line(hunk.after_range.start))
++        };
++
++        if let Some(ctx) = ctx {
++            hunk.semantic = crate::diff::SemanticInfo {
++                enclosing_function: ctx.enclosing_function,
++                enclosing_scope: ctx.enclosing_scope,
++                annotations: ctx.annotations,
++                is_doc_comment: ctx.is_doc_comment,
++                is_import: ctx.is_import,
++                is_toplevel: ctx.is_toplevel,
++                nesting_depth: ctx.nesting_depth,
++            };
++        }
++    }
++}
++
++#[cfg(not(feature = "semantic"))]
++fn enrich_hunks_with_semantics(
++    _hunks: &mut [Hunk],
++    _path: &str,
++    _before_text: &str,
++    _after_text: &str,
++) {
++}
++
+ fn resolve_optional_spec(spec: Option<&str>, spec_file: Option<&str>) -> Result<Option<String>> {
+     if spec.is_none() && spec_file.is_none() {
+         return Ok(None);
+@@ -371,6 +396,114 @@ fn resolve_optional_spec(spec: Option<&str>, spec_file: Option<&str>) -> Result<
+     Ok(Some(resolve_spec_input(spec, spec_file)?))
+ }
+ 
++/// Evaluate a hunkset expression against the current diff state for a given
++/// revision, returning a JSON-serialized Spec.
++fn evaluate_hunkset(hunkset_expr: &str, rev: Option<&str>) -> Result<String> {
++    let ast = hunkset::parse(hunkset_expr)
++        .map_err(|e| anyhow::anyhow!("failed to parse hunkset:\n{}", e.display_with_context()))?;
++
++    let file_hunks = load_file_hunks(rev, BinaryMode::Skip)?;
++
++    let enriched: Vec<EnrichedHunk> = file_hunks
++        .iter()
++        .flat_map(|fh| {
++            fh.hunks.iter().map(move |hunk| EnrichedHunk {
++                file_path: &fh.path,
++                file_status: &fh.status,
++                hunk,
++            })
++        })
++        .collect();
++
++    let selected = hunkset::evaluate(&ast, &enriched)
++        .map_err(|e| anyhow::anyhow!("hunkset evaluation error: {}", e.display_with_context()))?;
++    let spec = hunkset::to_spec(&selected, &enriched);
++
++    serde_json::to_string(&spec).context("failed to serialize hunkset result as spec")
++}
++
++/// A file's hunks with metadata, loaded from a jj diff.
++struct FileHunks {
++    path: String,
++    status: String,
++    hunks: Vec<Hunk>,
++    rename: Option<RenameInfo>,
++    is_binary: bool,
++}
++
++impl FileHunks {
++    /// All paths associated with this file entry (primary + rename source).
++    fn all_paths(&self) -> Vec<&str> {
++        let mut paths = vec![self.path.as_str()];
++        if let Some(rename) = &self.rename {
++            if rename.from != self.path {
++                paths.push(&rename.from);
++            }
++        }
++        paths
++    }
++}
++
++/// Load all file hunks for a revision, applying semantic enrichment.
++/// This is the shared core used by both `list` and `evaluate_hunkset`.
++fn load_file_hunks(rev: Option<&str>, binary: BinaryMode) -> Result<Vec<FileHunks>> {
++    let summary_entries = read_diff_summary(rev)?;
++    let (before_rev, after_rev) = resolve_revisions(rev);
++    let mut result = Vec::new();
++
++    for entry in &summary_entries {
++        let path = primary_path(entry);
++        if path.is_empty() {
++            continue;
++        }
++
++        let file_paths = file_paths_for_entry(entry, &path);
++        let before_bytes = file_paths
++            .before
++            .as_deref()
++            .map(|p| read_jj_file(before_rev.as_deref(), p))
++            .unwrap_or_default();
++        let after_bytes = file_paths
++            .after
++            .as_deref()
++            .map(|p| read_jj_file(after_rev.as_deref(), p))
++            .unwrap_or_default();
++
++        let is_binary = is_binary_data(&before_bytes) || is_binary_data(&after_bytes);
++        if is_binary && binary == BinaryMode::Skip {
++            continue;
++        }
++
++        let should_diff = !is_binary || binary == BinaryMode::Include;
++        let (before_text, after_text) = if should_diff {
++            (
++                String::from_utf8_lossy(&before_bytes).into_owned(),
++                String::from_utf8_lossy(&after_bytes).into_owned(),
++            )
++        } else {
++            (String::new(), String::new())
++        };
++
++        let mut hunks = if should_diff {
++            get_hunks(&before_text, &after_text)
++        } else {
++            Vec::new()
++        };
++
++        enrich_hunks_with_semantics(&mut hunks, &path, &before_text, &after_text);
++
++        result.push(FileHunks {
++            path,
++            status: entry.status.clone(),
++            hunks,
++            rename: rename_info(entry),
++            is_binary,
++        });
++    }
++
++    Ok(result)
++}
++
+ fn resolve_revisions(revset: Option<&str>) -> (Option<String>, Option<String>) {
+     if let Some(rev) = revset {
+         (Some(format!("({})-", rev)), Some(rev.to_string()))
+@@ -496,51 +629,6 @@ fn is_binary_data(bytes: &[u8]) -> bool {
+     bytes.contains(&0) || std::str::from_utf8(bytes).is_err()
+ }
+ 
+-fn truncate_text(
+-    content: &str,
+-    max_bytes: Option<usize>,
+-    max_lines: Option<usize>,
+-) -> (String, bool) {
+-    let mut truncated = false;
+-    let mut result = content.to_string();
+-
+-    if let Some(max_lines) = max_lines {
+-        if max_lines == 0 {
+-            if !result.is_empty() {
+-                truncated = true;
+-            }
+-            result.clear();
+-        } else {
+-            let mut limited = String::new();
+-            let mut count = 0usize;
+-            for line in result.split_inclusive('\n') {
+-                if count >= max_lines {
+-                    truncated = true;
+-                    break;
+-                }
+-                limited.push_str(line);
+-                count += 1;
+-            }
+-            if truncated {
+-                result = limited;
+-            }
+-        }
+-    }
+-
+-    if let Some(max_bytes) = max_bytes {
+-        if result.len() > max_bytes {
+-            let mut end = max_bytes;
+-            while !result.is_char_boundary(end) {
+-                end -= 1;
+-            }
+-            result.truncate(end);
+-            truncated = true;
+-        }
+-    }
+-
+-    (result, truncated)
+-}
+-
+ fn spec_decision(spec: Option<&Spec>, path: &str) -> SpecDecision {
+     let Some(spec) = spec else {
+         return SpecDecision::KeepAll;
+@@ -587,107 +675,10 @@ fn normalize_patterns(patterns: &[String]) -> Vec<String> {
+         .collect()
+ }
+ 
+-fn should_include_entry(entry: &DiffSummaryEntry, include: &[String], exclude: &[String]) -> bool {
+-    let paths = entry_paths(entry);
+-
+-    if !include.is_empty() && !paths.iter().any(|path| matches_any(include, path)) {
+-        return false;
+-    }
+-
+-    if !exclude.is_empty() && paths.iter().any(|path| matches_any(exclude, path)) {
+-        return false;
+-    }
+-
+-    true
+-}
+-
+-fn entry_paths<'a>(entry: &'a DiffSummaryEntry) -> Vec<&'a str> {
+-    let mut paths = Vec::new();
+-    if !entry.path.is_empty() {
+-        paths.push(entry.path.as_str());
+-    }
+-    if !entry.source.is_empty() && entry.source != entry.path {
+-        paths.push(entry.source.as_str());
+-    }
+-    if !entry.target.is_empty() && entry.target != entry.path && entry.target != entry.source {
+-        paths.push(entry.target.as_str());
+-    }
+-    paths
+-}
+-
+ fn matches_any(patterns: &[String], path: &str) -> bool {
+     patterns.iter().any(|pattern| glob_match(pattern, path))
+ }
+ 
+-fn glob_match(pattern: &str, path: &str) -> bool {
+-    let pattern = pattern.trim_start_matches("./");
+-    let path = path.trim_start_matches("./");
+-
+-    if pattern.is_empty() {
+-        return path.is_empty();
+-    }
+-
+-    let pattern_segments: Vec<&str> = pattern.split('/').filter(|s| !s.is_empty()).collect();
+-    let path_segments: Vec<&str> = path.split('/').filter(|s| !s.is_empty()).collect();
+-
+-    match_segments(&pattern_segments, &path_segments)
+-}
+-
+-fn match_segments(pattern: &[&str], path: &[&str]) -> bool {
+-    if pattern.is_empty() {
+-        return path.is_empty();
+-    }
+-
+-    if pattern[0] == "**" {
+-        if match_segments(&pattern[1..], path) {
+-            return true;
+-        }
+-        if !path.is_empty() {
+-            return match_segments(pattern, &path[1..]);
+-        }
+-        return false;
+-    }
+-
+-    if path.is_empty() {
+-        return false;
+-    }
+-
+-    if !match_segment(pattern[0], path[0]) {
+-        return false;
+-    }
+-
+-    match_segments(&pattern[1..], &path[1..])
+-}
+-
+-fn match_segment(pattern: &str, text: &str) -> bool {
+-    if pattern == "*" {
+-        return true;
+-    }
+-
+-    let pattern_chars: Vec<char> = pattern.chars().collect();
+-    let text_chars: Vec<char> = text.chars().collect();
+-    let mut dp = vec![vec![false; text_chars.len() + 1]; pattern_chars.len() + 1];
+-
+-    dp[0][0] = true;
+-    for i in 1..=pattern_chars.len() {
+-        if pattern_chars[i - 1] == '*' {
+-            dp[i][0] = dp[i - 1][0];
+-        }
+-    }
+-
+-    for i in 1..=pattern_chars.len() {
+-        for j in 1..=text_chars.len() {
+-            dp[i][j] = match pattern_chars[i - 1] {
+-                '*' => dp[i - 1][j] || dp[i][j - 1],
+-                '?' => dp[i - 1][j - 1],
+-                c => dp[i - 1][j - 1] && c == text_chars[j - 1],
+-            };
+-        }
+-    }
+-
+-    dp[pattern_chars.len()][text_chars.len()]
+-}
+-
+ fn group_files(files: Vec<FileEntry>, grouping: ListGrouping) -> Vec<ListGroup> {
+     let mut groups: Vec<ListGroup> = Vec::new();
+     let mut index: HashMap<String, usize> = HashMap::new();
+@@ -723,7 +714,6 @@ fn build_summary_output(files: Vec<FileEntry>, grouping: ListGrouping) -> ListSu
+             rename: file.rename,
+             hunk_count: file.hunks.len(),
+             binary: file.binary,
+-            truncated: file.truncated,
+         })
+         .collect();
+ 
+@@ -838,6 +828,66 @@ fn render_text_output(output: &ListOutput) -> String {
+     output
+ }
+ 
++fn render_diff_output(output: &ListOutput) -> String {
++    let mut result = String::new();
++
++    let files = if let Some(groups) = &output.groups {
++        groups.iter().flat_map(|g| g.files.iter()).collect::<Vec<_>>()
++    } else if let Some(files) = &output.files {
++        files.iter().collect()
++    } else {
++        return result;
++    };
++
++    for file in files {
++        let (a_path, b_path) = match file.status.as_str() {
++            "added" => ("/dev/null".to_string(), format!("b/{}", file.path)),
++            "removed" => (format!("a/{}", file.path), "/dev/null".to_string()),
++            _ => (format!("a/{}", file.path), format!("b/{}", file.path)),
++        };
++
++        result.push_str(&format!("--- {}\n+++ {}\n", a_path, b_path));
++
++        for hunk in &file.hunks {
++            // Build the hunk header: @@ -before +after @@ [scope::function]  [id]
++            let before = format!("-{},{}", hunk.before_range.start, hunk.before_range.length);
++            let after = format!("+{},{}", hunk.after_range.start, hunk.after_range.length);
++
++            let mut context = String::new();
++            if let Some(scope) = &hunk.semantic.enclosing_scope {
++                if let Some(func) = &hunk.semantic.enclosing_function {
++                    context = format!(" {}::{}", scope, func);
++                } else {
++                    context = format!(" {}", scope);
++                }
++            } else if let Some(func) = &hunk.semantic.enclosing_function {
++                context = format!(" {}", func);
++            }
++
++            // Truncate ID for readability (first 12 hex chars after "hunk-")
++            let short_id = if hunk.id.len() > 17 {
++                format!("{}...", &hunk.id[..17])
++            } else {
++                hunk.id.clone()
++            };
++
++            result.push_str(&format!(
++                "@@ {} {} @@{} [{}]\n",
++                before, after, context, short_id
++            ));
++
++            for line in hunk.removed.lines() {
++                result.push_str(&format!("-{}\n", line));
++            }
++            for line in hunk.added.lines() {
++                result.push_str(&format!("+{}\n", line));
++            }
++        }
++    }
++
++    result
++}
++
+ fn render_text_summary_output(output: &ListSummaryOutput) -> String {
+     let mut lines = Vec::new();
+ 
+@@ -871,7 +921,7 @@ fn format_files_text(lines: &mut Vec<String>, files: &[FileEntry]) {
+     for file in files {
+         lines.push(format_file_header(file));
+         for hunk in &file.hunks {
+-            lines.push(format!(
++            let mut hunk_line = format!(
+                 "  hunk {} {} {} (before {}+{} after {}+{})",
+                 hunk.index,
+                 hunk.hunk_type,
+@@ -880,7 +930,17 @@ fn format_files_text(lines: &mut Vec<String>, files: &[FileEntry]) {
+                 hunk.before_range.length,
+                 hunk.after_range.start,
+                 hunk.after_range.length,
+-            ));
++            );
++            if let Some(scope) = &hunk.semantic.enclosing_scope {
++                if let Some(func) = &hunk.semantic.enclosing_function {
++                    hunk_line.push_str(&format!(" in {}::{}", scope, func));
++                } else {
++                    hunk_line.push_str(&format!(" in {}", scope));
++                }
++            } else if let Some(func) = &hunk.semantic.enclosing_function {
++                hunk_line.push_str(&format!(" in {}", func));
++            }
++            lines.push(hunk_line);
+             if !hunk.removed.is_empty() {
+                 for line in hunk.removed.lines() {
+                     lines.push(format!("    - {}", line));
+@@ -909,9 +969,6 @@ fn format_summary_text(lines: &mut Vec<String>, files: &[FileSummary]) {
+         if file.binary == Some(true) {
+             line.push_str(" [binary]");
+         }
+-        if file.truncated == Some(true) {
+-            line.push_str(" [truncated]");
+-        }
+         lines.push(line);
+     }
+ }
+@@ -924,9 +981,6 @@ fn format_file_header(file: &FileEntry) -> String {
+     if file.binary == Some(true) {
+         header.push_str(" [binary]");
+     }
+-    if file.truncated == Some(true) {
+-        header.push_str(" [truncated]");
+-    }
+     header
+ }
+ 
+@@ -1077,8 +1131,18 @@ fn resolve_spec_input(spec: Option<&str>, spec_file: Option<&str>) -> Result<Str
+     Ok(spec.to_string())
+ }
+ 
+-fn run_jj_with_selection(args: &[&str], spec: Option<&str>, spec_file: Option<&str>) -> Result<()> {
++fn run_jj_with_selection(
++    args: &[&str],
++    spec: Option<&str>,
++    spec_file: Option<&str>,
++    rev: Option<&str>,
++) -> Result<()> {
+     let spec_content = resolve_spec_input(spec, spec_file)?;
++    let spec_content = if hunkset::is_hunkset(&spec_content) {
++        evaluate_hunkset(&spec_content, rev)?
++    } else {
++        spec_content
++    };
+     let temp_file = std::env::temp_dir().join(format!("jj-hunk-{}.spec", std::process::id()));
+     fs::write(&temp_file, spec_content)?;
+ 
+@@ -1145,7 +1209,7 @@ pub fn split(
+         args.push("-r");
+         args.push(rev);
+     }
+-    run_jj_with_selection(&args, spec, spec_file)
++    run_jj_with_selection(&args, spec, spec_file, rev)
+ }
+ 
+ pub fn commit(spec: Option<&str>, spec_file: Option<&str>, message: &str) -> Result<()> {
+@@ -1153,6 +1217,7 @@ pub fn commit(spec: Option<&str>, spec_file: Option<&str>, message: &str) -> Res
+         &["commit", "-i", JJ_HUNK_TOOL_ARG, "-m", message],
+         spec,
+         spec_file,
++        None, // commit always operates on @
+     )
+ }
+ 
+@@ -1162,5 +1227,5 @@ pub fn squash(spec: Option<&str>, spec_file: Option<&str>, rev: Option<&str>) ->
+         args.push("-r");
+         args.push(rev);
+     }
+-    run_jj_with_selection(&args, spec, spec_file)
++    run_jj_with_selection(&args, spec, spec_file, rev)
+ }
+diff --git a/src/diff.rs b/src/diff.rs
+index c76585c..9b48440 100644
+--- a/src/diff.rs
++++ b/src/diff.rs
+@@ -5,6 +5,10 @@ use std::collections::HashSet;
+ use std::fmt::Write;
+ 
+ pub const HUNK_ID_PREFIX: &str = "hunk-";
++
++fn is_zero(v: &usize) -> bool {
++    *v == 0
++}
+ const CONTEXT_LINES: usize = 3;
+ 
+ #[derive(Debug, Clone, Serialize)]
+@@ -22,6 +26,25 @@ pub struct HunkContext {
+     pub after: String,
+ }
+ 
++/// Semantic metadata extracted via tree-sitter (when the `semantic` feature is enabled).
++#[derive(Debug, Clone, Default, Serialize)]
++pub struct SemanticInfo {
++    #[serde(skip_serializing_if = "Option::is_none")]
++    pub enclosing_function: Option<String>,
++    #[serde(skip_serializing_if = "Option::is_none")]
++    pub enclosing_scope: Option<String>,
++    #[serde(skip_serializing_if = "Vec::is_empty")]
++    pub annotations: Vec<String>,
++    #[serde(skip_serializing_if = "std::ops::Not::not")]
++    pub is_doc_comment: bool,
++    #[serde(skip_serializing_if = "std::ops::Not::not")]
++    pub is_import: bool,
++    #[serde(skip_serializing_if = "std::ops::Not::not")]
++    pub is_toplevel: bool,
++    #[serde(skip_serializing_if = "is_zero")]
++    pub nesting_depth: usize,
++}
++
+ #[derive(Debug, Clone, Serialize)]
+ pub struct Hunk {
+     pub index: usize,
+@@ -36,6 +59,8 @@ pub struct Hunk {
+     pub after_range: LineRange,
+     #[serde(skip_serializing_if = "Option::is_none")]
+     pub context: Option<HunkContext>,
++    #[serde(flatten)]
++    pub semantic: SemanticInfo,
+ }
+ 
+ #[derive(Debug, Clone, Default)]
+@@ -167,6 +192,7 @@ fn finalize_hunk(
+         before_range,
+         after_range,
+         context,
++        semantic: SemanticInfo::default(),
+     });
+ }
+ 
+@@ -301,8 +327,12 @@ fn compute_hunk_id(hunk_type: &str, removed: &str, added: &str, context: Option<
+     format!("{HUNK_ID_PREFIX}{}", hex_encode(&digest))
+ }
+ 
++/// Normalize a hunk ID string. Accepts various prefixes (`hunk-`, `id:`,
++/// `sha:`, `sha256:`) and trailing `...` (for abbreviated IDs from diff output).
++/// Returns the normalized form `hunk-<hex>` which may be shorter than 64 chars
++/// for abbreviated IDs.
+ pub fn normalize_hunk_id(value: &str) -> Option<String> {
+-    let trimmed = value.trim();
++    let trimmed = value.trim().trim_end_matches("...");
+     if trimmed.is_empty() {
+         return None;
+     }
+diff --git a/src/glob.rs b/src/glob.rs
+new file mode 100644
+index 0000000..fe0bf4d
+--- /dev/null
++++ b/src/glob.rs
+@@ -0,0 +1,96 @@
++/// Match a glob pattern against a path.
++///
++/// Supports `*` (single segment wildcard), `**` (multi-segment), and `?` (single char).
++/// When the pattern contains no `/` or `**`, it matches against the filename only.
++pub fn glob_match(pattern: &str, path: &str) -> bool {
++    let pattern = pattern.trim_start_matches("./");
++    let path = path.trim_start_matches("./");
++
++    if pattern.contains('/') || pattern.contains("**") {
++        let pat_segs: Vec<&str> = pattern.split('/').filter(|s| !s.is_empty()).collect();
++        let path_segs: Vec<&str> = path.split('/').filter(|s| !s.is_empty()).collect();
++        match_segments(&pat_segs, &path_segs)
++    } else {
++        // Filename-only glob: match against the last path component
++        let filename = path.rsplit('/').next().unwrap_or(path);
++        match_segment(pattern, filename)
++    }
++}
++
++fn match_segments(pattern: &[&str], path: &[&str]) -> bool {
++    if pattern.is_empty() {
++        return path.is_empty();
++    }
++    if pattern[0] == "**" {
++        if match_segments(&pattern[1..], path) {
++            return true;
++        }
++        if !path.is_empty() {
++            return match_segments(pattern, &path[1..]);
++        }
++        return false;
++    }
++    if path.is_empty() {
++        return false;
++    }
++    if !match_segment(pattern[0], path[0]) {
++        return false;
++    }
++    match_segments(&pattern[1..], &path[1..])
++}
++
++fn match_segment(pattern: &str, text: &str) -> bool {
++    if pattern == "*" {
++        return true;
++    }
++    let pat: Vec<char> = pattern.chars().collect();
++    let txt: Vec<char> = text.chars().collect();
++    let mut dp = vec![vec![false; txt.len() + 1]; pat.len() + 1];
++    dp[0][0] = true;
++    for i in 1..=pat.len() {
++        if pat[i - 1] == '*' {
++            dp[i][0] = dp[i - 1][0];
++        }
++    }
++    for i in 1..=pat.len() {
++        for j in 1..=txt.len() {
++            dp[i][j] = match pat[i - 1] {
++                '*' => dp[i - 1][j] || dp[i][j - 1],
++                '?' => dp[i - 1][j - 1],
++                c => dp[i - 1][j - 1] && c == txt[j - 1],
++            };
++        }
++    }
++    dp[pat.len()][txt.len()]
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    #[test]
++    fn basic_glob() {
++        assert!(glob_match("*.rs", "lib.rs"));
++        assert!(glob_match("*.rs", "src/lib.rs")); // filename-only when no /
++        assert!(!glob_match("*.rs", "lib.py"));
++    }
++
++    #[test]
++    fn path_glob() {
++        assert!(glob_match("src/**/*.rs", "src/lib.rs"));
++        assert!(glob_match("src/**/*.rs", "src/sub/lib.rs"));
++        assert!(!glob_match("src/**/*.rs", "tests/lib.rs"));
++    }
++
++    #[test]
++    fn question_mark() {
++        assert!(glob_match("?.rs", "a.rs"));
++        assert!(!glob_match("?.rs", "ab.rs"));
++    }
++
++    #[test]
++    fn exact_path() {
++        assert!(glob_match("src/lib.rs", "src/lib.rs"));
++        assert!(!glob_match("src/lib.rs", "src/main.rs"));
++    }
++}
+diff --git a/src/hunkset/ast.rs b/src/hunkset/ast.rs
+new file mode 100644
+index 0000000..7c6040d
+--- /dev/null
++++ b/src/hunkset/ast.rs
+@@ -0,0 +1,30 @@
++#[derive(Debug, Clone, PartialEq)]
++pub enum Expr {
++    All,
++    None,
++    Function(String, Vec<Arg>),
++    Union(Box<Expr>, Box<Expr>),
++    Intersection(Box<Expr>, Box<Expr>),
++    Difference(Box<Expr>, Box<Expr>),
++    Negation(Box<Expr>),
++}
++
++#[derive(Debug, Clone, PartialEq)]
++pub enum Arg {
++    Pattern(StringPattern),
++    Range(usize, usize),
++}
++
++#[derive(Debug, Clone, PartialEq)]
++pub struct StringPattern {
++    pub kind: PatternKind,
++    pub value: String,
++}
++
++#[derive(Debug, Clone, Copy, PartialEq)]
++pub enum PatternKind {
++    Exact,
++    Substring,
++    Glob,
++    Regex,
++}
+diff --git a/src/hunkset/error.rs b/src/hunkset/error.rs
+new file mode 100644
+index 0000000..5bae047
+--- /dev/null
++++ b/src/hunkset/error.rs
+@@ -0,0 +1,34 @@
++use thiserror::Error;
++
++#[derive(Debug, Error)]
++pub enum HunksetError {
++    #[error("{message}")]
++    Parse {
++        message: String,
++        input: String,
++        position: usize,
++    },
++    #[error("unknown function '{name}'")]
++    UnknownFunction { name: String },
++    #[error("invalid regex '{pattern}': {source}")]
++    InvalidRegex {
++        pattern: String,
++        source: regex::Error,
++    },
++    #[error("{name}() requires the 'semantic' feature (build with --features semantic)")]
++    #[allow(dead_code)] // only constructed when semantic feature is disabled
++    SemanticFeatureRequired { name: String },
++}
++
++impl HunksetError {
++    /// Format the error with a caret pointing at the position in the input.
++    pub fn display_with_context(&self) -> String {
++        match self {
++            HunksetError::Parse { message, input, position } => {
++                let caret = format!("{}^", " ".repeat(*position));
++                format!("{}\n{}\n{}", input, caret, message)
++            }
++            other => format!("{}", other),
++        }
++    }
++}
+diff --git a/src/hunkset/eval.rs b/src/hunkset/eval.rs
+new file mode 100644
+index 0000000..4163001
+--- /dev/null
++++ b/src/hunkset/eval.rs
+@@ -0,0 +1,653 @@
++use crate::diff::Hunk;
++use crate::spec::{DefaultAction, FileSpec, HunkSpec, Spec};
++use std::collections::{HashMap, HashSet};
++
++use super::ast::{Arg, Expr, PatternKind, StringPattern};
++use super::error::HunksetError;
++use super::pattern::{compile_patterns, CompiledPattern};
++
++/// A hunk with its file-level context, used during evaluation.
++#[derive(Debug)]
++pub struct EnrichedHunk<'a> {
++    pub file_path: &'a str,
++    pub file_status: &'a str,
++    pub hunk: &'a Hunk,
++}
++
++/// Evaluate a hunkset expression against a list of enriched hunks.
++/// Returns a set of indices into the input slice that match.
++pub fn evaluate(expr: &Expr, hunks: &[EnrichedHunk]) -> Result<HashSet<usize>, HunksetError> {
++    match expr {
++        Expr::All => Ok((0..hunks.len()).collect()),
++        Expr::None => Ok(HashSet::new()),
++        Expr::Negation(inner) => {
++            let inner_set = evaluate(inner, hunks)?;
++            Ok((0..hunks.len())
++                .filter(|i| !inner_set.contains(i))
++                .collect())
++        }
++        Expr::Union(left, right) => {
++            let mut result = evaluate(left, hunks)?;
++            result.extend(evaluate(right, hunks)?);
++            Ok(result)
++        }
++        Expr::Intersection(left, right) => {
++            let left_set = evaluate(left, hunks)?;
++            let right_set = evaluate(right, hunks)?;
++            Ok(left_set.intersection(&right_set).copied().collect())
++        }
++        Expr::Difference(left, right) => {
++            let left_set = evaluate(left, hunks)?;
++            let right_set = evaluate(right, hunks)?;
++            Ok(left_set.difference(&right_set).copied().collect())
++        }
++        Expr::Function(name, args) => evaluate_function(name, args, hunks),
++    }
++}
++
++/// Check that the `semantic` feature is enabled. Returns an error if not.
++#[cfg(feature = "semantic")]
++fn require_semantic(_name: &str) -> Result<(), HunksetError> {
++    Ok(())
++}
++
++#[cfg(not(feature = "semantic"))]
++fn require_semantic(name: &str) -> Result<(), HunksetError> {
++    Err(HunksetError::SemanticFeatureRequired { name: name.to_string() })
++}
++
++/// Compile patterns, forcing exact match for enum-like values (type, status, extension).
++fn compile_exact(args: &[Arg]) -> Result<Vec<CompiledPattern>, HunksetError> {
++    let patterns: Vec<StringPattern> = extract_patterns(args)
++        .into_iter()
++        .map(|p| {
++            if p.kind == PatternKind::Substring {
++                StringPattern { kind: PatternKind::Exact, value: p.value }
++            } else {
++                p
++            }
++        })
++        .collect();
++    compile_patterns(patterns)
++}
++
++fn evaluate_function(name: &str, args: &[Arg], hunks: &[EnrichedHunk]) -> Result<HashSet<usize>, HunksetError> {
++    // Pre-compile patterns (validates regex upfront)
++    let compiled = compile_patterns(extract_patterns(args))?;
++
++    match name.as_ref() {
++        "file" => Ok(eval_file(args, hunks)),
++        "glob" => Ok(eval_glob(args, hunks)),
++        "extension" => { let exact = compile_exact(args)?; Ok(eval_extension(&exact, hunks)) }
++        "status" => { let exact = compile_exact(args)?; Ok(eval_status(&exact, hunks)) }
++        "type" => { let exact = compile_exact(args)?; Ok(eval_type(&exact, hunks)) }
++        "lines" => Ok(eval_lines(args, hunks, LineRangeMode::Either)),
++        "before_line" => Ok(eval_lines(args, hunks, LineRangeMode::Before)),
++        "after_line" => Ok(eval_lines(args, hunks, LineRangeMode::After)),
++        "content" => Ok(eval_content(&compiled, hunks, ContentMode::Either)),
++        "added" => Ok(eval_content(&compiled, hunks, ContentMode::Added)),
++        "removed" => Ok(eval_content(&compiled, hunks, ContentMode::Removed)),
++        "id" => Ok(eval_id(&compiled, hunks)),
++        "function" => { require_semantic(name)?; Ok(eval_semantic(&compiled, hunks, SemanticField::Function)) }
++        "scope" => { require_semantic(name)?; Ok(eval_semantic(&compiled, hunks, SemanticField::Scope)) }
++        "annotation" | "decorator" => { require_semantic(name)?; Ok(eval_annotation(&compiled, hunks)) }
++        "doc" => { require_semantic(name)?; Ok(eval_doc(hunks)) }
++        "import" => { require_semantic(name)?; Ok(eval_import(hunks)) }
++        "toplevel" => { require_semantic(name)?; Ok(eval_toplevel(hunks)) }
++        "depth" => { require_semantic(name)?; Ok(eval_depth(args, hunks)) }
++        _ => Err(HunksetError::UnknownFunction { name: name.to_string() }),
++    }
++}
++
++// --- helpers ---
++
++fn filter_by_field<'a, F>(
++    patterns: &[CompiledPattern],
++    hunks: &[EnrichedHunk<'a>],
++    field: F,
++) -> HashSet<usize>
++where
++    F: Fn(&EnrichedHunk<'a>) -> &'a str,
++{
++    hunks
++        .iter()
++        .enumerate()
++        .filter(|(_, h)| patterns.iter().any(|p| p.matches(field(h))))
++        .map(|(i, _)| i)
++        .collect()
++}
++
++fn extract_patterns(args: &[Arg]) -> Vec<StringPattern> {
++    args.iter()
++        .filter_map(|a| match a {
++            Arg::Pattern(p) => Some(p.clone()),
++            _ => None,
++        })
++        .collect()
++}
++
++fn extract_ranges(args: &[Arg]) -> Vec<(usize, usize)> {
++    args.iter()
++        .filter_map(|a| match a {
++            Arg::Range(start, end) => Some((*start, *end)),
++            _ => None,
++        })
++        .collect()
++}
++
++// --- file predicates ---
++
++/// file() defaults to exact matching for paths (not substring).
++/// Users can explicitly use `glob:` or `substring:` prefixes.
++fn eval_file(args: &[Arg], hunks: &[EnrichedHunk]) -> HashSet<usize> {
++    // unwrap: regex patterns were already validated in evaluate_function
++    let patterns = compile_exact(args).unwrap();
++    hunks
++        .iter()
++        .enumerate()
++        .filter(|(_, h)| patterns.iter().any(|p| p.matches(h.file_path)))
++        .map(|(i, _)| i)
++        .collect()
++}
++
++fn eval_glob(args: &[Arg], hunks: &[EnrichedHunk]) -> HashSet<usize> {
++    let patterns: Vec<CompiledPattern> = extract_patterns(args)
++        .into_iter()
++        .map(|p| CompiledPattern::compile(&StringPattern { kind: PatternKind::Glob, value: p.value }).unwrap())
++        .collect();
++    hunks
++        .iter()
++        .enumerate()
++        .filter(|(_, h)| patterns.iter().any(|p| p.matches(h.file_path)))
++        .map(|(i, _)| i)
++        .collect()
++}
++
++fn eval_extension(patterns: &[CompiledPattern], hunks: &[EnrichedHunk]) -> HashSet<usize> {
++    hunks
++        .iter()
++        .enumerate()
++        .filter(|(_, h)| {
++            let ext = std::path::Path::new(h.file_path)
++                .extension()
++                .and_then(|e| e.to_str())
++                .unwrap_or("");
++            patterns.iter().any(|p| p.matches(ext))
++        })
++        .map(|(i, _)| i)
++        .collect()
++}
++
++fn eval_status(patterns: &[CompiledPattern], hunks: &[EnrichedHunk]) -> HashSet<usize> {
++    filter_by_field(patterns, hunks, |h| h.file_status)
++}
++
++fn eval_type(patterns: &[CompiledPattern], hunks: &[EnrichedHunk]) -> HashSet<usize> {
++    filter_by_field(patterns, hunks, |h| &h.hunk.hunk_type)
++}
++
++// --- line ranges ---
++
++#[derive(Clone, Copy)]
++enum LineRangeMode { Before, After, Either }
++
++fn eval_lines(args: &[Arg], hunks: &[EnrichedHunk], mode: LineRangeMode) -> HashSet<usize> {
++    let ranges = extract_ranges(args);
++    if ranges.is_empty() {
++        return HashSet::new();
++    }
++    hunks
++        .iter()
++        .enumerate()
++        .filter(|(_, h)| {
++            ranges.iter().any(|&(start, end)| {
++                let before = hunk_touches_range(h.hunk.before_range.start, h.hunk.before_range.length, start, end);
++                let after = hunk_touches_range(h.hunk.after_range.start, h.hunk.after_range.length, start, end);
++                match mode {
++                    LineRangeMode::Before => before,
++                    LineRangeMode::After => after,
++                    LineRangeMode::Either => before || after,
++                }
++            })
++        })
++        .map(|(i, _)| i)
++        .collect()
++}
++
++fn hunk_touches_range(hunk_start: usize, hunk_len: usize, range_start: usize, range_end: usize) -> bool {
++    if hunk_len == 0 {
++        return hunk_start >= range_start && hunk_start <= range_end;
++    }
++    let hunk_end = hunk_start + hunk_len - 1;
++    hunk_start <= range_end && hunk_end >= range_start
++}
++
++// --- content matching ---
++
++#[derive(Clone, Copy)]
++enum ContentMode { Added, Removed, Either }
++
++fn eval_content(patterns: &[CompiledPattern], hunks: &[EnrichedHunk], mode: ContentMode) -> HashSet<usize> {
++    hunks
++        .iter()
++        .enumerate()
++        .filter(|(_, h)| {
++            patterns.iter().any(|p| match mode {
++                ContentMode::Added => p.matches(&h.hunk.added),
++                ContentMode::Removed => p.matches(&h.hunk.removed),
++                ContentMode::Either => p.matches(&h.hunk.added) || p.matches(&h.hunk.removed),
++            })
++        })
++        .map(|(i, _)| i)
++        .collect()
++}
++
++// --- stable ID ---
++
++/// Match by hunk ID, supporting prefix matching for abbreviated IDs
++/// (e.g., `id("hunk-162b7798da21...")` matches the full ID).
++fn eval_id(patterns: &[CompiledPattern], hunks: &[EnrichedHunk]) -> HashSet<usize> {
++    let ids: Vec<String> = patterns
++        .iter()
++        .filter_map(|p| crate::diff::normalize_hunk_id(p.value()))
++        .collect();
++    hunks
++        .iter()
++        .enumerate()
++        .filter(|(_, h)| {
++            ids.iter().any(|id| {
++                if id.len() < h.hunk.id.len() {
++                    h.hunk.id.starts_with(id.as_str())
++                } else {
++                    h.hunk.id == *id
++                }
++            })
++        })
++        .map(|(i, _)| i)
++        .collect()
++}
++
++// --- semantic ---
++
++#[derive(Clone, Copy)]
++enum SemanticField { Function, Scope }
++
++fn eval_semantic(patterns: &[CompiledPattern], hunks: &[EnrichedHunk], field: SemanticField) -> HashSet<usize> {
++    hunks
++        .iter()
++        .enumerate()
++        .filter(|(_, h)| {
++            let value = match field {
++                SemanticField::Function => h.hunk.semantic.enclosing_function.as_deref(),
++                SemanticField::Scope => h.hunk.semantic.enclosing_scope.as_deref(),
++            };
++            match value {
++                Some(v) => patterns.iter().any(|p| p.matches(v)),
++                None => false,
++            }
++        })
++        .map(|(i, _)| i)
++        .collect()
++}
++
++fn eval_annotation(patterns: &[CompiledPattern], hunks: &[EnrichedHunk]) -> HashSet<usize> {
++    hunks
++        .iter()
++        .enumerate()
++        .filter(|(_, h)| {
++            if patterns.is_empty() {
++                !h.hunk.semantic.annotations.is_empty()
++            } else {
++                h.hunk.semantic.annotations.iter().any(|ann| {
++                    patterns.iter().any(|p| p.matches(ann))
++                })
++            }
++        })
++        .map(|(i, _)| i)
++        .collect()
++}
++
++fn filter_by_bool<F>(hunks: &[EnrichedHunk], pred: F) -> HashSet<usize>
++where
++    F: Fn(&EnrichedHunk) -> bool,
++{
++    hunks.iter().enumerate()
++        .filter(|(_, h)| pred(h))
++        .map(|(i, _)| i)
++        .collect()
++}
++
++fn eval_doc(hunks: &[EnrichedHunk]) -> HashSet<usize> {
++    filter_by_bool(hunks, |h| h.hunk.semantic.is_doc_comment)
++}
++
++fn eval_import(hunks: &[EnrichedHunk]) -> HashSet<usize> {
++    filter_by_bool(hunks, |h| h.hunk.semantic.is_import)
++}
++
++fn eval_toplevel(hunks: &[EnrichedHunk]) -> HashSet<usize> {
++    filter_by_bool(hunks, |h| h.hunk.semantic.is_toplevel)
++}
++
++fn eval_depth(args: &[Arg], hunks: &[EnrichedHunk]) -> HashSet<usize> {
++    let mut exact: Vec<usize> = Vec::new();
++    let mut ranges: Vec<(usize, usize)> = Vec::new();
++    for arg in args {
++        match arg {
++            Arg::Pattern(p) => {
++                if let Ok(n) = p.value.parse::<usize>() {
++                    exact.push(n);
++                }
++            }
++            Arg::Range(start, end) => {
++                ranges.push((*start, *end));
++            }
++        }
++    }
++    hunks
++        .iter()
++        .enumerate()
++        .filter(|(_, h)| {
++            let d = h.hunk.semantic.nesting_depth;
++            exact.contains(&d) || ranges.iter().any(|&(lo, hi)| d >= lo && d <= hi)
++        })
++        .map(|(i, _)| i)
++        .collect()
++}
++
++// ---------------------------------------------------------------------------
++// Hunkset → Spec conversion
++// ---------------------------------------------------------------------------
++
++/// Convert a set of matched enriched hunks into a Spec suitable for
++/// split/commit/squash operations.
++pub fn to_spec(selected: &HashSet<usize>, hunks: &[EnrichedHunk]) -> Spec {
++    let mut files: HashMap<String, Vec<String>> = HashMap::new();
++
++    for &idx in selected {
++        let Some(h) = hunks.get(idx) else { continue };
++        files
++            .entry(h.file_path.to_string())
++            .or_default()
++            .push(h.hunk.id.clone());
++    }
++
++    let spec_files: HashMap<String, FileSpec> = files
++        .into_iter()
++        .map(|(path, ids)| {
++            let hunk_spec = HunkSpec {
++                hunks: Vec::new(),
++                ids,
++            };
++            (path, FileSpec::Selection(hunk_spec))
++        })
++        .collect();
++
++    Spec {
++        files: spec_files,
++        default: DefaultAction::Reset,
++    }
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    use crate::diff::LineRange;
++    use crate::hunkset::parse;
++
++    fn make_hunk(index: usize, hunk_type: &str, removed: &str, added: &str) -> Hunk {
++        Hunk {
++            index,
++            id: format!("hunk-{:064x}", index),
++            hunk_type: hunk_type.to_string(),
++            removed: removed.to_string(),
++            added: added.to_string(),
++            before_range: LineRange {
++                start: index * 10 + 1,
++                length: if removed.is_empty() { 0 } else { removed.lines().count() },
++            },
++            after_range: LineRange {
++                start: index * 10 + 1,
++                length: if added.is_empty() { 0 } else { added.lines().count() },
++            },
++            context: None,
++            semantic: crate::diff::SemanticInfo::default(),
++        }
++    }
++
++    #[test]
++    fn eval_type_filter() {
++        let hunks_data = vec![
++            make_hunk(0, "insert", "", "new line\n"),
++            make_hunk(1, "delete", "old line\n", ""),
++            make_hunk(2, "replace", "before\n", "after\n"),
++        ];
++        let enriched: Vec<EnrichedHunk> = hunks_data
++            .iter()
++            .map(|h| EnrichedHunk { file_path: "src/lib.rs", file_status: "modified", hunk: h })
++            .collect();
++
++        assert_eq!(evaluate(&parse("type(insert)").unwrap(), &enriched).unwrap(), HashSet::from([0]));
++        assert_eq!(evaluate(&parse("type(insert) | type(delete)").unwrap(), &enriched).unwrap(), HashSet::from([0, 1]));
++    }
++
++    #[test]
++    fn eval_file_filter() {
++        let h1 = make_hunk(0, "insert", "", "x\n");
++        let h2 = make_hunk(1, "insert", "", "y\n");
++        let enriched = vec![
++            EnrichedHunk { file_path: "src/lib.rs", file_status: "modified", hunk: &h1 },
++            EnrichedHunk { file_path: "tests/test.rs", file_status: "added", hunk: &h2 },
++        ];
++        assert_eq!(evaluate(&parse(r#"file("src/lib.rs")"#).unwrap(), &enriched).unwrap(), HashSet::from([0]));
++    }
++
++    #[test]
++    fn eval_glob_filter() {
++        let h1 = make_hunk(0, "insert", "", "x\n");
++        let h2 = make_hunk(1, "insert", "", "y\n");
++        let enriched = vec![
++            EnrichedHunk { file_path: "src/lib.rs", file_status: "modified", hunk: &h1 },
++            EnrichedHunk { file_path: "tests/test.rs", file_status: "added", hunk: &h2 },
++        ];
++        assert_eq!(evaluate(&parse(r#"glob("src/**/*.rs")"#).unwrap(), &enriched).unwrap(), HashSet::from([0]));
++    }
++
++    #[test]
++    fn eval_content_filter() {
++        let h1 = make_hunk(0, "insert", "", "TODO: fix this\n");
++        let h2 = make_hunk(1, "replace", "old code\n", "new code\n");
++        let enriched = vec![
++            EnrichedHunk { file_path: "a.rs", file_status: "modified", hunk: &h1 },
++            EnrichedHunk { file_path: "b.rs", file_status: "modified", hunk: &h2 },
++        ];
++        assert_eq!(evaluate(&parse(r#"added("TODO")"#).unwrap(), &enriched).unwrap(), HashSet::from([0]));
++        assert_eq!(evaluate(&parse(r#"removed("old")"#).unwrap(), &enriched).unwrap(), HashSet::from([1]));
++    }
++
++    #[test]
++    fn eval_intersection_and_difference() {
++        let h1 = make_hunk(0, "insert", "", "new\n");
++        let h2 = make_hunk(1, "insert", "", "also new\n");
++        let h3 = make_hunk(2, "delete", "gone\n", "");
++        let enriched = vec![
++            EnrichedHunk { file_path: "src/a.rs", file_status: "modified", hunk: &h1 },
++            EnrichedHunk { file_path: "src/b.rs", file_status: "modified", hunk: &h2 },
++            EnrichedHunk { file_path: "tests/c.rs", file_status: "modified", hunk: &h3 },
++        ];
++        assert_eq!(evaluate(&parse(r#"type(insert) & glob("src/**")"#).unwrap(), &enriched).unwrap(), HashSet::from([0, 1]));
++        assert_eq!(evaluate(&parse("all() ~ type(delete)").unwrap(), &enriched).unwrap(), HashSet::from([0, 1]));
++    }
++
++    #[test]
++    fn eval_lines_filter() {
++        let mut h1 = make_hunk(0, "replace", "old\n", "new\n");
++        h1.before_range.start = 5;
++        h1.before_range.length = 1;
++        let mut h2 = make_hunk(1, "insert", "", "added\n");
++        h2.before_range.start = 25;
++        h2.before_range.length = 0;
++        let enriched = vec![
++            EnrichedHunk { file_path: "a.rs", file_status: "modified", hunk: &h1 },
++            EnrichedHunk { file_path: "a.rs", file_status: "modified", hunk: &h2 },
++        ];
++        assert_eq!(evaluate(&parse("lines(1..10)").unwrap(), &enriched).unwrap(), HashSet::from([0]));
++        assert_eq!(evaluate(&parse("lines(20..30)").unwrap(), &enriched).unwrap(), HashSet::from([1]));
++    }
++
++    #[test]
++    fn eval_to_spec() {
++        let h1 = make_hunk(0, "insert", "", "x\n");
++        let h2 = make_hunk(1, "delete", "y\n", "");
++        let enriched = vec![
++            EnrichedHunk { file_path: "src/a.rs", file_status: "modified", hunk: &h1 },
++            EnrichedHunk { file_path: "src/b.rs", file_status: "modified", hunk: &h2 },
++        ];
++        let selected = HashSet::from([0]);
++        let spec = to_spec(&selected, &enriched);
++        assert_eq!(spec.default, DefaultAction::Reset);
++        assert!(spec.files.contains_key("src/a.rs"));
++        assert!(!spec.files.contains_key("src/b.rs"));
++    }
++
++    #[test]
++    fn unknown_function_is_error() {
++        let h = make_hunk(0, "insert", "", "x\n");
++        let enriched = vec![EnrichedHunk { file_path: "a.rs", file_status: "modified", hunk: &h }];
++        let expr = parse("functon(\"foo\")").unwrap();
++        assert!(matches!(evaluate(&expr, &enriched).unwrap_err(), HunksetError::UnknownFunction { .. }));
++    }
++
++    #[test]
++    fn invalid_regex_is_error() {
++        let h = make_hunk(0, "insert", "", "x\n");
++        let enriched = vec![EnrichedHunk { file_path: "a.rs", file_status: "modified", hunk: &h }];
++        let expr = parse(r#"added(regex:"(unclosed")"#).unwrap();
++        assert!(matches!(evaluate(&expr, &enriched).unwrap_err(), HunksetError::InvalidRegex { .. }));
++    }
++
++    #[test]
++    #[cfg(not(feature = "semantic"))]
++    fn semantic_functions_require_feature() {
++        let h = make_hunk(0, "insert", "", "x\n");
++        let enriched = vec![EnrichedHunk { file_path: "a.rs", file_status: "modified", hunk: &h }];
++        for func in &["scope(\"Foo\")", "function(\"bar\")", "doc()", "import()", "toplevel()", "depth(0)", "annotation(\"test\")"] {
++            let expr = parse(func).unwrap();
++            let err = evaluate(&expr, &enriched).unwrap_err();
++            assert!(matches!(err, HunksetError::SemanticFeatureRequired { .. }), "expected SemanticFeatureRequired for {}", func);
++        }
++    }
++
++    #[test]
++    fn eval_on_empty_hunks() {
++        let empty: Vec<EnrichedHunk> = vec![];
++        assert!(evaluate(&parse("all()").unwrap(), &empty).unwrap().is_empty());
++        assert!(evaluate(&parse("none()").unwrap(), &empty).unwrap().is_empty());
++        assert!(evaluate(&parse("type(insert)").unwrap(), &empty).unwrap().is_empty());
++    }
++
++    #[test]
++    fn eval_extension_filter() {
++        let h1 = make_hunk(0, "insert", "", "x\n");
++        let h2 = make_hunk(1, "insert", "", "y\n");
++        let enriched = vec![
++            EnrichedHunk { file_path: "src/lib.rs", file_status: "modified", hunk: &h1 },
++            EnrichedHunk { file_path: "src/lib.py", file_status: "modified", hunk: &h2 },
++        ];
++        assert_eq!(evaluate(&parse("extension(rs)").unwrap(), &enriched).unwrap(), HashSet::from([0]));
++    }
++
++    #[test]
++    fn eval_status_filter() {
++        let h1 = make_hunk(0, "insert", "", "x\n");
++        let h2 = make_hunk(1, "insert", "", "y\n");
++        let enriched = vec![
++            EnrichedHunk { file_path: "a.rs", file_status: "modified", hunk: &h1 },
++            EnrichedHunk { file_path: "b.rs", file_status: "added", hunk: &h2 },
++        ];
++        assert_eq!(evaluate(&parse("status(added)").unwrap(), &enriched).unwrap(), HashSet::from([1]));
++    }
++
++    #[test]
++    #[cfg(feature = "semantic")]
++    fn eval_doc_import_toplevel() {
++        let mut h1 = make_hunk(0, "insert", "", "/// doc\n");
++        h1.semantic.is_doc_comment = true;
++        let mut h2 = make_hunk(1, "insert", "", "use foo;\n");
++        h2.semantic.is_import = true;
++        let mut h3 = make_hunk(2, "insert", "", "const X: i32 = 1;\n");
++        h3.semantic.is_toplevel = true;
++        let enriched = vec![
++            EnrichedHunk { file_path: "a.rs", file_status: "modified", hunk: &h1 },
++            EnrichedHunk { file_path: "a.rs", file_status: "modified", hunk: &h2 },
++            EnrichedHunk { file_path: "a.rs", file_status: "modified", hunk: &h3 },
++        ];
++        assert_eq!(evaluate(&parse("doc()").unwrap(), &enriched).unwrap(), HashSet::from([0]));
++        assert_eq!(evaluate(&parse("import()").unwrap(), &enriched).unwrap(), HashSet::from([1]));
++        assert_eq!(evaluate(&parse("toplevel()").unwrap(), &enriched).unwrap(), HashSet::from([2]));
++    }
++
++    #[test]
++    #[cfg(feature = "semantic")]
++    fn eval_depth_filter() {
++        let mut h1 = make_hunk(0, "insert", "", "x\n");
++        h1.semantic.nesting_depth = 0;
++        let mut h2 = make_hunk(1, "insert", "", "y\n");
++        h2.semantic.nesting_depth = 1;
++        let mut h3 = make_hunk(2, "insert", "", "z\n");
++        h3.semantic.nesting_depth = 2;
++        let enriched = vec![
++            EnrichedHunk { file_path: "a.rs", file_status: "modified", hunk: &h1 },
++            EnrichedHunk { file_path: "a.rs", file_status: "modified", hunk: &h2 },
++            EnrichedHunk { file_path: "a.rs", file_status: "modified", hunk: &h3 },
++        ];
++        assert_eq!(evaluate(&parse("depth(0)").unwrap(), &enriched).unwrap(), HashSet::from([0]));
++        assert_eq!(evaluate(&parse("depth(0..1)").unwrap(), &enriched).unwrap(), HashSet::from([0, 1]));
++    }
++
++    #[test]
++    #[cfg(feature = "semantic")]
++    fn eval_annotation_filter() {
++        let mut h1 = make_hunk(0, "insert", "", "x\n");
++        h1.semantic.annotations = vec!["#[test]".to_string()];
++        let h2 = make_hunk(1, "insert", "", "y\n");
++        let enriched = vec![
++            EnrichedHunk { file_path: "a.rs", file_status: "modified", hunk: &h1 },
++            EnrichedHunk { file_path: "a.rs", file_status: "modified", hunk: &h2 },
++        ];
++        assert_eq!(evaluate(&parse(r#"annotation("test")"#).unwrap(), &enriched).unwrap(), HashSet::from([0]));
++        assert_eq!(evaluate(&parse("annotation()").unwrap(), &enriched).unwrap(), HashSet::from([0]));
++        assert_eq!(evaluate(&parse(r#"decorator("test")"#).unwrap(), &enriched).unwrap(), HashSet::from([0]));
++    }
++
++    #[test]
++    fn eval_regex_content() {
++        let h1 = make_hunk(0, "insert", "", "fn hello_world() {\n");
++        let h2 = make_hunk(1, "insert", "", "let x = 1;\n");
++        let enriched = vec![
++            EnrichedHunk { file_path: "a.rs", file_status: "modified", hunk: &h1 },
++            EnrichedHunk { file_path: "a.rs", file_status: "modified", hunk: &h2 },
++        ];
++        assert_eq!(evaluate(&parse(r#"added(regex:"fn\s+\w+")"#).unwrap(), &enriched).unwrap(), HashSet::from([0]));
++    }
++
++    #[test]
++    fn to_spec_multi_file() {
++        let h1 = make_hunk(0, "insert", "", "x\n");
++        let h2 = make_hunk(1, "insert", "", "y\n");
++        let h3 = make_hunk(2, "delete", "z\n", "");
++        let enriched = vec![
++            EnrichedHunk { file_path: "src/a.rs", file_status: "modified", hunk: &h1 },
++            EnrichedHunk { file_path: "src/a.rs", file_status: "modified", hunk: &h2 },
++            EnrichedHunk { file_path: "src/b.rs", file_status: "modified", hunk: &h3 },
++        ];
++        let selected = HashSet::from([0, 2]);
++        let spec = to_spec(&selected, &enriched);
++        assert!(spec.files.contains_key("src/a.rs"));
++        assert!(spec.files.contains_key("src/b.rs"));
++        match spec.files.get("src/a.rs").unwrap() {
++            FileSpec::Selection(hs) => assert_eq!(hs.ids.len(), 1),
++            _ => panic!("expected Selection"),
++        }
++    }
++}
+diff --git a/src/hunkset/mod.rs b/src/hunkset/mod.rs
+new file mode 100644
+index 0000000..9719766
+--- /dev/null
++++ b/src/hunkset/mod.rs
+@@ -0,0 +1,60 @@
++//! Hunkset: an algebraic query language for selecting diff hunks.
++//!
++//! Inspired by jj's fileset and revset languages, hunkset expressions compose
++//! using set algebra (`|`, `&`, `~`) with predicate functions that filter hunks
++//! by file path, hunk type, content, line ranges, and semantic context.
++//!
++//! # Example
++//!
++//! ```text
++//! type(insert) & glob("src/**/*.rs") ~ annotation("test")
++//! ```
++//!
++//! Selects all insertions in Rust source files that are not inside `#[test]`
++//! functions.
++
++mod ast;
++mod error;
++mod eval;
++mod parser;
++mod pattern;
++
++#[allow(unused_imports)]
++pub use error::HunksetError;
++pub use eval::{evaluate, to_spec, EnrichedHunk};
++pub use parser::parse;
++
++/// Returns true if the input looks like a hunkset expression rather than
++/// JSON or YAML. Uses a trial parse: if it parses as a hunkset, it is one.
++pub fn is_hunkset(input: &str) -> bool {
++    let trimmed = input.trim();
++    if trimmed.is_empty() {
++        return false;
++    }
++    // Quick reject: JSON/YAML object/array literals
++    let first = trimmed.as_bytes()[0];
++    if first == b'{' || first == b'[' {
++        return false;
++    }
++    // Require at least one `(` to avoid false positives on bare YAML values
++    // like `all`, `none`, `reset`, etc.
++    if !trimmed.contains('(') {
++        return false;
++    }
++    parse(trimmed).is_ok()
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    #[test]
++    fn detect_hunkset_vs_json() {
++        assert!(is_hunkset("type(insert)"));
++        assert!(is_hunkset("all()"));
++        assert!(is_hunkset("~type(delete)"));
++        assert!(is_hunkset("(type(insert) | type(delete))"));
++        assert!(!is_hunkset(r#"{"files": {}}"#));
++        assert!(!is_hunkset("[1, 2, 3]"));
++    }
++}
+diff --git a/src/hunkset/parser.rs b/src/hunkset/parser.rs
+new file mode 100644
+index 0000000..b02ede9
+--- /dev/null
++++ b/src/hunkset/parser.rs
+@@ -0,0 +1,595 @@
++use super::ast::{Arg, Expr, PatternKind, StringPattern};
++use super::error::HunksetError;
++
++// ---------------------------------------------------------------------------
++// Tokenizer
++// ---------------------------------------------------------------------------
++
++#[derive(Debug, Clone, PartialEq)]
++enum TokenKind {
++    LParen,
++    RParen,
++    Pipe,
++    Ampersand,
++    Tilde,
++    Comma,
++    DotDot,
++    Ident(String),
++    Str(String),
++    Number(usize),
++    Colon,
++}
++
++#[derive(Debug, Clone)]
++struct Token {
++    kind: TokenKind,
++    pos: usize,
++}
++
++struct Tokenizer {
++    chars: Vec<char>,
++    pos: usize,
++}
++
++impl Tokenizer {
++    fn new(input: &str) -> Self {
++        Self {
++            chars: input.chars().collect(),
++            pos: 0,
++        }
++    }
++
++    fn peek_char(&self) -> Option<char> {
++        self.chars.get(self.pos).copied()
++    }
++
++    fn next_char(&mut self) -> Option<char> {
++        let ch = self.chars.get(self.pos).copied();
++        if ch.is_some() {
++            self.pos += 1;
++        }
++        ch
++    }
++
++    fn skip_whitespace(&mut self) {
++        while let Some(ch) = self.peek_char() {
++            if ch.is_whitespace() {
++                self.pos += 1;
++            } else {
++                break;
++            }
++        }
++    }
++
++    fn emit(&self, kind: TokenKind, pos: usize) -> Token {
++        Token { kind, pos }
++    }
++
++    fn tokenize(&mut self) -> Result<Vec<Token>, String> {
++        let mut tokens = Vec::new();
++
++        loop {
++            self.skip_whitespace();
++            let Some(ch) = self.peek_char() else {
++                break;
++            };
++
++            let start = self.pos;
++            match ch {
++                '(' => { self.next_char(); tokens.push(self.emit(TokenKind::LParen, start)); }
++                ')' => { self.next_char(); tokens.push(self.emit(TokenKind::RParen, start)); }
++                '|' => { self.next_char(); tokens.push(self.emit(TokenKind::Pipe, start)); }
++                '&' => { self.next_char(); tokens.push(self.emit(TokenKind::Ampersand, start)); }
++                '~' => { self.next_char(); tokens.push(self.emit(TokenKind::Tilde, start)); }
++                ',' => { self.next_char(); tokens.push(self.emit(TokenKind::Comma, start)); }
++                ':' => { self.next_char(); tokens.push(self.emit(TokenKind::Colon, start)); }
++                '.' => {
++                    if self.chars.get(self.pos + 1) == Some(&'.') {
++                        self.pos += 2;
++                        tokens.push(self.emit(TokenKind::DotDot, start));
++                    } else {
++                        return Err(format!("unexpected '.' at position {}", self.pos));
++                    }
++                }
++                '"' => { tokens.push(self.read_string(start)?); }
++                _ if ch.is_ascii_digit() => { tokens.push(self.read_number(start)?); }
++                _ if is_ident_start(ch) => { tokens.push(self.read_ident(start)); }
++                _ => {
++                    return Err(format!("unexpected character '{}' at position {}", ch, self.pos));
++                }
++            }
++        }
++
++        Ok(tokens)
++    }
++
++    fn read_string(&mut self, start: usize) -> Result<Token, String> {
++        self.next_char(); // consume opening quote
++        let mut value = String::new();
++        loop {
++            match self.next_char() {
++                Some('"') => return Ok(Token { kind: TokenKind::Str(value), pos: start }),
++                Some('\\') => match self.next_char() {
++                    Some('n') => value.push('\n'),
++                    Some('t') => value.push('\t'),
++                    Some('\\') => value.push('\\'),
++                    Some('"') => value.push('"'),
++                    Some(c) => { value.push('\\'); value.push(c); }
++                    None => return Err("unterminated string escape".to_string()),
++                },
++                Some(c) => value.push(c),
++                None => return Err("unterminated string literal".to_string()),
++            }
++        }
++    }
++
++    fn read_number(&mut self, start: usize) -> Result<Token, String> {
++        let mut digits = String::new();
++        while let Some(ch) = self.peek_char() {
++            if ch.is_ascii_digit() {
++                digits.push(ch);
++                self.next_char();
++            } else {
++                break;
++            }
++        }
++        let n: usize = digits.parse().map_err(|_| {
++            format!("number too large at position {}", start)
++        })?;
++        Ok(Token { kind: TokenKind::Number(n), pos: start })
++    }
++
++    fn read_ident(&mut self, start: usize) -> Token {
++        let mut name = String::new();
++        while let Some(ch) = self.peek_char() {
++            if is_ident_char(ch) {
++                name.push(ch);
++                self.next_char();
++            } else {
++                break;
++            }
++        }
++        Token { kind: TokenKind::Ident(name), pos: start }
++    }
++}
++
++fn is_ident_start(ch: char) -> bool {
++    ch.is_ascii_alphabetic() || ch == '_'
++}
++
++fn is_ident_char(ch: char) -> bool {
++    ch.is_ascii_alphanumeric() || ch == '_' || ch == '-'
++}
++
++// ---------------------------------------------------------------------------
++// Parser
++// ---------------------------------------------------------------------------
++
++struct Parser {
++    input: String,
++    tokens: Vec<Token>,
++    pos: usize,
++}
++
++impl Parser {
++    fn new(input: &str, tokens: Vec<Token>) -> Self {
++        Self { input: input.to_string(), tokens, pos: 0 }
++    }
++
++    fn peek(&self) -> Option<&TokenKind> {
++        self.tokens.get(self.pos).map(|t| &t.kind)
++    }
++
++    fn next_token(&mut self) -> Option<Token> {
++        let tok = self.tokens.get(self.pos).cloned();
++        if tok.is_some() {
++            self.pos += 1;
++        }
++        tok
++    }
++
++    fn next_kind(&mut self) -> Option<TokenKind> {
++        self.next_token().map(|t| t.kind)
++    }
++
++    fn expect(&mut self, expected: &TokenKind) -> Result<(), HunksetError> {
++        match self.next_token() {
++            Some(tok) if tok.kind == *expected => Ok(()),
++            Some(tok) => Err(self.error_at(tok.pos, &format!("expected {:?}, got {:?}", expected, tok.kind))),
++            None => Err(self.error_at(self.input.len(), &format!("expected {:?}, got end of input", expected))),
++        }
++    }
++
++    fn error_at(&self, pos: usize, msg: &str) -> HunksetError {
++        HunksetError::Parse {
++            message: msg.to_string(),
++            input: self.input.clone(),
++            position: pos,
++        }
++    }
++
++    fn current_pos(&self) -> usize {
++        self.tokens.get(self.pos).map(|t| t.pos).unwrap_or(self.input.len())
++    }
++
++    fn parse(&mut self) -> Result<Expr, HunksetError> {
++        let expr = self.parse_union()?;
++        if self.pos < self.tokens.len() {
++            let tok = &self.tokens[self.pos];
++            return Err(self.error_at(tok.pos, &format!("unexpected {:?}", tok.kind)));
++        }
++        Ok(expr)
++    }
++
++    fn parse_union(&mut self) -> Result<Expr, HunksetError> {
++        let mut left = self.parse_intersection()?;
++        while self.peek() == Some(&TokenKind::Pipe) {
++            self.next_kind();
++            let right = self.parse_intersection()?;
++            left = Expr::Union(Box::new(left), Box::new(right));
++        }
++        Ok(left)
++    }
++
++    fn parse_intersection(&mut self) -> Result<Expr, HunksetError> {
++        let mut left = self.parse_difference()?;
++        while self.peek() == Some(&TokenKind::Ampersand) {
++            self.next_kind();
++            let right = self.parse_difference()?;
++            left = Expr::Intersection(Box::new(left), Box::new(right));
++        }
++        Ok(left)
++    }
++
++    /// Difference is intentionally non-associative (`a ~ b ~ c` is a parse
++    /// error). Use parentheses: `(a ~ b) ~ c`. This matches jj's revset.
++    fn parse_difference(&mut self) -> Result<Expr, HunksetError> {
++        let left = self.parse_negation()?;
++        if self.peek() == Some(&TokenKind::Tilde) {
++            self.next_kind();
++            let right = self.parse_negation()?;
++            Ok(Expr::Difference(Box::new(left), Box::new(right)))
++        } else {
++            Ok(left)
++        }
++    }
++
++    /// Negation is right-recursive: `~~x` is `~(~x)` (double negation).
++    fn parse_negation(&mut self) -> Result<Expr, HunksetError> {
++        if self.peek() == Some(&TokenKind::Tilde) {
++            self.next_kind();
++            let inner = self.parse_negation()?;
++            Ok(Expr::Negation(Box::new(inner)))
++        } else {
++            self.parse_atom()
++        }
++    }
++
++    fn parse_atom(&mut self) -> Result<Expr, HunksetError> {
++        match self.peek() {
++            Some(TokenKind::LParen) => {
++                self.next_kind();
++                let expr = self.parse_union()?;
++                self.expect(&TokenKind::RParen)?;
++                Ok(expr)
++            }
++            Some(TokenKind::Ident(_)) => self.parse_function_call(),
++            _ => Err(self.error_at(self.current_pos(), "expected function or '('")),
++        }
++    }
++
++    fn parse_function_call(&mut self) -> Result<Expr, HunksetError> {
++        let name = match self.next_kind() {
++            Some(TokenKind::Ident(name)) => name,
++            _ => return Err(self.error_at(self.current_pos(), "expected function name")),
++        };
++
++        if self.peek() != Some(&TokenKind::LParen) {
++            return match name.as_str() {
++                "all" => Ok(Expr::All),
++                "none" => Ok(Expr::None),
++                _ => Err(self.error_at(self.current_pos(), &format!("expected '(' after '{}'", name))),
++            };
++        }
++
++        self.expect(&TokenKind::LParen)?;
++
++        if name == "all" || name == "none" {
++            self.expect(&TokenKind::RParen)?;
++            return Ok(if name == "all" { Expr::All } else { Expr::None });
++        }
++
++        let mut args = Vec::new();
++        if self.peek() != Some(&TokenKind::RParen) {
++            args.push(self.parse_arg()?);
++            while self.peek() == Some(&TokenKind::Comma) {
++                self.next_kind();
++                args.push(self.parse_arg()?);
++            }
++        }
++
++        self.expect(&TokenKind::RParen)?;
++        Ok(Expr::Function(name, args))
++    }
++
++    fn parse_arg(&mut self) -> Result<Arg, HunksetError> {
++        match self.peek().cloned() {
++            Some(TokenKind::Number(_)) => {
++                let n = match self.next_kind() {
++                    Some(TokenKind::Number(n)) => n,
++                    _ => unreachable!(),
++                };
++                if self.peek() == Some(&TokenKind::DotDot) {
++                    self.next_kind();
++                    match self.next_kind() {
++                        Some(TokenKind::Number(m)) => Ok(Arg::Range(n, m)),
++                        _ => Err(self.error_at(self.current_pos(), "expected number after '..'")),
++                    }
++                } else {
++                    Ok(Arg::Pattern(StringPattern {
++                        kind: PatternKind::Exact,
++                        value: n.to_string(),
++                    }))
++                }
++            }
++            Some(TokenKind::Str(_)) => {
++                let value = match self.next_kind() {
++                    Some(TokenKind::Str(s)) => s,
++                    _ => unreachable!(),
++                };
++                Ok(Arg::Pattern(StringPattern {
++                    kind: PatternKind::Substring,
++                    value,
++                }))
++            }
++            Some(TokenKind::Ident(_)) => {
++                let ident = match self.next_kind() {
++                    Some(TokenKind::Ident(s)) => s,
++                    _ => unreachable!(),
++                };
++                if self.peek() == Some(&TokenKind::Colon) {
++                    let kind = match ident.as_str() {
++                        "exact" => PatternKind::Exact,
++                        "substring" => PatternKind::Substring,
++                        "glob" => PatternKind::Glob,
++                        "regex" => PatternKind::Regex,
++                        _ => return Err(self.error_at(self.current_pos(), &format!("unknown pattern kind '{}'", ident))),
++                    };
++                    self.next_kind(); // consume colon
++                    let value = match self.next_kind() {
++                        Some(TokenKind::Str(s)) => s,
++                        Some(TokenKind::Ident(s)) => s,
++                        _ => {
++                            return Err(self.error_at(self.current_pos(), &format!("expected string after '{}:'", ident)))
++                        }
++                    };
++                    Ok(Arg::Pattern(StringPattern { kind, value }))
++                } else {
++                    Ok(Arg::Pattern(StringPattern {
++                        kind: PatternKind::Exact,
++                        value: ident,
++                    }))
++                }
++            }
++            _ => Err(self.error_at(self.current_pos(), "expected argument")),
++        }
++    }
++}
++
++/// Parse a hunkset expression string into an AST.
++pub fn parse(input: &str) -> Result<Expr, HunksetError> {
++    let mut tokenizer = Tokenizer::new(input);
++    let tokens = tokenizer.tokenize().map_err(|e| {
++        let pos = e
++            .rfind("position ")
++            .and_then(|idx| e[idx + 9..].trim().parse::<usize>().ok())
++            .unwrap_or(0);
++        HunksetError::Parse {
++            message: e,
++            input: input.to_string(),
++            position: pos,
++        }
++    })?;
++    if tokens.is_empty() {
++        return Err(HunksetError::Parse {
++            message: "empty expression".to_string(),
++            input: input.to_string(),
++            position: 0,
++        });
++    }
++    let mut parser = Parser::new(input, tokens);
++    parser.parse()
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    fn kinds(tokens: &[Token]) -> Vec<&TokenKind> {
++        tokens.iter().map(|t| &t.kind).collect()
++    }
++
++    #[test]
++    fn tokenize_simple_expression() {
++        let mut t = Tokenizer::new("type(insert) & file(\"src/lib.rs\")");
++        let tokens = t.tokenize().unwrap();
++        assert_eq!(
++            kinds(&tokens),
++            vec![
++                &TokenKind::Ident("type".into()),
++                &TokenKind::LParen,
++                &TokenKind::Ident("insert".into()),
++                &TokenKind::RParen,
++                &TokenKind::Ampersand,
++                &TokenKind::Ident("file".into()),
++                &TokenKind::LParen,
++                &TokenKind::Str("src/lib.rs".into()),
++                &TokenKind::RParen,
++            ]
++        );
++    }
++
++    #[test]
++    fn tokenize_range() {
++        let mut t = Tokenizer::new("lines(10..20)");
++        let tokens = t.tokenize().unwrap();
++        assert_eq!(
++            kinds(&tokens),
++            vec![
++                &TokenKind::Ident("lines".into()),
++                &TokenKind::LParen,
++                &TokenKind::Number(10),
++                &TokenKind::DotDot,
++                &TokenKind::Number(20),
++                &TokenKind::RParen,
++            ]
++        );
++    }
++
++    #[test]
++    fn tokenize_pattern_prefix() {
++        let mut t = Tokenizer::new(r#"added(regex:"fn\s+")"#);
++        let tokens = t.tokenize().unwrap();
++        assert_eq!(
++            kinds(&tokens),
++            vec![
++                &TokenKind::Ident("added".into()),
++                &TokenKind::LParen,
++                &TokenKind::Ident("regex".into()),
++                &TokenKind::Colon,
++                &TokenKind::Str(r"fn\s+".into()),
++                &TokenKind::RParen,
++            ]
++        );
++    }
++
++    #[test]
++    fn tokenize_string_escapes() {
++        let mut t = Tokenizer::new(r#""hello\nworld""#);
++        let tokens = t.tokenize().unwrap();
++        assert_eq!(tokens.len(), 1);
++        match &tokens[0].kind {
++            TokenKind::Str(s) => assert_eq!(s, "hello\nworld"),
++            _ => panic!("expected string"),
++        }
++    }
++
++    #[test]
++    fn parse_all_none() {
++        assert_eq!(parse("all()").unwrap(), Expr::All);
++        assert_eq!(parse("none()").unwrap(), Expr::None);
++    }
++
++    #[test]
++    fn parse_simple_function() {
++        let expr = parse("type(insert)").unwrap();
++        assert_eq!(
++            expr,
++            Expr::Function(
++                "type".into(),
++                vec![Arg::Pattern(StringPattern {
++                    kind: PatternKind::Exact,
++                    value: "insert".into(),
++                })]
++            )
++        );
++    }
++
++    #[test]
++    fn parse_union() {
++        assert!(matches!(
++            parse("type(insert) | type(delete)").unwrap(),
++            Expr::Union(_, _)
++        ));
++    }
++
++    #[test]
++    fn parse_intersection() {
++        assert!(matches!(
++            parse("type(insert) & file(\"src/lib.rs\")").unwrap(),
++            Expr::Intersection(_, _)
++        ));
++    }
++
++    #[test]
++    fn parse_negation() {
++        assert!(matches!(
++            parse("~type(delete)").unwrap(),
++            Expr::Negation(_)
++        ));
++    }
++
++    #[test]
++    fn parse_difference() {
++        assert!(matches!(
++            parse("all() ~ type(delete)").unwrap(),
++            Expr::Difference(_, _)
++        ));
++    }
++
++    #[test]
++    fn parse_precedence() {
++        // a | b & c should parse as a | (b & c)
++        match parse("type(insert) | type(replace) & file(\"x\")").unwrap() {
++            Expr::Union(_, right) => assert!(matches!(*right, Expr::Intersection(_, _))),
++            other => panic!("expected union, got {:?}", other),
++        }
++    }
++
++    #[test]
++    fn parse_parenthesized() {
++        match parse("(type(insert) | type(replace)) & file(\"x\")").unwrap() {
++            Expr::Intersection(left, _) => assert!(matches!(*left, Expr::Union(_, _))),
++            other => panic!("expected intersection, got {:?}", other),
++        }
++    }
++
++    #[test]
++    fn parse_range_arg() {
++        assert_eq!(
++            parse("lines(10..20)").unwrap(),
++            Expr::Function("lines".into(), vec![Arg::Range(10, 20)])
++        );
++    }
++
++    #[test]
++    fn parse_pattern_prefix() {
++        assert_eq!(
++            parse(r#"added(regex:"TODO")"#).unwrap(),
++            Expr::Function(
++                "added".into(),
++                vec![Arg::Pattern(StringPattern {
++                    kind: PatternKind::Regex,
++                    value: "TODO".into(),
++                })]
++            )
++        );
++    }
++
++    #[test]
++    fn parse_multiple_args() {
++        match parse(r#"id("hunk-aabb", "hunk-ccdd")"#).unwrap() {
++            Expr::Function(name, args) => {
++                assert_eq!(name, "id");
++                assert_eq!(args.len(), 2);
++            }
++            other => panic!("expected function, got {:?}", other),
++        }
++    }
++
++    #[test]
++    fn parse_double_negation() {
++        match parse("~~type(delete)").unwrap() {
++            Expr::Negation(inner) => assert!(matches!(*inner, Expr::Negation(_))),
++            other => panic!("expected double negation, got {:?}", other),
++        }
++    }
++
++    #[test]
++    fn parse_error_shows_caret() {
++        let err = parse("type(insert").unwrap_err();
++        let display = err.display_with_context();
++        assert!(display.contains("type(insert"));
++        assert!(display.contains("^"));
++    }
++}
+diff --git a/src/hunkset/pattern.rs b/src/hunkset/pattern.rs
+new file mode 100644
+index 0000000..c161213
+--- /dev/null
++++ b/src/hunkset/pattern.rs
+@@ -0,0 +1,48 @@
++use crate::glob::glob_match;
++use regex::Regex;
++use super::ast::{PatternKind, StringPattern};
++use super::error::HunksetError;
++
++/// A pattern with a pre-compiled regex (if applicable).
++pub(super) struct CompiledPattern {
++    kind: PatternKind,
++    value: String,
++    compiled_regex: Option<Regex>,
++}
++
++impl CompiledPattern {
++    pub(super) fn compile(pattern: &StringPattern) -> Result<Self, HunksetError> {
++        let compiled_regex = if pattern.kind == PatternKind::Regex {
++            Some(Regex::new(&pattern.value).map_err(|e| HunksetError::InvalidRegex {
++                pattern: pattern.value.clone(),
++                source: e,
++            })?)
++        } else {
++            None
++        };
++        Ok(Self {
++            kind: pattern.kind,
++            value: pattern.value.clone(),
++            compiled_regex,
++        })
++    }
++
++    pub(super) fn matches(&self, haystack: &str) -> bool {
++        match self.kind {
++            PatternKind::Exact => haystack == self.value,
++            PatternKind::Substring => haystack.contains(&self.value),
++            PatternKind::Glob => glob_match(&self.value, haystack),
++            PatternKind::Regex => {
++                self.compiled_regex.as_ref().map_or(false, |re| re.is_match(haystack))
++            }
++        }
++    }
++
++    pub(super) fn value(&self) -> &str {
++        &self.value
++    }
++}
++
++pub(super) fn compile_patterns(patterns: Vec<StringPattern>) -> Result<Vec<CompiledPattern>, HunksetError> {
++    patterns.iter().map(CompiledPattern::compile).collect()
++}
+diff --git a/src/main.rs b/src/main.rs
+index b5a1668..0f0904a 100644
+--- a/src/main.rs
++++ b/src/main.rs
+@@ -2,6 +2,10 @@ use anyhow::Result;
+ use clap::{Args, Parser, Subcommand};
+ 
+ mod diff;
++mod glob;
++mod hunkset;
++#[cfg(feature = "semantic")]
++mod semantic;
+ mod spec;
+ mod commands;
+ 
+@@ -30,7 +34,7 @@ enum Commands {
+ 
+     /// Split changes with hunk selection
+     Split {
+-        /// JSON/YAML spec string, or '-' for stdin (omit when using --spec-file)
++        /// Hunk selection: hunkset expression, JSON/YAML spec, or '-' for stdin
+         spec: Option<String>,
+         /// Commit message
+         message: Option<String>,
+@@ -44,7 +48,7 @@ enum Commands {
+ 
+     /// Commit selected hunks
+     Commit {
+-        /// JSON/YAML spec string, or '-' for stdin (omit when using --spec-file)
++        /// Hunk selection: hunkset expression, JSON/YAML spec, or '-' for stdin
+         spec: Option<String>,
+         /// Commit message
+         message: Option<String>,
+@@ -55,7 +59,7 @@ enum Commands {
+ 
+     /// Squash selected hunks into parent
+     Squash {
+-        /// JSON/YAML spec string, or '-' for stdin (omit when using --spec-file)
++        /// Hunk selection: hunkset expression, JSON/YAML spec, or '-' for stdin
+         spec: Option<String>,
+         /// Read spec from a file (JSON or YAML)
+         #[arg(long = "spec-file", short = 'f')]
+@@ -86,13 +90,7 @@ struct ListArgs {
+     /// Binary handling
+     #[arg(long, value_enum, default_value_t = BinaryMode::Mark)]
+     binary: BinaryMode,
+-    /// Truncate file contents to N bytes before diffing
+-    #[arg(long)]
+-    max_bytes: Option<usize>,
+-    /// Truncate file contents to N lines before diffing
+-    #[arg(long)]
+-    max_lines: Option<usize>,
+-    /// Optional JSON/YAML spec to preview (inline or '-')
++    /// Filter output with a hunkset expression or JSON/YAML spec
+     #[arg(long)]
+     spec: Option<String>,
+     /// Read spec from a file (JSON or YAML)
+@@ -129,8 +127,6 @@ fn main() -> Result<()> {
+                 spec: args.spec,
+                 spec_file: args.spec_file,
+                 binary: args.binary,
+-                max_bytes: args.max_bytes,
+-                max_lines: args.max_lines,
+             };
+ 
+             commands::list(options)
+diff --git a/src/semantic.rs b/src/semantic.rs
+new file mode 100644
+index 0000000..947eadd
+--- /dev/null
++++ b/src/semantic.rs
+@@ -0,0 +1,1252 @@
++use tree_sitter::{Language, Parser, Tree};
++
++/// Semantic context extracted for a given line in a source file.
++#[derive(Debug, Clone, Default)]
++pub struct SemanticContext {
++    /// Name of the enclosing function/method, if any.
++    pub enclosing_function: Option<String>,
++    /// Name of the enclosing scope (class, struct, impl, module, etc.), if any.
++    pub enclosing_scope: Option<String>,
++    /// Annotations/decorators on the enclosing function/scope (e.g., `#[test]`, `@Override`).
++    pub annotations: Vec<String>,
++    /// Whether the line is inside a doc comment or docstring.
++    pub is_doc_comment: bool,
++    /// Whether the line is an import/use/require statement.
++    pub is_import: bool,
++    /// Whether the line is at the top level (not inside any function or scope).
++    pub is_toplevel: bool,
++    /// Nesting depth of enclosing scopes (0 = top level).
++    pub nesting_depth: usize,
++}
++
++/// Language configuration: which node kinds represent functions and scopes.
++struct LangConfig {
++    language: Language,
++    function_kinds: &'static [&'static str],
++    scope_kinds: &'static [&'static str],
++    /// How to extract the name from a function node.
++    function_name_extractor: NameExtractor,
++    /// How to extract the name from a scope node (defaults to NameField).
++    scope_name_extractor: NameExtractor,
++    /// Node kinds that represent annotations/decorators.
++    annotation_kinds: &'static [&'static str],
++    /// Node kinds that represent comments (candidates for doc comments).
++    comment_kinds: &'static [&'static str],
++    /// How to determine if a comment is a doc comment.
++    doc_comment_check: DocCommentCheck,
++    /// Node kinds that represent import/use/require statements.
++    import_kinds: &'static [&'static str],
++    /// For macro-based languages (e.g., Elixir): `call` node target identifiers
++    /// that define functions (e.g., "def", "defp").
++    call_function_targets: &'static [&'static str],
++    /// For macro-based languages: `call` node target identifiers that define
++    /// scopes (e.g., "defmodule").
++    call_scope_targets: &'static [&'static str],
++    /// For macro-based languages: `call` node target identifiers that represent
++    /// imports (e.g., "import", "use", "require").
++    call_import_targets: &'static [&'static str],
++}
++
++#[derive(Clone, Copy)]
++#[allow(dead_code)]
++enum NameExtractor {
++    /// Use the "name" field directly.
++    NameField,
++    /// Also try the "type" field (Rust impl_item).
++    NameOrTypeField,
++    /// C/C++ style: dig into declarator → function_declarator → declarator.
++    CDeclarator,
++    /// Find first child of a given kind (e.g., Kotlin simple_identifier).
++    FirstChildOfKind(&'static str),
++    /// OCaml let_binding: use "pattern" field.
++    PatternField,
++    /// Try "name" field, then fall back to first "field_identifier" child (Go methods).
++    NameOrFieldIdentifier,
++}
++
++#[derive(Clone, Copy)]
++enum DocCommentCheck {
++    /// Check text starts with any of these prefixes (e.g., "///", "//!")
++    Prefixes(&'static [&'static str]),
++    /// Any comment on this node kind is a doc comment (e.g., dedicated doc_comment node)
++    NodeKind(&'static str),
++    /// A comment is a doc comment if its next named sibling is a declaration.
++    /// The list contains declaration node kinds to check for.
++    BeforeDeclaration(&'static [&'static str]),
++    /// Python-style: a string literal that is the first statement in a
++    /// function/class/module body (docstring).
++    PythonDocstring,
++    /// No doc comment detection for this language
++    None,
++}
++
++fn get_lang_config(extension: &str) -> Option<LangConfig> {
++    match extension {
++        "rs" => Some(LangConfig {
++            language: tree_sitter_rust::LANGUAGE.into(),
++            function_kinds: &["function_item"],
++            scope_kinds: &["impl_item", "struct_item", "enum_item", "mod_item", "trait_item"],
++            function_name_extractor: NameExtractor::NameField,
++            scope_name_extractor: NameExtractor::NameOrTypeField,
++            annotation_kinds: &["attribute_item", "inner_attribute_item"],
++            comment_kinds: &["line_comment", "block_comment"],
++            doc_comment_check: DocCommentCheck::Prefixes(&["///", "//!", "/**"]),
++            import_kinds: &["use_declaration", "extern_crate_declaration"],
++            call_function_targets: &[],
++            call_scope_targets: &[],
++            call_import_targets: &[],
++        }),
++        "py" => Some(LangConfig {
++            language: tree_sitter_python::LANGUAGE.into(),
++            function_kinds: &["function_definition"],
++            scope_kinds: &["class_definition", "module"],
++            function_name_extractor: NameExtractor::NameField,
++            scope_name_extractor: NameExtractor::NameField,
++            annotation_kinds: &["decorator"],
++            comment_kinds: &["comment", "expression_statement"],
++            doc_comment_check: DocCommentCheck::PythonDocstring,
++            import_kinds: &["import_statement", "import_from_statement"],
++            call_function_targets: &[],
++            call_scope_targets: &[],
++            call_import_targets: &[],
++        }),
++        "js" | "mjs" | "cjs" | "jsx" => Some(LangConfig {
++            language: tree_sitter_javascript::LANGUAGE.into(),
++            function_kinds: &["function_declaration", "method_definition", "arrow_function"],
++            scope_kinds: &["class_declaration"],
++            function_name_extractor: NameExtractor::NameField,
++            scope_name_extractor: NameExtractor::NameField,
++            annotation_kinds: &["decorator"],
++            comment_kinds: &["comment"],
++            doc_comment_check: DocCommentCheck::Prefixes(&["/**"]),
++            import_kinds: &["import_statement"],
++            call_function_targets: &[],
++            call_scope_targets: &[],
++            call_import_targets: &[],
++        }),
++        "ts" | "tsx" => {
++            let language = if extension == "tsx" {
++                tree_sitter_typescript::LANGUAGE_TSX.into()
++            } else {
++                tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into()
++            };
++            Some(LangConfig {
++                language,
++                function_kinds: &["function_declaration", "method_definition", "arrow_function"],
++                scope_kinds: &["class_declaration", "interface_declaration"],
++                function_name_extractor: NameExtractor::NameField,
++                scope_name_extractor: NameExtractor::NameField,
++                annotation_kinds: &["decorator"],
++                comment_kinds: &["comment"],
++                doc_comment_check: DocCommentCheck::Prefixes(&["/**"]),
++                import_kinds: &["import_statement"],
++                call_function_targets: &[],
++                call_scope_targets: &[],
++                call_import_targets: &[],
++            })
++        }
++        "go" => Some(LangConfig {
++            language: tree_sitter_go::LANGUAGE.into(),
++            function_kinds: &["function_declaration", "method_declaration"],
++            scope_kinds: &["type_declaration"],
++            function_name_extractor: NameExtractor::NameOrFieldIdentifier,
++            scope_name_extractor: NameExtractor::NameField,
++            annotation_kinds: &[],
++            comment_kinds: &["comment"],
++            doc_comment_check: DocCommentCheck::BeforeDeclaration(&[
++                "function_declaration", "method_declaration", "type_declaration",
++                "var_declaration", "const_declaration",
++            ]),
++            import_kinds: &["import_declaration"],
++            call_function_targets: &[],
++            call_scope_targets: &[],
++            call_import_targets: &[],
++        }),
++        "c" | "h" => Some(LangConfig {
++            language: tree_sitter_c::LANGUAGE.into(),
++            function_kinds: &["function_definition"],
++            scope_kinds: &["struct_specifier", "enum_specifier"],
++            function_name_extractor: NameExtractor::CDeclarator,
++            scope_name_extractor: NameExtractor::NameField,
++            annotation_kinds: &[],
++            comment_kinds: &["comment"],
++            doc_comment_check: DocCommentCheck::Prefixes(&["/**", "///"]),
++            import_kinds: &["preproc_include"],
++            call_function_targets: &[],
++            call_scope_targets: &[],
++            call_import_targets: &[],
++        }),
++        "cc" | "cpp" | "cxx" | "hpp" | "hxx" | "hh" => Some(LangConfig {
++            language: tree_sitter_cpp::LANGUAGE.into(),
++            function_kinds: &["function_definition"],
++            scope_kinds: &["class_specifier", "struct_specifier", "namespace_definition"],
++            function_name_extractor: NameExtractor::CDeclarator,
++            scope_name_extractor: NameExtractor::NameField,
++            annotation_kinds: &[],
++            comment_kinds: &["comment"],
++            doc_comment_check: DocCommentCheck::Prefixes(&["/**", "///", "//!"]),
++            import_kinds: &["preproc_include", "using_declaration"],
++            call_function_targets: &[],
++            call_scope_targets: &[],
++            call_import_targets: &[],
++        }),
++        "java" => Some(LangConfig {
++            language: tree_sitter_java::LANGUAGE.into(),
++            function_kinds: &["method_declaration", "constructor_declaration"],
++            scope_kinds: &["class_declaration", "interface_declaration", "enum_declaration"],
++            function_name_extractor: NameExtractor::NameField,
++            scope_name_extractor: NameExtractor::NameField,
++            annotation_kinds: &["marker_annotation", "annotation"],
++            comment_kinds: &["line_comment", "block_comment"],
++            doc_comment_check: DocCommentCheck::Prefixes(&["/**"]),
++            import_kinds: &["import_declaration"],
++            call_function_targets: &[],
++            call_scope_targets: &[],
++            call_import_targets: &[],
++        }),
++        "rb" => Some(LangConfig {
++            language: tree_sitter_ruby::LANGUAGE.into(),
++            function_kinds: &["method", "singleton_method"],
++            scope_kinds: &["class", "module"],
++            function_name_extractor: NameExtractor::NameField,
++            scope_name_extractor: NameExtractor::NameField,
++            annotation_kinds: &[],
++            comment_kinds: &["comment"],
++            doc_comment_check: DocCommentCheck::None,
++            import_kinds: &[],
++            call_function_targets: &[],
++            call_scope_targets: &[],
++            call_import_targets: &["require", "require_relative", "load"],
++        }),
++        "cs" => Some(LangConfig {
++            language: tree_sitter_c_sharp::LANGUAGE.into(),
++            function_kinds: &["method_declaration", "constructor_declaration"],
++            scope_kinds: &["class_declaration", "struct_declaration", "namespace_declaration", "interface_declaration"],
++            function_name_extractor: NameExtractor::NameField,
++            scope_name_extractor: NameExtractor::NameField,
++            annotation_kinds: &["attribute_list"],
++            comment_kinds: &["comment"],
++            doc_comment_check: DocCommentCheck::Prefixes(&["///", "/**"]),
++            import_kinds: &["using_directive"],
++            call_function_targets: &[],
++            call_scope_targets: &[],
++            call_import_targets: &[],
++        }),
++        // --- Additional languages ---
++        // Kotlin: tree-sitter-kotlin crate uses old tree-sitter API, not yet
++        // compatible with tree-sitter 0.25+. Re-add when the crate is updated.
++        "scala" | "sc" => Some(LangConfig {
++            language: tree_sitter_scala::LANGUAGE.into(),
++            function_kinds: &["function_definition", "function_declaration"],
++            scope_kinds: &["class_definition", "object_definition", "trait_definition", "enum_definition"],
++            function_name_extractor: NameExtractor::NameField,
++            scope_name_extractor: NameExtractor::NameField,
++            annotation_kinds: &["annotation"],
++            comment_kinds: &["comment", "block_comment"],
++            doc_comment_check: DocCommentCheck::Prefixes(&["/**"]),
++            import_kinds: &["import_declaration"],
++            call_function_targets: &[],
++            call_scope_targets: &[],
++            call_import_targets: &[],
++        }),
++        "swift" => Some(LangConfig {
++            language: tree_sitter_swift::LANGUAGE.into(),
++            function_kinds: &["function_declaration", "init_declaration"],
++            scope_kinds: &["class_declaration"],
++            function_name_extractor: NameExtractor::NameField,
++            scope_name_extractor: NameExtractor::NameField,
++            annotation_kinds: &["attribute"],
++            comment_kinds: &["comment", "multiline_comment"],
++            doc_comment_check: DocCommentCheck::Prefixes(&["///", "/**"]),
++            import_kinds: &["import_declaration"],
++            call_function_targets: &[],
++            call_scope_targets: &[],
++            call_import_targets: &[],
++        }),
++        "php" => Some(LangConfig {
++            language: tree_sitter_php::LANGUAGE_PHP.into(),
++            function_kinds: &["function_definition", "method_declaration"],
++            scope_kinds: &["class_declaration", "interface_declaration", "trait_declaration", "enum_declaration", "namespace_definition"],
++            function_name_extractor: NameExtractor::NameField,
++            scope_name_extractor: NameExtractor::NameField,
++            annotation_kinds: &["attribute_list"],
++            comment_kinds: &["comment"],
++            doc_comment_check: DocCommentCheck::Prefixes(&["/**"]),
++            import_kinds: &["namespace_use_declaration"],
++            call_function_targets: &[],
++            call_scope_targets: &[],
++            call_import_targets: &[],
++        }),
++        "sh" | "bash" => Some(LangConfig {
++            language: tree_sitter_bash::LANGUAGE.into(),
++            function_kinds: &["function_definition"],
++            scope_kinds: &[],
++            function_name_extractor: NameExtractor::NameField,
++            scope_name_extractor: NameExtractor::NameField,
++            annotation_kinds: &[],
++            comment_kinds: &["comment"],
++            doc_comment_check: DocCommentCheck::None,
++            import_kinds: &[],
++            call_function_targets: &[],
++            call_scope_targets: &[],
++            call_import_targets: &[],
++        }),
++        "ex" | "exs" => Some(LangConfig {
++            language: tree_sitter_elixir::LANGUAGE.into(),
++            function_kinds: &[],
++            scope_kinds: &[],
++            function_name_extractor: NameExtractor::NameField,
++            scope_name_extractor: NameExtractor::NameField,
++            annotation_kinds: &[],
++            comment_kinds: &["comment"],
++            doc_comment_check: DocCommentCheck::None,
++            import_kinds: &[],
++            // Elixir uses macros: def/defp/defmodule/import/use/require are `call` nodes
++            call_function_targets: &["def", "defp"],
++            call_scope_targets: &["defmodule", "defprotocol", "defimpl"],
++            call_import_targets: &["import", "use", "require", "alias"],
++        }),
++        "erl" | "hrl" => Some(LangConfig {
++            language: tree_sitter_erlang::LANGUAGE.into(),
++            function_kinds: &["function_clause"],
++            scope_kinds: &[],
++            function_name_extractor: NameExtractor::NameField,
++            scope_name_extractor: NameExtractor::NameField,
++            annotation_kinds: &[],
++            comment_kinds: &["comment"],
++            doc_comment_check: DocCommentCheck::None,
++            import_kinds: &[],
++            call_function_targets: &[],
++            call_scope_targets: &[],
++            call_import_targets: &[],
++        }),
++        "hs" | "lhs" => Some(LangConfig {
++            language: tree_sitter_haskell::LANGUAGE.into(),
++            function_kinds: &["function"],
++            scope_kinds: &["class", "data_type", "newtype"],
++            function_name_extractor: NameExtractor::NameField,
++            scope_name_extractor: NameExtractor::NameField,
++            annotation_kinds: &[],
++            comment_kinds: &["comment"],
++            doc_comment_check: DocCommentCheck::Prefixes(&["-- |", "-- ^"]),
++            import_kinds: &["import"],
++            call_function_targets: &[],
++            call_scope_targets: &[],
++            call_import_targets: &[],
++        }),
++        "ml" | "mli" => Some(LangConfig {
++            language: tree_sitter_ocaml::LANGUAGE_OCAML.into(),
++            function_kinds: &["let_binding"], // matches all let bindings, not just function-valued
++            scope_kinds: &["module_binding"],
++            function_name_extractor: NameExtractor::PatternField,
++            scope_name_extractor: NameExtractor::NameField,
++            annotation_kinds: &[],
++            comment_kinds: &["comment"],
++            doc_comment_check: DocCommentCheck::Prefixes(&["(**"]),
++            import_kinds: &["open_statement"],
++            call_function_targets: &[],
++            call_scope_targets: &[],
++            call_import_targets: &[],
++        }),
++        "zig" => Some(LangConfig {
++            language: tree_sitter_zig::LANGUAGE.into(),
++            function_kinds: &["function_declaration"],
++            scope_kinds: &[],
++            function_name_extractor: NameExtractor::NameField,
++            scope_name_extractor: NameExtractor::NameField,
++            annotation_kinds: &[],
++            comment_kinds: &["line_comment", "doc_comment"],
++            doc_comment_check: DocCommentCheck::NodeKind("doc_comment"),
++            import_kinds: &[], // @import is a builtin_call_expression but so are @embedFile, @cImport, etc.
++            call_function_targets: &[],
++            call_scope_targets: &[],
++            call_import_targets: &[],
++        }),
++        "lua" => Some(LangConfig {
++            language: tree_sitter_lua::LANGUAGE.into(),
++            function_kinds: &["function_declaration"],
++            scope_kinds: &[],
++            function_name_extractor: NameExtractor::NameField,
++            scope_name_extractor: NameExtractor::NameField,
++            annotation_kinds: &[],
++            comment_kinds: &["comment"],
++            doc_comment_check: DocCommentCheck::Prefixes(&["---"]),
++            import_kinds: &[],
++            call_function_targets: &[],
++            call_scope_targets: &[],
++            call_import_targets: &[],
++        }),
++        _ => None,
++    }
++}
++
++/// A parsed source file that can answer semantic queries about line ranges.
++pub struct ParsedFile {
++    tree: Tree,
++    source: String,
++    config: LangConfig,
++}
++
++impl ParsedFile {
++    /// Parse a source file given its extension (e.g., "rs", "py") and content.
++    /// Returns None if the language is not supported.
++    pub fn parse(extension: &str, source: &str) -> Option<Self> {
++        let config = get_lang_config(extension)?;
++        let mut parser = Parser::new();
++        parser.set_language(&config.language).ok()?;
++        let tree = parser.parse(source.as_bytes(), None)?;
++        Some(Self {
++            tree,
++            source: source.to_string(),
++            config,
++        })
++    }
++
++    /// Get the semantic context (enclosing function/scope) for a given
++    /// 1-based line number.
++    #[allow(dead_code)]
++    pub fn context_at_line(&self, line: usize) -> SemanticContext {
++        self.contexts_at_lines(&[line]).into_iter().next().unwrap_or_default()
++    }
++
++    /// Get semantic contexts for multiple 1-based line numbers in a single
++    /// tree walk per line. The tree is parsed once and reused.
++    pub fn contexts_at_lines(&self, lines: &[usize]) -> Vec<SemanticContext> {
++        let root = self.tree.root_node();
++        lines
++            .iter()
++            .map(|&line| {
++                if line == 0 {
++                    return SemanticContext::default();
++                }
++                let line_0 = line - 1;
++                let mut ctx = SemanticContext::default();
++                ctx.is_toplevel = true;
++                self.find_enclosing(root, line_0, &mut ctx, 0);
++                ctx
++            })
++            .collect()
++    }
++
++    /// Recursively walk the tree to find the innermost function and scope
++    /// containing the given 0-based line.
++    ///
++    /// Invariant: since we recurse depth-first and inner nodes are visited
++    /// after outer ones, `enclosing_function` and `enclosing_scope` are
++    /// overwritten as we descend — the last match is the innermost.
++    fn find_enclosing(
++        &self,
++        node: tree_sitter::Node,
++        line: usize,
++        ctx: &mut SemanticContext,
++        depth: usize,
++    ) {
++        let kind = node.kind();
++
++        // Check if this node IS a doc-comment/import at the target line
++        if self.config.comment_kinds.contains(&kind) && node_contains_line(&node, line) {
++            ctx.is_doc_comment = self.is_doc_comment(&node);
++        }
++
++        if self.config.import_kinds.contains(&kind) && node_contains_line(&node, line) {
++            ctx.is_import = true;
++        }
++
++        // Check function/scope containment
++        let mut entered_scope = false;
++
++        if self.config.function_kinds.contains(&kind) {
++            if node_contains_line(&node, line) {
++                if let Some(name) = self.extract_function_name(&node) {
++                    ctx.enclosing_function = Some(name);
++                }
++                ctx.is_toplevel = false;
++                entered_scope = true;
++                self.collect_sibling_annotations(&node, ctx);
++            }
++        }
++
++        if self.config.scope_kinds.contains(&kind) {
++            if node_contains_line(&node, line) {
++                if let Some(name) = self.extract_node_name(&node, self.config.scope_name_extractor) {
++                    ctx.enclosing_scope = Some(name);
++                }
++                ctx.is_toplevel = false;
++                entered_scope = true;
++                self.collect_sibling_annotations(&node, ctx);
++            }
++        }
++
++        // Call-based detection for macro-heavy languages (e.g., Elixir).
++        // Check if this is a `call` node whose target matches a known keyword.
++        if kind == "call" && node_contains_line(&node, line) {
++            if let Some(target) = self.call_target_text(&node) {
++                if self.config.call_function_targets.contains(&target.as_str()) {
++                    if let Some(name) = self.extract_call_arg_name(&node) {
++                        ctx.enclosing_function = Some(name);
++                    }
++                    ctx.is_toplevel = false;
++                    entered_scope = true;
++                } else if self.config.call_scope_targets.contains(&target.as_str()) {
++                    if let Some(name) = self.extract_call_arg_name(&node) {
++                        ctx.enclosing_scope = Some(name);
++                    }
++                    ctx.is_toplevel = false;
++                    entered_scope = true;
++                } else if self.config.call_import_targets.contains(&target.as_str()) {
++                    ctx.is_import = true;
++                }
++            }
++        }
++
++        let new_depth = if entered_scope { depth + 1 } else { depth };
++        // Track the deepest nesting level reached
++        if new_depth > ctx.nesting_depth {
++            ctx.nesting_depth = new_depth;
++        }
++
++        let mut cursor = node.walk();
++        for child in node.children(&mut cursor) {
++            if node_contains_line(&child, line) {
++                self.find_enclosing(child, line, ctx, new_depth);
++            }
++        }
++    }
++
++    /// Collect annotation nodes attached to a function/scope node.
++    /// Checks both preceding siblings and child nodes (different grammars
++    /// place annotations differently).
++    fn collect_sibling_annotations(&self, node: &tree_sitter::Node, ctx: &mut SemanticContext) {
++        // Check preceding siblings (Rust, Python decorators)
++        let mut sibling = node.prev_named_sibling();
++        while let Some(sib) = sibling {
++            if self.config.annotation_kinds.contains(&sib.kind()) {
++                self.add_annotation_text(&sib, ctx);
++            } else {
++                break;
++            }
++            sibling = sib.prev_named_sibling();
++        }
++
++        // Check child nodes (Java, C# — annotations inside modifiers or directly)
++        let mut cursor = node.walk();
++        for child in node.children(&mut cursor) {
++            if self.config.annotation_kinds.contains(&child.kind()) {
++                self.add_annotation_text(&child, ctx);
++            }
++            // Also check inside "modifiers" wrapper nodes (Java)
++            if child.kind() == "modifiers" {
++                let mut inner_cursor = child.walk();
++                for grandchild in child.children(&mut inner_cursor) {
++                    if self.config.annotation_kinds.contains(&grandchild.kind()) {
++                        self.add_annotation_text(&grandchild, ctx);
++                    }
++                }
++            }
++        }
++    }
++
++    fn is_doc_comment(&self, node: &tree_sitter::Node) -> bool {
++        match self.config.doc_comment_check {
++            DocCommentCheck::Prefixes(prefixes) => {
++                if let Ok(text) = node.utf8_text(self.source.as_bytes()) {
++                    let trimmed = text.trim_start();
++                    prefixes.iter().any(|prefix| trimmed.starts_with(prefix))
++                } else {
++                    false
++                }
++            }
++            DocCommentCheck::NodeKind(kind) => node.kind() == kind,
++            DocCommentCheck::BeforeDeclaration(decl_kinds) => {
++                // A comment is a doc comment if its next named sibling is a
++                // declaration. We skip over other comment nodes to handle
++                // multi-line doc comment blocks.
++                let mut sibling = node.next_named_sibling();
++                while let Some(sib) = sibling {
++                    if self.config.comment_kinds.contains(&sib.kind()) {
++                        sibling = sib.next_named_sibling();
++                        continue;
++                    }
++                    return decl_kinds.contains(&sib.kind());
++                }
++                false
++            }
++            DocCommentCheck::PythonDocstring => {
++                // A docstring is an expression_statement containing a string
++                // that is the first statement in a block (function/class body).
++                if node.kind() == "comment" {
++                    return false; // Regular # comments are never docstrings
++                }
++                if node.kind() != "expression_statement" {
++                    return false;
++                }
++                // Must contain a string child
++                let has_string = node.named_child(0)
++                    .map(|c| c.kind() == "string")
++                    .unwrap_or(false);
++                if !has_string {
++                    return false;
++                }
++                // Must be the first named child of its parent (the block)
++                if let Some(parent) = node.parent() {
++                    parent.named_child(0).map(|first| first.id() == node.id()).unwrap_or(false)
++                } else {
++                    false
++                }
++            }
++            DocCommentCheck::None => false,
++        }
++    }
++
++    /// Get the target identifier text of a `call` node (e.g., "def", "defmodule").
++    /// Get the target/method identifier text of a `call` node.
++    /// Tries `target` field (Elixir) then `method` field (Ruby).
++    fn call_target_text(&self, node: &tree_sitter::Node) -> Option<String> {
++        let target = node.child_by_field_name("target")
++            .or_else(|| node.child_by_field_name("method"))?;
++        target.utf8_text(self.source.as_bytes()).ok().map(|s| s.to_string())
++    }
++
++    /// Extract the name from the first argument of a `call` node.
++    /// Handles both `def foo(args)` (first arg is a call whose target is the name)
++    /// and `def foo` (first arg is an identifier) and `defmodule Foo` (first arg
++    /// is an alias).
++    fn extract_call_arg_name(&self, node: &tree_sitter::Node) -> Option<String> {
++        // Find the `arguments` child by kind (not field name — Elixir's grammar
++        // doesn't use field names for arguments).
++        let args = find_child_by_kind(node, "arguments")?;
++        let first_arg = args.named_child(0)?;
++        match first_arg.kind() {
++            // def get_user(id) — first arg is a call node, name is its target
++            "call" => {
++                let target = first_arg.child_by_field_name("target")?;
++                target.utf8_text(self.source.as_bytes()).ok().map(|s| s.to_string())
++            }
++            // def foo / defmodule Foo — first arg is an identifier or alias
++            _ => first_arg.utf8_text(self.source.as_bytes()).ok().map(|s| s.to_string()),
++        }
++    }
++
++    fn add_annotation_text(&self, node: &tree_sitter::Node, ctx: &mut SemanticContext) {
++        if let Ok(text) = node.utf8_text(self.source.as_bytes()) {
++            let text = text.trim().to_string();
++            if !ctx.annotations.contains(&text) {
++                ctx.annotations.push(text);
++            }
++        }
++    }
++
++    fn extract_function_name(&self, node: &tree_sitter::Node) -> Option<String> {
++        self.extract_node_name(node, self.config.function_name_extractor)
++    }
++
++    fn extract_node_name(&self, node: &tree_sitter::Node, extractor: NameExtractor) -> Option<String> {
++        match extractor {
++            NameExtractor::NameField => {
++                let name_node = node.child_by_field_name("name")?;
++                name_node.utf8_text(self.source.as_bytes()).ok().map(|s| s.to_string())
++            }
++            NameExtractor::NameOrTypeField => {
++                if let Some(name_node) = node.child_by_field_name("name") {
++                    return name_node.utf8_text(self.source.as_bytes()).ok().map(|s| s.to_string());
++                }
++                let type_node = node.child_by_field_name("type")?;
++                type_node.utf8_text(self.source.as_bytes()).ok().map(|s| s.to_string())
++            }
++            NameExtractor::CDeclarator => self.extract_c_function_name(node),
++            NameExtractor::FirstChildOfKind(kind) => {
++                find_child_by_kind(node, kind)
++                    .and_then(|n| n.utf8_text(self.source.as_bytes()).ok().map(|s| s.to_string()))
++            }
++            NameExtractor::PatternField => {
++                let pat_node = node.child_by_field_name("pattern")?;
++                pat_node.utf8_text(self.source.as_bytes()).ok().map(|s| s.to_string())
++            }
++            NameExtractor::NameOrFieldIdentifier => {
++                if let Some(name_node) = node.child_by_field_name("name") {
++                    return name_node.utf8_text(self.source.as_bytes()).ok().map(|s| s.to_string());
++                }
++                find_child_by_kind(node, "field_identifier")
++                    .and_then(|n| n.utf8_text(self.source.as_bytes()).ok().map(|s| s.to_string()))
++            }
++        }
++    }
++
++    /// For C/C++: function name is inside declarator → (function_declarator →) declarator
++    fn extract_c_function_name(&self, node: &tree_sitter::Node) -> Option<String> {
++        let declarator = node.child_by_field_name("declarator")?;
++        // Could be function_declarator or pointer_declarator wrapping it
++        let func_decl = if declarator.kind() == "function_declarator" {
++            declarator
++        } else {
++            // Try children
++            find_child_by_kind(&declarator, "function_declarator")?
++        };
++        let name_node = func_decl.child_by_field_name("declarator")?;
++        // This might be an identifier or a qualified_identifier
++        let name = self.leaf_text(&name_node)?;
++        Some(name)
++    }
++
++    fn leaf_text(&self, node: &tree_sitter::Node) -> Option<String> {
++        if node.child_count() == 0 {
++            return node.utf8_text(self.source.as_bytes()).ok().map(|s| s.to_string());
++        }
++        // For qualified identifiers, get the full text
++        node.utf8_text(self.source.as_bytes()).ok().map(|s| s.to_string())
++    }
++}
++
++fn node_contains_line(node: &tree_sitter::Node, line: usize) -> bool {
++    node.start_position().row <= line && node.end_position().row >= line
++}
++
++fn find_child_by_kind<'a>(node: &tree_sitter::Node<'a>, kind: &str) -> Option<tree_sitter::Node<'a>> {
++    let mut cursor = node.walk();
++    for child in node.children(&mut cursor) {
++        if child.kind() == kind {
++            return Some(child);
++        }
++    }
++    None
++}
++
++/// Get semantic contexts for multiple lines in a file, reusing a single parse.
++/// Returns a Vec of SemanticContext, one per input line number.
++#[allow(dead_code)]
++pub fn contexts_for_lines(extension: &str, source: &str, lines: &[usize]) -> Vec<SemanticContext> {
++    match ParsedFile::parse(extension, source) {
++        Some(parsed) => parsed.contexts_at_lines(lines),
++        None => lines.iter().map(|_| SemanticContext::default()).collect(),
++    }
++}
++
++/// Extract the file extension from a path.
++pub fn extension_from_path(path: &str) -> &str {
++    std::path::Path::new(path)
++        .extension()
++        .and_then(|e| e.to_str())
++        .unwrap_or("")
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    #[test]
++    fn rust_function_detection() {
++        let source = r#"
++fn top_level() {
++    let x = 1;
++}
++
++struct Foo;
++
++impl Foo {
++    fn method(&self) {
++        let y = 2;
++    }
++}
++"#;
++        let parsed = ParsedFile::parse("rs", source).unwrap();
++
++        // Line 3: inside top_level
++        let ctx = parsed.context_at_line(3);
++        assert_eq!(ctx.enclosing_function.as_deref(), Some("top_level"));
++        assert_eq!(ctx.enclosing_scope, None);
++
++        // Line 10: inside Foo::method
++        let ctx = parsed.context_at_line(10);
++        assert_eq!(ctx.enclosing_function.as_deref(), Some("method"));
++        assert_eq!(ctx.enclosing_scope.as_deref(), Some("Foo"));
++    }
++
++    #[test]
++    fn python_function_detection() {
++        let source = r#"
++class MyClass:
++    def my_method(self):
++        x = 1
++        return x
++
++def standalone():
++    pass
++"#;
++        let parsed = ParsedFile::parse("py", source).unwrap();
++
++        // Line 4: inside MyClass.my_method
++        let ctx = parsed.context_at_line(4);
++        assert_eq!(ctx.enclosing_function.as_deref(), Some("my_method"));
++        assert_eq!(ctx.enclosing_scope.as_deref(), Some("MyClass"));
++
++        // Line 8: inside standalone
++        let ctx = parsed.context_at_line(8);
++        assert_eq!(ctx.enclosing_function.as_deref(), Some("standalone"));
++    }
++
++    #[test]
++    fn javascript_function_detection() {
++        let source = r#"
++function hello() {
++    console.log("hi");
++}
++
++class Widget {
++    render() {
++        return null;
++    }
++}
++"#;
++        let parsed = ParsedFile::parse("js", source).unwrap();
++
++        let ctx = parsed.context_at_line(3);
++        assert_eq!(ctx.enclosing_function.as_deref(), Some("hello"));
++
++        let ctx = parsed.context_at_line(8);
++        assert_eq!(ctx.enclosing_function.as_deref(), Some("render"));
++        assert_eq!(ctx.enclosing_scope.as_deref(), Some("Widget"));
++    }
++
++    #[test]
++    fn go_function_detection() {
++        let source = r#"package main
++
++func hello() {
++    fmt.Println("hi")
++}
++"#;
++        let parsed = ParsedFile::parse("go", source).unwrap();
++
++        let ctx = parsed.context_at_line(4);
++        assert_eq!(ctx.enclosing_function.as_deref(), Some("hello"));
++    }
++
++    #[test]
++    fn c_function_detection() {
++        let source = r#"
++int main(int argc, char **argv) {
++    return 0;
++}
++"#;
++        let parsed = ParsedFile::parse("c", source).unwrap();
++
++        let ctx = parsed.context_at_line(3);
++        assert_eq!(ctx.enclosing_function.as_deref(), Some("main"));
++    }
++
++    #[test]
++    fn unsupported_extension_returns_none() {
++        assert!(ParsedFile::parse("xyz", "anything").is_none());
++    }
++
++    #[test]
++    fn batch_contexts() {
++        let source = r#"
++fn alpha() {
++    let a = 1;
++}
++
++fn beta() {
++    let b = 2;
++}
++"#;
++        let results = contexts_for_lines("rs", source, &[3, 7]);
++        assert_eq!(results[0].enclosing_function.as_deref(), Some("alpha"));
++        assert_eq!(results[1].enclosing_function.as_deref(), Some("beta"));
++    }
++
++    #[test]
++    fn scala_function_detection() {
++        let source = r#"
++object Main {
++  def hello(): Unit = {
++    println("hi")
++  }
++}
++"#;
++        let parsed = ParsedFile::parse("scala", source).unwrap();
++        let ctx = parsed.context_at_line(4);
++        assert_eq!(ctx.enclosing_function.as_deref(), Some("hello"));
++        assert_eq!(ctx.enclosing_scope.as_deref(), Some("Main"));
++    }
++
++    #[test]
++    fn php_function_detection() {
++        let source = r#"<?php
++class UserService {
++    public function getUser($id) {
++        return $id;
++    }
++}
++?>"#;
++        let parsed = ParsedFile::parse("php", source).unwrap();
++        let ctx = parsed.context_at_line(4);
++        assert_eq!(ctx.enclosing_function.as_deref(), Some("getUser"));
++        assert_eq!(ctx.enclosing_scope.as_deref(), Some("UserService"));
++    }
++
++    #[test]
++    fn bash_function_detection() {
++        let source = r#"#!/bin/bash
++my_func() {
++    echo "hello"
++}
++"#;
++        let parsed = ParsedFile::parse("sh", source).unwrap();
++        let ctx = parsed.context_at_line(3);
++        assert_eq!(ctx.enclosing_function.as_deref(), Some("my_func"));
++    }
++
++    #[test]
++    fn haskell_function_detection() {
++        let source = r#"
++module Main where
++
++factorial :: Int -> Int
++factorial 0 = 1
++factorial n = n * factorial (n - 1)
++"#;
++        let parsed = ParsedFile::parse("hs", source).unwrap();
++        let ctx = parsed.context_at_line(6);
++        assert_eq!(ctx.enclosing_function.as_deref(), Some("factorial"));
++    }
++
++    #[test]
++    fn zig_function_detection() {
++        let source = r#"
++const std = @import("std");
++
++fn add(a: i32, b: i32) i32 {
++    return a + b;
++}
++"#;
++        let parsed = ParsedFile::parse("zig", source).unwrap();
++        let ctx = parsed.context_at_line(5);
++        assert_eq!(ctx.enclosing_function.as_deref(), Some("add"));
++    }
++
++    #[test]
++    fn lua_function_detection() {
++        let source = r#"
++function greet(name)
++    print("Hello, " .. name)
++end
++"#;
++        let parsed = ParsedFile::parse("lua", source).unwrap();
++        let ctx = parsed.context_at_line(3);
++        assert_eq!(ctx.enclosing_function.as_deref(), Some("greet"));
++    }
++
++    #[test]
++    fn erlang_function_detection() {
++        let source = r#"-module(hello).
++-export([greet/0]).
++
++greet() ->
++    io:format("Hello~n").
++"#;
++        let parsed = ParsedFile::parse("erl", source).unwrap();
++        let ctx = parsed.context_at_line(5);
++        assert_eq!(ctx.enclosing_function.as_deref(), Some("greet"));
++    }
++
++    // --- tests for new semantic predicates ---
++
++    #[test]
++    fn rust_annotation_detection() {
++        let source = r#"
++#[test]
++fn my_test() {
++    assert!(true);
++}
++
++fn plain() {
++    let x = 1;
++}
++"#;
++        let parsed = ParsedFile::parse("rs", source).unwrap();
++
++        // Line 4: inside #[test] fn my_test
++        let ctx = parsed.context_at_line(4);
++        assert_eq!(ctx.enclosing_function.as_deref(), Some("my_test"));
++        assert!(ctx.annotations.iter().any(|a| a.contains("test")));
++
++        // Line 8: inside plain (no annotations)
++        let ctx = parsed.context_at_line(8);
++        assert_eq!(ctx.enclosing_function.as_deref(), Some("plain"));
++        assert!(ctx.annotations.is_empty());
++    }
++
++    #[test]
++    fn python_decorator_detection() {
++        let source = r#"
++class API:
++    @app.route("/users")
++    def get_users(self):
++        return []
++"#;
++        let parsed = ParsedFile::parse("py", source).unwrap();
++
++        let ctx = parsed.context_at_line(5);
++        assert_eq!(ctx.enclosing_function.as_deref(), Some("get_users"));
++        assert!(ctx.annotations.iter().any(|a| a.contains("app.route")));
++    }
++
++    #[test]
++    fn java_annotation_detection() {
++        let source = r#"
++public class MyTest {
++    @Test
++    @Override
++    public void testSomething() {
++        assert true;
++    }
++}
++"#;
++        let parsed = ParsedFile::parse("java", source).unwrap();
++
++        let ctx = parsed.context_at_line(6);
++        assert_eq!(ctx.enclosing_function.as_deref(), Some("testSomething"));
++        assert!(ctx.annotations.iter().any(|a| a.contains("Test")));
++    }
++
++    #[test]
++    fn rust_import_detection() {
++        let source = r#"
++use std::collections::HashMap;
++use anyhow::Result;
++
++fn main() {
++    let x = 1;
++}
++"#;
++        let parsed = ParsedFile::parse("rs", source).unwrap();
++
++        // Line 2: import
++        let ctx = parsed.context_at_line(2);
++        assert!(ctx.is_import);
++        assert!(ctx.is_toplevel);
++
++        // Line 6: inside main
++        let ctx = parsed.context_at_line(6);
++        assert!(!ctx.is_import);
++        assert!(!ctx.is_toplevel);
++    }
++
++    #[test]
++    fn toplevel_and_depth() {
++        let source = r#"
++const X: i32 = 1;
++
++impl Foo {
++    fn method(&self) {
++        let y = 2;
++    }
++}
++"#;
++        let parsed = ParsedFile::parse("rs", source).unwrap();
++
++        // Line 2: top-level const
++        let ctx = parsed.context_at_line(2);
++        assert!(ctx.is_toplevel);
++        assert_eq!(ctx.nesting_depth, 0);
++
++        // Line 6: inside Foo::method (depth 2: impl + fn)
++        let ctx = parsed.context_at_line(6);
++        assert!(!ctx.is_toplevel);
++        assert_eq!(ctx.nesting_depth, 2);
++    }
++
++    #[test]
++    fn doc_comment_detection() {
++        let source = r#"
++/// This is a doc comment
++/// for the function below.
++fn documented() {
++    let x = 1;
++}
++"#;
++        let parsed = ParsedFile::parse("rs", source).unwrap();
++
++        // Line 2: doc comment line
++        let ctx = parsed.context_at_line(2);
++        assert!(ctx.is_doc_comment);
++
++        // Line 5: inside the function body
++        let ctx = parsed.context_at_line(5);
++        assert!(!ctx.is_doc_comment);
++    }
++
++    #[test]
++    fn js_arrow_function_detection() {
++        let source = r#"
++const handler = () => {
++    return 42;
++};
++"#;
++        let parsed = ParsedFile::parse("js", source).unwrap();
++        // Line 3: inside arrow function body — not toplevel
++        let ctx = parsed.context_at_line(3);
++        assert!(!ctx.is_toplevel);
++        // Arrow functions are anonymous — no enclosing_function name
++        assert_eq!(ctx.enclosing_function, None);
++    }
++
++    #[test]
++    fn rust_import_not_doc() {
++        let source = r#"
++// Regular comment
++use std::io;
++/// Doc comment
++fn foo() {}
++"#;
++        let parsed = ParsedFile::parse("rs", source).unwrap();
++
++        // Line 2: regular comment — NOT a doc comment
++        let ctx = parsed.context_at_line(2);
++        assert!(!ctx.is_doc_comment);
++
++        // Line 3: import
++        let ctx = parsed.context_at_line(3);
++        assert!(ctx.is_import);
++
++        // Line 4: doc comment
++        let ctx = parsed.context_at_line(4);
++        assert!(ctx.is_doc_comment);
++    }
++
++    #[test]
++    fn deep_nesting_depth() {
++        let source = r#"
++mod outer {
++    impl Foo {
++        fn deep() {
++            let x = 1;
++        }
++    }
++}
++"#;
++        let parsed = ParsedFile::parse("rs", source).unwrap();
++        let ctx = parsed.context_at_line(5);
++        assert_eq!(ctx.nesting_depth, 3); // mod + impl + fn
++        assert_eq!(ctx.enclosing_function.as_deref(), Some("deep"));
++    }
++
++    #[test]
++    fn elixir_function_and_module_detection() {
++        let source = r#"
++defmodule MyApp.Users do
++  import Ecto.Query
++
++  def get_user(id) do
++    Repo.get(User, id)
++  end
++
++  defp helper do
++    :ok
++  end
++end
++"#;
++        let parsed = ParsedFile::parse("ex", source).unwrap();
++
++        // Line 6: inside MyApp.Users.get_user
++        let ctx = parsed.context_at_line(6);
++        assert_eq!(ctx.enclosing_function.as_deref(), Some("get_user"));
++        assert_eq!(ctx.enclosing_scope.as_deref(), Some("MyApp.Users"));
++        assert!(!ctx.is_toplevel);
++
++        // Line 10: inside helper (defp)
++        let ctx = parsed.context_at_line(10);
++        assert_eq!(ctx.enclosing_function.as_deref(), Some("helper"));
++
++        // Line 3: import line
++        let ctx = parsed.context_at_line(3);
++        assert!(ctx.is_import);
++    }
++
++    #[test]
++    fn python_docstring_detection() {
++        let source = r#"
++class MyClass:
++    """Class docstring."""
++
++    def method(self):
++        """Method docstring."""
++        x = "not a docstring"
++        return x
++"#;
++        let parsed = ParsedFile::parse("py", source).unwrap();
++
++        // Line 3: class docstring
++        let ctx = parsed.context_at_line(3);
++        assert!(ctx.is_doc_comment);
++
++        // Line 6: method docstring
++        let ctx = parsed.context_at_line(6);
++        assert!(ctx.is_doc_comment);
++
++        // Line 7: regular string assignment — NOT a docstring
++        let ctx = parsed.context_at_line(7);
++        assert!(!ctx.is_doc_comment);
++    }
++
++    #[test]
++    fn go_doc_comment_detection() {
++        let source = r#"package main
++
++// Hello greets the world.
++// It is a doc comment.
++func Hello() string {
++    return "hello"
++}
++
++// just a random comment
++var x = 1
++"#;
++        let parsed = ParsedFile::parse("go", source).unwrap();
++
++        // Line 3: doc comment before func
++        let ctx = parsed.context_at_line(3);
++        assert!(ctx.is_doc_comment);
++
++        // Line 4: also doc comment (multi-line, before func)
++        let ctx = parsed.context_at_line(4);
++        assert!(ctx.is_doc_comment);
++
++        // Line 6: inside function body, not a comment
++        let ctx = parsed.context_at_line(6);
++        assert!(!ctx.is_doc_comment);
++
++        // Line 9: comment before var — also a doc comment
++        let ctx = parsed.context_at_line(9);
++        assert!(ctx.is_doc_comment);
++    }
++
++    #[test]
++    fn ruby_require_detection() {
++        let source = r#"
++require "json"
++require_relative "helper"
++
++class Foo
++  def bar
++    42
++  end
++end
++"#;
++        let parsed = ParsedFile::parse("rb", source).unwrap();
++
++        // Line 2: require
++        let ctx = parsed.context_at_line(2);
++        assert!(ctx.is_import);
++
++        // Line 3: require_relative
++        let ctx = parsed.context_at_line(3);
++        assert!(ctx.is_import);
++
++        // Line 7: inside method, not an import
++        let ctx = parsed.context_at_line(7);
++        assert!(!ctx.is_import);
++        assert_eq!(ctx.enclosing_function.as_deref(), Some("bar"));
++    }
++}
+diff --git a/src/spec.rs b/src/spec.rs
+index 8699bb1..115b010 100644
+--- a/src/spec.rs
++++ b/src/spec.rs
+@@ -1,9 +1,9 @@
+ use crate::diff::{normalize_hunk_id, HunkSelection};
+ use serde::de::{self, Deserializer};
+-use serde::Deserialize;
++use serde::{Deserialize, Serialize};
+ use std::collections::HashMap;
+ 
+-#[derive(Debug, Deserialize)]
++#[derive(Debug, Deserialize, Serialize)]
+ pub struct Spec {
+     #[serde(default)]
+     pub files: HashMap<String, FileSpec>,
+@@ -11,14 +11,14 @@ pub struct Spec {
+     pub default: DefaultAction,
+ }
+ 
+-#[derive(Debug, Deserialize)]
++#[derive(Debug, Deserialize, Serialize)]
+ #[serde(untagged)]
+ pub enum FileSpec {
+     Selection(HunkSpec),
+     Action { action: Action },
+ }
+ 
+-#[derive(Debug, Deserialize, Default)]
++#[derive(Debug, Deserialize, Serialize, Default)]
+ #[serde(deny_unknown_fields)]
+ pub struct HunkSpec {
+     #[serde(default, deserialize_with = "deserialize_hunk_selectors")]
+@@ -47,7 +47,8 @@ impl HunkSpec {
+     }
+ }
+ 
+-#[derive(Debug)]
++#[derive(Debug, Serialize)]
++#[serde(untagged)]
+ pub enum HunkSelector {
+     Index(usize),
+     Id(String),
+@@ -108,14 +109,14 @@ where
+     Ok(parsed)
+ }
+ 
+-#[derive(Debug, Deserialize, Clone, Copy, PartialEq)]
++#[derive(Debug, Deserialize, Serialize, Clone, Copy, PartialEq)]
+ #[serde(rename_all = "lowercase")]
+ pub enum Action {
+     Keep,
+     Reset,
+ }
+ 
+-#[derive(Debug, Deserialize, Clone, Copy, Default, PartialEq)]
++#[derive(Debug, Deserialize, Serialize, Clone, Copy, Default, PartialEq)]
+ #[serde(rename_all = "lowercase")]
+ pub enum DefaultAction {
+     Keep,
