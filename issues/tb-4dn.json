@@ -2,13 +2,14 @@
   "assignee": "unknown",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-05-17T18:40:33Z",
   "created": "2026-05-17T18:36:50Z",
   "description": "Add jj-hunk v0.4.1 from https://github.com/laulauland/jj-hunk with an additional patch sourced from https://github.com/sigma/jj-hunk/tree/dev",
   "id": "tb-4dn",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add jj-hunk package with sigma/dev patch",
   "type": "task",
-  "updated_at": "2026-05-17T18:36:51Z"
+  "updated_at": "2026-05-17T18:40:33Z"
 }
