@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-05-17T18:40:56Z",
+  "description": "Add jj-hunk 0.4.1 to vcs-toolchain as a new version 5",
+  "id": "tb-bdu",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Bump vcs-toolchain to v5 (add jj-hunk)",
+  "type": "task",
+  "updated_at": "2026-05-17T18:40:56Z"
+}
