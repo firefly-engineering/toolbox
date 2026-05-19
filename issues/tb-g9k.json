@@ -1,7 +1,9 @@
 {
   "assignee": "",
   "blocked_by": [],
-  "blocks": [],
+  "blocks": [
+    "tb-95b"
+  ],
   "created": "2026-05-19T16:01:31Z",
   "description": "Add go-licenses v2.0.1 from google/go-licenses, source build via buildGoModule",
   "id": "tb-g9k",
@@ -10,5 +12,5 @@
   "status": "open",
   "title": "Add go-licenses 2.0.1 package",
   "type": "task",
-  "updated_at": "2026-05-19T16:01:31Z"
+  "updated_at": "2026-05-19T16:01:38Z"
 }
