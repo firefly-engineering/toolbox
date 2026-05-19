@@ -4,13 +4,14 @@
   "blocks": [
     "tb-95b"
   ],
+  "closed_at": "2026-05-19T16:01:15Z",
   "created": "2026-05-19T16:00:15Z",
   "description": "Add gotestsum v1.13.0 from gotestyourself/gotestsum, source build via buildGoModule",
   "id": "tb-xpn",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add gotestsum 1.13.0 package",
   "type": "task",
-  "updated_at": "2026-05-19T16:00:18Z"
+  "updated_at": "2026-05-19T16:01:15Z"
 }
