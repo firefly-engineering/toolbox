@@ -1,7 +1,9 @@
 {
   "assignee": "",
   "blocked_by": [],
-  "blocks": [],
+  "blocks": [
+    "tb-95b"
+  ],
   "created": "2026-05-19T16:00:15Z",
   "description": "Add gotestsum v1.13.0 from gotestyourself/gotestsum, source build via buildGoModule",
   "id": "tb-xpn",
@@ -10,5 +12,5 @@
   "status": "open",
   "title": "Add gotestsum 1.13.0 package",
   "type": "task",
-  "updated_at": "2026-05-19T16:00:15Z"
+  "updated_at": "2026-05-19T16:00:18Z"
 }
