@@ -5,12 +5,12 @@
   ],
   "blocks": [],
   "created": "2026-05-19T16:00:15Z",
-  "description": "Add gotestsum 1.13.0 to go-toolchain as v4",
+  "description": "Add gotestsum 1.13.0 and go-licenses 2.0.1 to go-toolchain as v4",
   "id": "tb-95b",
   "labels": [],
   "priority": 2,
   "status": "open",
-  "title": "Bump go-toolchain to v4 (add gotestsum)",
+  "title": "Bump go-toolchain to v4 (add gotestsum, go-licenses)",
   "type": "task",
-  "updated_at": "2026-05-19T16:00:18Z"
+  "updated_at": "2026-05-19T16:01:38Z"
 }
