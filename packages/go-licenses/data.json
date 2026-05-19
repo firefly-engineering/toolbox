@@ -1,0 +1,17 @@
+{
+  "_meta": {
+    "default": "2.0.1",
+    "releases": "https://github.com/google/go-licenses/releases"
+  },
+  "2.0.1": {
+    "sha256": "sha256-byKuUf8XMyXjAHZUANaBVAc6c2Jz9mEEdRxAy69P2QM=",
+    "vendorHash": "sha256-AYbx/DmYnbjJ2iqx34t/dUsthTjJ+YDvfxxCl/cJenI=",
+    "go": "1.26.2"
+  },
+  "1.6.0": {
+    "sha256": "sha256-GAlwTVoVA+n9+EfhybmpKm16FoY9kFzrxy1ZQxS6A8E=",
+    "vendorHash": "sha256-Xf/aSio+edo94NHzrRqOzB8jRnxE53D+F3FoJH/k/K8=",
+    "go": "1.26.2",
+    "builder": "legacy"
+  }
+}
