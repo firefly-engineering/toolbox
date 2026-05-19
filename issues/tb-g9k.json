@@ -4,13 +4,14 @@
   "blocks": [
     "tb-95b"
   ],
+  "closed_at": "2026-05-19T16:06:06Z",
   "created": "2026-05-19T16:01:31Z",
   "description": "Add go-licenses v2.0.1 from google/go-licenses, source build via buildGoModule",
   "id": "tb-g9k",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add go-licenses 2.0.1 package",
   "type": "task",
-  "updated_at": "2026-05-19T16:01:38Z"
+  "updated_at": "2026-05-19T16:06:06Z"
 }
