@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "unknown",
   "blocked_by": [],
   "blocks": [
     "tb-95b"
@@ -9,7 +9,7 @@
   "id": "tb-xpn",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "Add gotestsum 1.13.0 package",
   "type": "task",
   "updated_at": "2026-05-19T16:00:18Z"
