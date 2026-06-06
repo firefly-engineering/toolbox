@@ -5,13 +5,14 @@
     "tb-ay7.2"
   ],
   "blocks": [],
+  "closed_at": "2026-06-06T07:46:40Z",
   "created": "2026-06-06T07:36:21Z",
   "description": "",
   "id": "tb-ay7.3",
   "labels": [],
   "parent": "tb-ay7",
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Roll qmk_hid + vitaly into kbd-toolchain v1",
   "type": "task",
   "updated_at": "2026-06-06T07:46:40Z"
