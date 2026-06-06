@@ -1,0 +1,6 @@
+{
+  "_meta": { "default": "1.2.0", "releases": "https://github.com/qmk/qmk_cli/tags" },
+  "1.2.0": {
+    "sha256": "sha256-FkvRbExAGyt2XuTwF7z6gUGULd82KWHEy6GXXYyyikg="
+  }
+}
