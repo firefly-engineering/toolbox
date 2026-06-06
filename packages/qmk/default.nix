@@ -14,6 +14,7 @@ let
         };
         propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [
           pkgs.dos2unix
+          pkgs.dfu-util
         ];
       });
   };
