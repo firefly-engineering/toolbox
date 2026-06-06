@@ -1,6 +1,20 @@
 {
-  "_meta": { "default": "1.2.0", "releases": "https://github.com/qmk/qmk_cli/tags" },
+  "_meta": {
+    "default": "1.2.0",
+    "releases": "https://github.com/qmk/qmk_cli/tags"
+  },
   "1.2.0": {
-    "sha256": "sha256-FkvRbExAGyt2XuTwF7z6gUGULd82KWHEy6GXXYyyikg="
+    "sha256": "sha256-FkvRbExAGyt2XuTwF7z6gUGULd82KWHEy6GXXYyyikg=",
+    "patches": [
+      {
+        "file": "patches/sigma-alt-home-1.2.0.patch",
+        "source": {
+          "owner": "sigma",
+          "repo": "qmk_cli",
+          "branch": "alt-home",
+          "commit": "c66d4f405e280c1643d42675ae7d0072ab4678a4"
+        }
+      }
+    ]
   }
 }

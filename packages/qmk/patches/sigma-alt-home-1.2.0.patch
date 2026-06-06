@@ -1,0 +1,475 @@
+diff --git a/qmk_cli/helpers.py b/qmk_cli/helpers.py
+index 8abc757..bce8bb9 100644
+--- a/qmk_cli/helpers.py
++++ b/qmk_cli/helpers.py
+@@ -115,3 +115,142 @@ def in_qmk_userspace():
+         # Move up a directory before the next iteration
+         cur_dir = cur_dir / '..'
+         cur_dir = cur_dir.resolve()
++
++
++# Reserved keys inside a build_target env dict that the CLI consumes instead of forwarding to make.
++RESERVED_TARGET_ENV_KEYS = {'alt_home'}
++
++
++def find_alt_home(name):
++    """Resolve a named alternate qmk_firmware path from user config.
++
++    Looks up `user.qmk_alt_home.<name>`, supporting either milc's nested-namespace
++    storage (an object exposing attributes) or a flat dotted/underscored key on
++    the user section.
++
++    Returns a resolved Path or None if not configured.
++    """
++    if not name:
++        return None
++
++    section = getattr(cli.config.user, 'qmk_alt_home', None)
++    path_str = None
++    if section is not None:
++        # Nested namespace: cli.config.user.qmk_alt_home.<name>
++        path_str = getattr(section, name, None)
++        if path_str is None and hasattr(section, '__getitem__'):
++            try:
++                path_str = section[name]
++            except (KeyError, TypeError):
++                path_str = None
++
++    if not path_str:
++        # Flat dotted key on the user section
++        try:
++            path_str = cli.config['user'].get(f'qmk_alt_home.{name}')
++        except (AttributeError, TypeError):
++            path_str = None
++
++    if not path_str:
++        # Underscore fallback for environments that mangle dotted keys
++        path_str = getattr(cli.config.user, f'qmk_alt_home_{name}', None)
++
++    if not path_str:
++        return None
++
++    return Path(path_str).expanduser().resolve()
++
++
++def load_userspace_targets(userspace_path):
++    """Return a list of build_target dicts parsed from a userspace `qmk.json`.
++
++    Each dict has `keyboard` and `keymap`, and optionally `env` (the dict of
++    pass-through make variables, with reserved keys stripped out) and one entry
++    per reserved key (e.g. `alt_home`). JSON-path entries are returned as
++    `{'json_path': str}`.
++
++    Parsing is lightweight: no schema validation, no jsonschema dependency.
++    Returns [] if the userspace path is not a valid userspace or qmk.json is
++    malformed.
++    """
++    if userspace_path is None:
++        return []
++
++    qmk_json = Path(userspace_path) / 'qmk.json'
++    if not qmk_json.exists():
++        return []
++
++    try:
++        data = json.loads(qmk_json.read_text(encoding='UTF-8'))
++    except json.JSONDecodeError:
++        return []
++
++    targets = []
++    for entry in data.get('build_targets', []):
++        if isinstance(entry, str):
++            targets.append({'json_path': entry})
++            continue
++        if not isinstance(entry, list) or len(entry) < 2:
++            continue
++
++        t = {'keyboard': entry[0], 'keymap': entry[1]}
++        if len(entry) >= 3 and isinstance(entry[2], dict):
++            env = dict(entry[2])
++            for key in RESERVED_TARGET_ENV_KEYS:
++                if key in env:
++                    t[key] = env.pop(key)
++            if env:
++                t['env'] = env
++        targets.append(t)
++
++    return targets
++
++
++def find_target_alt_home(userspace_path, keyboard, keymap):
++    """Look up the configured alt_home name for a given (keyboard, keymap).
++
++    Returns the name string or None if no matching target carries an alt_home.
++    """
++    for t in load_userspace_targets(userspace_path):
++        if t.get('keyboard') == keyboard and t.get('keymap') == keymap and 'alt_home' in t:
++            return t['alt_home']
++    return None
++
++
++def list_alt_homes():
++    """Enumerate all configured `user.qmk_alt_home.*` entries.
++
++    Returns a dict {name: path_str}, discovering entries across the three
++    storage shapes supported by find_alt_home (nested namespace, dotted flat
++    key, underscored flat key).
++    """
++    result = {}
++
++    section = getattr(cli.config.user, 'qmk_alt_home', None)
++    if section is not None:
++        items = None
++        if hasattr(section, 'items'):
++            try:
++                items = list(section.items())
++            except TypeError:
++                items = None
++        if items is None:
++            items = [(k, getattr(section, k)) for k in dir(section) if not k.startswith('_') and isinstance(getattr(section, k, None), str)]
++        for key, value in items:
++            if isinstance(value, str) and value:
++                result[key] = value
++
++    try:
++        user_section = cli.config['user']
++        iter_items = user_section.items() if hasattr(user_section, 'items') else []
++        for key, value in iter_items:
++            if not isinstance(value, str) or not value:
++                continue
++            if key.startswith('qmk_alt_home.'):
++                result.setdefault(key[len('qmk_alt_home.'):], value)
++            elif key.startswith('qmk_alt_home_'):
++                result.setdefault(key[len('qmk_alt_home_'):], value)
++    except (AttributeError, TypeError, KeyError):
++        pass
++
++    return result
+diff --git a/qmk_cli/intercepts/__init__.py b/qmk_cli/intercepts/__init__.py
+new file mode 100644
+index 0000000..517c060
+--- /dev/null
++++ b/qmk_cli/intercepts/__init__.py
+@@ -0,0 +1,44 @@
++"""CLI-wrapper-level intercepts for subcommands that need alt_home dispatch.
++
++These run before milc.cli() and before the firmware-side qmk.cli is imported.
++Each intercept reads userspace state directly (via qmk_cli.helpers) and shells
++out to `qmk <subcommand>` invocations that re-enter the wrapper, where the
++per-target QMK_HOME is resolved by script_qmk._resolve_alt_home_for_argv.
++"""
++import sys
++
++
++def _first_positional(argv):
++    for arg in argv:
++        if not arg.startswith('-'):
++            return arg
++    return None
++
++
++def detect_intercept(argv):
++    """Return the name of an intercepted subcommand if argv invokes one, else None.
++
++    Skipped if --help/-h is present so milc-driven help output still works.
++    `userspace-add` is only intercepted when `--alt-home` is in argv; without it
++    we let the firmware-side implementation handle the call unchanged.
++    """
++    if any(a in ('-h', '--help') for a in argv):
++        return None
++
++    subcommand = _first_positional(argv)
++    if subcommand == 'userspace-compile':
++        return 'userspace-compile'
++    if subcommand == 'userspace-add' and '--alt-home' in argv:
++        return 'userspace-add'
++    return None
++
++
++def dispatch(name):
++    """Run the named intercept handler and return its exit code (int)."""
++    if name == 'userspace-compile':
++        from . import userspace_compile
++        return userspace_compile.run(sys.argv[1:])
++    if name == 'userspace-add':
++        from . import userspace_add
++        return userspace_add.run(sys.argv[1:])
++    raise ValueError(f'No intercept registered for {name!r}')
+diff --git a/qmk_cli/intercepts/userspace_add.py b/qmk_cli/intercepts/userspace_add.py
+new file mode 100644
+index 0000000..f19ee7b
+--- /dev/null
++++ b/qmk_cli/intercepts/userspace_add.py
+@@ -0,0 +1,70 @@
++"""`qmk userspace-add --alt-home <name>` intercept.
++
++Only intercepts when `--alt-home` is supplied; without it the firmware-side
++userspace-add runs unchanged. This handler appends an entry of the form
++`[keyboard, keymap, {"alt_home": name, ...env}]` to the userspace `qmk.json`
++without touching the firmware tree -- so the named alt_home does not need to
++be present (or even reachable) when the entry is added.
++"""
++import argparse
++import json
++import sys
++from pathlib import Path
++
++from ..helpers import find_qmk_userspace, is_qmk_userspace
++
++
++def _build_parser():
++    parser = argparse.ArgumentParser(prog='qmk userspace-add', add_help=False)
++    parser.add_argument('-kb', '--keyboard', required=True)
++    parser.add_argument('-km', '--keymap', required=True)
++    parser.add_argument('-e', '--env', action='append', default=[],
++                        help='VAR=VALUE pairs forwarded to make.')
++    parser.add_argument('--alt-home', dest='alt_home', required=True,
++                        help='Name of the alternate qmk_firmware tree to use for this target. Must match a configured user.qmk_alt_home.<name>.')
++    return parser
++
++
++def _parse_env_pairs(pairs):
++    out = {}
++    for entry in pairs:
++        if '=' not in entry:
++            print(f'Warning: ignoring env entry {entry!r} (expected VAR=VALUE).', file=sys.stderr)
++            continue
++        key, value = entry.split('=', 1)
++        out[key] = value
++    return out
++
++
++def run(argv):
++    parser = _build_parser()
++    args, _unknown = parser.parse_known_args(argv[1:])  # argv[0] is 'userspace-add'
++
++    userspace = find_qmk_userspace()
++    if not is_qmk_userspace(userspace):
++        print('Error: could not determine QMK userspace location.', file=sys.stderr)
++        return 1
++
++    qmk_json = Path(userspace) / 'qmk.json'
++    try:
++        data = json.loads(qmk_json.read_text(encoding='UTF-8'))
++    except json.JSONDecodeError as exc:
++        print(f'Error: {qmk_json} is not valid JSON: {exc}', file=sys.stderr)
++        return 1
++
++    env_dict = _parse_env_pairs(args.env)
++    env_dict['alt_home'] = args.alt_home
++    new_entry = [args.keyboard, args.keymap, env_dict]
++
++    targets = data.setdefault('build_targets', [])
++
++    # Reject exact duplicates, but allow same keyboard:keymap with different env.
++    if new_entry in targets:
++        print(f'{args.keyboard}:{args.keymap} (alt_home={args.alt_home}) is already a userspace build target.')
++        return 0
++
++    targets.append(new_entry)
++
++    qmk_json.write_text(json.dumps(data, indent=4) + '\n', encoding='UTF-8')
++    print(f'Added {args.keyboard}:{args.keymap} (alt_home={args.alt_home}) to userspace build targets.')
++    return 0
+diff --git a/qmk_cli/intercepts/userspace_compile.py b/qmk_cli/intercepts/userspace_compile.py
+new file mode 100644
+index 0000000..0d58128
+--- /dev/null
++++ b/qmk_cli/intercepts/userspace_compile.py
+@@ -0,0 +1,80 @@
++"""`qmk userspace-compile` intercept.
++
++Replaces the firmware-side userspace_compile for the duration of the wrapper
++invocation. Reads `qmk.json`, then spawns a `qmk compile` per build target so
++each one resolves its own QMK_HOME via the alt_home machinery in script_qmk.
++"""
++import argparse
++import os
++import subprocess
++import sys
++from pathlib import Path
++
++from ..helpers import find_qmk_userspace, is_qmk_userspace, load_userspace_targets
++
++
++def _build_parser():
++    parser = argparse.ArgumentParser(prog='qmk userspace-compile', add_help=False)
++    parser.add_argument('-c', '--clean', action='store_true')
++    parser.add_argument('-n', '--dry-run', action='store_true')
++    parser.add_argument('-p', '--print-failures', action='store_true')
++    parser.add_argument('-e', '--env', action='append', default=[])
++    # Accepted for parity with firmware-side userspace-compile; not currently
++    # honored by this intercept.
++    parser.add_argument('-j', '--parallel', type=int, default=1)
++    parser.add_argument('-t', '--no-temp', action='store_true')
++    return parser
++
++
++def _qmk_invocation():
++    """Return the argv prefix used to re-enter the wrapper."""
++    return [sys.argv[0]]
++
++
++def _compile_command(target, extra_env, clean, dry_run):
++    cmd = _qmk_invocation() + ['compile']
++    if 'json_path' in target:
++        userspace = Path(os.environ.get('QMK_USERSPACE', '.'))
++        cmd.append(str(userspace / target['json_path']))
++    else:
++        cmd += ['-kb', target['keyboard'], '-km', target['keymap']]
++        for key, value in target.get('env', {}).items():
++            cmd += ['-e', f'{key}={value}']
++    for entry in extra_env:
++        cmd += ['-e', entry]
++    if clean:
++        cmd.append('-c')
++    if dry_run:
++        cmd.append('-n')
++    return cmd
++
++
++def run(argv):
++    parser = _build_parser()
++    args, _unknown = parser.parse_known_args(argv[1:])  # argv[0] is 'userspace-compile'
++
++    userspace = find_qmk_userspace()
++    if not is_qmk_userspace(userspace):
++        print('Error: could not determine QMK userspace location.', file=sys.stderr)
++        return 1
++
++    targets = load_userspace_targets(userspace)
++    if not targets:
++        print('No build targets found in qmk.json.', file=sys.stderr)
++        return 0
++
++    failures = []
++    for target in targets:
++        label = target.get('json_path') or f"{target['keyboard']}:{target['keymap']}"
++        cmd = _compile_command(target, args.env, args.clean, args.dry_run)
++        print(f'>>> {label}')
++        result = subprocess.run(cmd)
++        if result.returncode != 0:
++            failures.append((label, result.returncode))
++
++    if failures:
++        print(f'\n{len(failures)} target(s) failed:', file=sys.stderr)
++        for label, code in failures:
++            print(f'  {label} (exit {code})', file=sys.stderr)
++        return 1
++    return 0
+diff --git a/qmk_cli/script_qmk.py b/qmk_cli/script_qmk.py
+index 85d990a..1a4f23e 100644
+--- a/qmk_cli/script_qmk.py
++++ b/qmk_cli/script_qmk.py
+@@ -3,6 +3,7 @@
+ 
+ This program can be run from anywhere, with or without a qmk_firmware repository. If a qmk_firmware repository can be located we will use that to augment our available subcommands.
+ """
++import argparse
+ import os
+ from pathlib import Path
+ import shlex
+@@ -15,7 +16,7 @@
+ import platformdirs
+ 
+ from . import __version__
+-from .helpers import find_qmk_firmware, is_qmk_firmware, find_qmk_userspace, is_qmk_userspace
++from .helpers import find_qmk_firmware, is_qmk_firmware, find_qmk_userspace, is_qmk_userspace, find_alt_home, find_target_alt_home
+ 
+ 
+ def _get_default_distrib_path():
+@@ -64,6 +65,47 @@ def run_cmd(*command):
+     return subprocess.run(command)
+ 
+ 
++def _sniff_keyboard_keymap(argv):
++    """Extract -kb/--keyboard and -km/--keymap from argv without knowing the subcommand grammar.
++
++    Returns (keyboard, keymap), either of which may be None.
++    """
++    parser = argparse.ArgumentParser(add_help=False)
++    parser.add_argument('-kb', '--keyboard', dest='keyboard')
++    parser.add_argument('-km', '--keymap', dest='keymap')
++    try:
++        args, _ = parser.parse_known_args(argv)
++    except SystemExit:
++        return None, None
++    return args.keyboard, args.keymap
++
++
++def _resolve_alt_home_for_argv(qmk_userspace, argv):
++    """If the current invocation targets a (keyboard, keymap) with an alt_home,
++    return the resolved firmware path. Otherwise return None.
++    """
++    if qmk_userspace is None or not is_qmk_userspace(qmk_userspace):
++        return None
++
++    keyboard, keymap = _sniff_keyboard_keymap(argv)
++    if not keyboard or not keymap:
++        return None
++
++    alt_name = find_target_alt_home(qmk_userspace, keyboard, keymap)
++    if not alt_name:
++        return None
++
++    path = find_alt_home(alt_name)
++    if path is None:
++        print(f'Warning: build target {keyboard}:{keymap} requests alt_home "{alt_name}" but no path is configured (user.qmk_alt_home.{alt_name}).', file=sys.stderr)
++        return None
++    if not is_qmk_firmware(path):
++        print(f'Warning: alt_home "{alt_name}" -> {path} is not a valid qmk_firmware clone; falling back to default.', file=sys.stderr)
++        return None
++
++    return path
++
++
+ # Python setuptools entrypoint
+ def main():
+     """Setup the environment before dispatching to the entrypoint.
+@@ -96,7 +138,8 @@ def main():
+ 
+     # Environment setup
+     qmk_userspace = find_qmk_userspace()
+-    qmk_firmware = find_qmk_firmware()
++    alt_firmware = _resolve_alt_home_for_argv(qmk_userspace, sys.argv[1:])
++    qmk_firmware = alt_firmware if alt_firmware is not None else find_qmk_firmware()
+     if is_qmk_userspace(qmk_userspace):
+         os.environ['QMK_USERSPACE'] = str(qmk_userspace)
+     elif 'QMK_USERSPACE' in os.environ:  # Failed to find valid userspace, including what was in the environment if specified -- wipe any environment variable if present as it's clearly invalid.
+@@ -104,6 +147,13 @@ def main():
+     os.environ['QMK_HOME'] = str(qmk_firmware)
+     os.environ['ORIG_CWD'] = os.getcwd()
+ 
++    # Wrapper-level intercepts run before milc dispatch so they can fan out
++    # across multiple alt_homes without touching the firmware-side qmk.cli.
++    from . import intercepts
++    intercepted = intercepts.detect_intercept(sys.argv[1:])
++    if intercepted is not None:
++        sys.exit(intercepts.dispatch(intercepted))
++
+     import qmk_cli.subcommands
+ 
+     # Check out and initialize the qmk_firmware environment
+diff --git a/qmk_cli/subcommands/env.py b/qmk_cli/subcommands/env.py
+index 0f3960a..14aaafe 100644
+--- a/qmk_cli/subcommands/env.py
++++ b/qmk_cli/subcommands/env.py
+@@ -4,7 +4,7 @@
+ from pathlib import Path
+ 
+ from milc import cli
+-from qmk_cli.helpers import is_qmk_firmware, is_qmk_userspace
++from qmk_cli.helpers import is_qmk_firmware, is_qmk_userspace, list_alt_homes
+ 
+ 
+ @cli.argument('var', arg_only=True, default=None, nargs='?', help='Optional variable to query')
+@@ -20,6 +20,9 @@ def env(cli):
+         'QMK_PATH_PREFIX': os.environ.get('QMK_PATH_PREFIX', "")
+     }
+ 
++    for name, path in list_alt_homes().items():
++        data[f'QMK_ALT_HOME_{name.upper()}'] = path
++
+     # Now munge the current cli config
+     for key, val in cli.config.general.items():
+         converted_key = 'QMK_' + key.upper()

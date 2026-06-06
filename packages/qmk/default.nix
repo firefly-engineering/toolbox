@@ -12,6 +12,7 @@ let
           inherit version;
           hash = versionData.sha256;
         };
+        patches = (old.patches or [ ]) ++ toolboxLib.resolvePatches ./. versionData;
         propagatedBuildInputs = (old.propagatedBuildInputs or [ ]) ++ [
           pkgs.dos2unix
           pkgs.dfu-util
