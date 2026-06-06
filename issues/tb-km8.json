@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-06-06T20:04:29Z",
+  "description": "",
+  "id": "tb-km8",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Patch qmk with sigma/alt-home + add dfu-suffix",
+  "type": "task",
+  "updated_at": "2026-06-06T20:04:29Z"
+}
