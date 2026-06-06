@@ -5,14 +5,15 @@
     "tb-yix.2"
   ],
   "blocks": [],
+  "closed_at": "2026-06-06T07:31:37Z",
   "created": "2026-06-06T07:26:33Z",
   "description": "",
   "id": "tb-yix.3",
   "labels": [],
   "parent": "tb-yix",
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Add kbd-toolchain meta-package",
   "type": "task",
-  "updated_at": "2026-06-06T07:26:41Z"
+  "updated_at": "2026-06-06T07:31:37Z"
 }
