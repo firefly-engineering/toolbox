@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-06-06T07:26:33Z",
+  "description": "",
+  "id": "tb-yix.2",
+  "labels": [],
+  "parent": "tb-yix",
+  "priority": 2,
+  "status": "open",
+  "title": "Add dos2unix package (source build)",
+  "type": "task",
+  "updated_at": "2026-06-06T07:26:33Z"
+}
