@@ -4,14 +4,15 @@
   "blocks": [
     "tb-ay7.3"
   ],
+  "closed_at": "2026-06-06T07:46:40Z",
   "created": "2026-06-06T07:36:21Z",
   "description": "",
   "id": "tb-ay7.2",
   "labels": [],
   "parent": "tb-ay7",
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Add vitaly package (Rust source build)",
   "type": "task",
-  "updated_at": "2026-06-06T07:36:24Z"
+  "updated_at": "2026-06-06T07:46:40Z"
 }
