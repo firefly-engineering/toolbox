@@ -1,7 +1,9 @@
 {
   "assignee": "",
   "blocked_by": [],
-  "blocks": [],
+  "blocks": [
+    "tb-ay7.3"
+  ],
   "created": "2026-06-06T07:36:20Z",
   "description": "",
   "id": "tb-ay7.1",
@@ -11,5 +13,5 @@
   "status": "open",
   "title": "Add qmk_hid package (Rust source build)",
   "type": "task",
-  "updated_at": "2026-06-06T07:36:20Z"
+  "updated_at": "2026-06-06T07:36:24Z"
 }
