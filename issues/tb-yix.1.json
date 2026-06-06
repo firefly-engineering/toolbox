@@ -1,7 +1,9 @@
 {
   "assignee": "",
   "blocked_by": [],
-  "blocks": [],
+  "blocks": [
+    "tb-yix.3"
+  ],
   "created": "2026-06-06T07:26:33Z",
   "description": "",
   "id": "tb-yix.1",
@@ -11,5 +13,5 @@
   "status": "open",
   "title": "Add qmk package (source build)",
   "type": "task",
-  "updated_at": "2026-06-06T07:26:33Z"
+  "updated_at": "2026-06-06T07:26:40Z"
 }

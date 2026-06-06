@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "tb-yix.1"
+  ],
   "blocks": [],
   "created": "2026-06-06T07:26:33Z",
   "description": "",
@@ -11,5 +13,5 @@
   "status": "open",
   "title": "Add kbd-toolchain meta-package",
   "type": "task",
-  "updated_at": "2026-06-06T07:26:33Z"
+  "updated_at": "2026-06-06T07:26:40Z"
 }
