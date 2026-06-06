@@ -12,7 +12,7 @@
   "parent": "tb-ay7",
   "priority": 2,
   "status": "open",
-  "title": "Bump kbd-toolchain to v2 (add qmk_hid + vitaly)",
+  "title": "Roll qmk_hid + vitaly into kbd-toolchain v1",
   "type": "task",
-  "updated_at": "2026-06-06T07:36:24Z"
+  "updated_at": "2026-06-06T07:46:40Z"
 }
