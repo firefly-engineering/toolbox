@@ -1,0 +1,7 @@
+{
+  "_meta": { "default": "0.1.13", "releases": "https://github.com/FrameworkComputer/qmk_hid/releases" },
+  "0.1.13": {
+    "sha256": "sha256-GuI/hDqMEpJ5Flcs4hRXZr3pbVFreelJIlS/idViHmY=",
+    "rust": "1.95.0"
+  }
+}
