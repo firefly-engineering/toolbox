@@ -1,8 +1,8 @@
 diff --git a/qmk_cli/helpers.py b/qmk_cli/helpers.py
-index 8abc757..bce8bb9 100644
+index 8abc757..6ffce59 100644
 --- a/qmk_cli/helpers.py
 +++ b/qmk_cli/helpers.py
-@@ -115,3 +115,142 @@ def in_qmk_userspace():
+@@ -115,3 +115,180 @@ def in_qmk_userspace():
          # Move up a directory before the next iteration
          cur_dir = cur_dir / '..'
          cur_dir = cur_dir.resolve()
@@ -15,25 +15,45 @@ index 8abc757..bce8bb9 100644
 +def find_alt_home(name):
 +    """Resolve a named alternate qmk_firmware path from user config.
 +
-+    Looks up `user.qmk_alt_home.<name>`, supporting either milc's nested-namespace
-+    storage (an object exposing attributes) or a flat dotted/underscored key on
-+    the user section.
++    Looks up `user.qmk_alt_home.<name>` across the storage shapes milc may use:
++    a top-level section literally named ``user.qmk_alt_home`` (how
++    RawConfigParser stores ``[user.qmk_alt_home]`` from qmk.ini), then a
++    nested-namespace attribute on the ``user`` section, then a flat
++    dotted/underscored key on the ``user`` section as a fallback.
 +
 +    Returns a resolved Path or None if not configured.
 +    """
 +    if not name:
 +        return None
 +
-+    section = getattr(cli.config.user, 'qmk_alt_home', None)
 +    path_str = None
-+    if section is not None:
-+        # Nested namespace: cli.config.user.qmk_alt_home.<name>
-+        path_str = getattr(section, name, None)
-+        if path_str is None and hasattr(section, '__getitem__'):
-+            try:
-+                path_str = section[name]
-+            except (KeyError, TypeError):
-+                path_str = None
++
++    # Flat INI section: cli.config['user.qmk_alt_home'][<name>]. milc's
++    # RawConfigParser keeps the literal dotted section name as a single key,
++    # so this is what an entry written to qmk.ini under [user.qmk_alt_home]
++    # actually lands as.
++    try:
++        flat_section = cli.config['user.qmk_alt_home']
++    except (KeyError, AttributeError, TypeError):
++        flat_section = None
++    if flat_section is not None and name in flat_section:
++        try:
++            candidate = flat_section[name]
++        except (KeyError, TypeError):
++            candidate = None
++        if isinstance(candidate, str) and candidate:
++            path_str = candidate
++
++    if not path_str:
++        section = getattr(cli.config.user, 'qmk_alt_home', None)
++        if section is not None:
++            # Nested namespace: cli.config.user.qmk_alt_home.<name>
++            path_str = getattr(section, name, None)
++            if path_str is None and hasattr(section, '__getitem__'):
++                try:
++                    path_str = section[name]
++                except (KeyError, TypeError):
++                    path_str = None
 +
 +    if not path_str:
 +        # Flat dotted key on the user section
@@ -111,11 +131,29 @@ index 8abc757..bce8bb9 100644
 +def list_alt_homes():
 +    """Enumerate all configured `user.qmk_alt_home.*` entries.
 +
-+    Returns a dict {name: path_str}, discovering entries across the three
-+    storage shapes supported by find_alt_home (nested namespace, dotted flat
-+    key, underscored flat key).
++    Returns a dict {name: path_str}, discovering entries across the storage
++    shapes supported by find_alt_home (flat ``user.qmk_alt_home`` section,
++    nested namespace, dotted/underscored flat key on the user section).
 +    """
 +    result = {}
++
++    # Flat INI section: cli.config['user.qmk_alt_home']
++    try:
++        flat_section = cli.config['user.qmk_alt_home']
++    except (KeyError, AttributeError, TypeError):
++        flat_section = None
++    if flat_section is not None:
++        items = None
++        if hasattr(flat_section, 'items'):
++            try:
++                items = list(flat_section.items())
++            except TypeError:
++                items = None
++        if items is None:
++            items = [(k, getattr(flat_section, k)) for k in dir(flat_section) if not k.startswith('_') and isinstance(getattr(flat_section, k, None), str)]
++        for key, value in items:
++            if isinstance(value, str) and value:
++                result.setdefault(key, value)
 +
 +    section = getattr(cli.config.user, 'qmk_alt_home', None)
 +    if section is not None:
@@ -129,7 +167,7 @@ index 8abc757..bce8bb9 100644
 +            items = [(k, getattr(section, k)) for k in dir(section) if not k.startswith('_') and isinstance(getattr(section, k, None), str)]
 +        for key, value in items:
 +            if isinstance(value, str) and value:
-+                result[key] = value
++                result.setdefault(key, value)
 +
 +    try:
 +        user_section = cli.config['user']
