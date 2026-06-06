@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-06-06T07:26:29Z",
+  "description": "Bundle qmk and dos2unix as a toolbox toolchain for keyboard firmware work. Both packages need source builds.",
+  "id": "tb-yix",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Add kbd-toolchain (qmk + dos2unix)",
+  "type": "epic",
+  "updated_at": "2026-06-06T07:26:29Z"
+}
