@@ -10,9 +10,15 @@
   "id": "tb-yix.2",
   "labels": [],
   "parent": "tb-yix",
+  "comments": [
+    {
+      "text": "Reverted — dos2unix is now a propagatedBuildInput of qmk (it's a runtime dep, not a user-facing tool). Package removed.",
+      "timestamp": "2026-06-06T07:46:40Z"
+    }
+  ],
   "priority": 2,
   "status": "closed",
   "title": "Add dos2unix package (source build)",
   "type": "task",
-  "updated_at": "2026-06-06T07:30:47Z"
+  "updated_at": "2026-06-06T07:46:40Z"
 }
