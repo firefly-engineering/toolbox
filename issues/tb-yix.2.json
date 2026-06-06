@@ -4,14 +4,15 @@
   "blocks": [
     "tb-yix.3"
   ],
+  "closed_at": "2026-06-06T07:30:47Z",
   "created": "2026-06-06T07:26:33Z",
   "description": "",
   "id": "tb-yix.2",
   "labels": [],
   "parent": "tb-yix",
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Add dos2unix package (source build)",
   "type": "task",
-  "updated_at": "2026-06-06T07:26:41Z"
+  "updated_at": "2026-06-06T07:30:47Z"
 }
