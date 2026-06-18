@@ -1,0 +1,9 @@
+{
+  "_meta": { "default": "v1.54", "releases": "https://github.com/anza-xyz/platform-tools/releases" },
+  "v1.54": {
+    "x86_64-linux": { "sha256": "sha256-/MQWMcf3dWG/VBIhi/KXUB3M8DBeooDzOPCs4qq58x4=" },
+    "aarch64-linux": { "sha256": "sha256-9igS3Za2scjg4s9ncUaRLFjIPpXXYsMOiSMNZp+cLmo=" },
+    "x86_64-darwin": { "sha256": "sha256-0ctxZYkgB9Ea1y/e0Wx2km5d+p/yhv49mZRAwa80p1g=" },
+    "aarch64-darwin": { "sha256": "sha256-HIs69ehhThxFk5OpXFsZv7zI7ROCKhy1OfrmhHH5v7s=" }
+  }
+}
