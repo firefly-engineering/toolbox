@@ -1,0 +1,12 @@
+{
+  "_meta": {
+    "default": "2.5.0",
+    "releases": "https://github.com/numtide/treefmt/releases"
+  },
+  "2.5.0": {
+    "x86_64-linux": { "sha256": "sha256-lfcHv5Zm0ItQiIsRZ2j9d/BCrVr5KqO3lfBjFg5ydY8=" },
+    "aarch64-linux": { "sha256": "sha256-/OR8b8jLaodGGxMJ/G0xAureZLb+DJuGZ4tO7Z6wDlc=" },
+    "x86_64-darwin": { "sha256": "sha256-ITiLH31sL1cuHOkjH338CPgKBiQ4kIeRqweMHXaxCkk=" },
+    "aarch64-darwin": { "sha256": "sha256-o836jpLrfDAruFH3OAAYfnXVeJ8qdYNbQDsVjXeyw3Y=" }
+  }
+}
