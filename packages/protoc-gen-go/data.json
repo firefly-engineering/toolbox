@@ -1,0 +1,11 @@
+{
+  "_meta": {
+    "default": "1.36.11",
+    "releases": "https://github.com/protocolbuffers/protobuf-go/releases"
+  },
+  "1.36.11": {
+    "sha256": "sha256-7+w3f5dDcQCw87A6P+JZXfMejS4QHANaLGK8QbUAaQs=",
+    "vendorHash": "sha256-EAkrbx9pTBhZ0y0ub14PnMINrk1M6yEgnGapzpgXqBU=",
+    "go": "1.26.2"
+  }
+}
