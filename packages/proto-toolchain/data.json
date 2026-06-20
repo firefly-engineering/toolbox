@@ -1,0 +1,7 @@
+{
+  "_meta": { "default": "1" },
+  "1": {
+    "protobuf": "35.1",
+    "protoc-gen-go": "1.36.11"
+  }
+}
