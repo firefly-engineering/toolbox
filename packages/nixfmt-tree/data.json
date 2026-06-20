@@ -1,0 +1,9 @@
+{
+  "_meta": {
+    "default": "2.5.0",
+    "releases": "https://github.com/numtide/treefmt/releases"
+  },
+  "2.5.0": {
+    "treefmt": "2.5.0"
+  }
+}
