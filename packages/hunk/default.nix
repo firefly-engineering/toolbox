@@ -46,6 +46,14 @@ let
           mkdir -p $out/bin
           install -m755 hunk $out/bin/hunk
           ln -s hunk $out/bin/hunkdiff
+
+          # Bundle the assets shipped alongside the binary. hunk resolves the
+          # review skill by walking up from process.execPath ($out/bin/hunk)
+          # looking for skills/hunk-review/SKILL.md, so the skills/ directory
+          # must sit next to bin/ at $out. metadata.json is shipped likewise.
+          cp -r skills $out/skills
+          install -m644 metadata.json $out/metadata.json
+
           runHook postInstall
         '';
 
