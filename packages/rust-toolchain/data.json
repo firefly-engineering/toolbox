@@ -1,5 +1,10 @@
 {
-  "_meta": { "default": "3" },
+  "_meta": { "default": "4" },
+  "4": {
+    "rust": "1.96.0",
+    "rust-analyzer": "2026-06-22",
+    "cargo-edit": "0.13.9"
+  },
   "3": {
     "rust": "1.95.0",
     "rust-analyzer": "2026-04-27",
