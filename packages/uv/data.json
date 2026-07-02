@@ -1,5 +1,11 @@
 {
-  "_meta": { "default": "0.11.6", "releases": "https://github.com/astral-sh/uv/releases" },
+  "_meta": { "default": "0.11.26", "releases": "https://github.com/astral-sh/uv/releases" },
+  "0.11.26": {
+    "x86_64-linux": { "sha256": "sha256-ZCanPDg35uJIPuNEy8APNjlNF5r8umGDy3dDfmfbSvA=" },
+    "aarch64-linux": { "sha256": "sha256-vvoaWckelutgGw/ZqXwD3WZvF7q6ZEsrTbnFmnZ+OH4=" },
+    "x86_64-darwin": { "sha256": "sha256-kitGAgJwfdX0zKy62+f2pUbMRugqmb9Qypmnl3p47d0=" },
+    "aarch64-darwin": { "sha256": "sha256-j3+/Fwg5m5IYV7znHh1g8NPM9SowyuvBwaLxddzhOrY=" }
+  },
   "0.11.6": {
     "x86_64-linux": { "sha256": "sha256-DGurd6Z6RF3ISe1ejujTyzM7bi66hjZDzh4igHXyeUM=" },
     "aarch64-linux": { "sha256": "sha256-1b5L9wFeoAA3jLPDq6U7qBqGc0WKzpx/oloL4AW3SAI=" },
