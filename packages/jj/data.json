@@ -1,5 +1,10 @@
 {
-  "_meta": { "default": "0.42.0", "releases": "https://github.com/jj-vcs/jj/releases" },
+  "_meta": { "default": "0.43.0", "releases": "https://github.com/jj-vcs/jj/releases" },
+  "0.43.0": {
+    "sha256": "sha256-XgBq2ZN34iWlwKVgW7Syr46KUdt7pJuSDd/J6QWJwwQ=",
+    "cargoHash": "sha256-bEvpTd+FAHrD+CZN7+AuCuThyJ5LtufQR7OrGpjrWK0=",
+    "rust": "1.96.0"
+  },
   "0.42.0": {
     "sha256": "sha256-wAefhpNP4ErCTTjZADpvTDk2of/XKP/MoXl6fpG7/fA=",
     "cargoHash": "sha256-b7/5vkO6GNX8qzJr4NcxtLZVLDc6NOMrOU4dE6LOFoE=",
