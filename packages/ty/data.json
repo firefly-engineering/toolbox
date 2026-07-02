@@ -1,5 +1,11 @@
 {
-  "_meta": { "default": "0.0.35", "releases": "https://github.com/astral-sh/ty/releases" },
+  "_meta": { "default": "0.0.56", "releases": "https://github.com/astral-sh/ty/releases" },
+  "0.0.56": {
+    "x86_64-linux": { "sha256": "sha256-kueq7vGt2qiqHAGHcLvk5NT+F9ExwTLUpCYRouPv3xM=" },
+    "aarch64-linux": { "sha256": "sha256-buNsgg0O7HpTCYGq8lbo6gplsqKLpFU34oPavBEkTVM=" },
+    "x86_64-darwin": { "sha256": "sha256-hQon1eQzJ0lElwiFTTrExXS6ca49AnQojfhzlm36hjg=" },
+    "aarch64-darwin": { "sha256": "sha256-Mqu14HC74BEHgT783lVA0QMzGt9oxQhx0GZcPi0vocg=" }
+  },
   "0.0.35": {
     "x86_64-linux": { "sha256": "sha256-Sg0JjQhlAobwk9eF3t5Gq3REBEeu+3NaFHWam0Uogqc=" },
     "aarch64-linux": { "sha256": "sha256-x9Hf4eSn/attENM98Q+4bL0WctSBEPkVHmfBOaJzcfM=" },
