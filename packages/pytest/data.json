@@ -1,5 +1,8 @@
 {
-  "_meta": { "default": "9.0.3", "releases": "https://github.com/pytest-dev/pytest/releases" },
+  "_meta": { "default": "9.1.1", "releases": "https://github.com/pytest-dev/pytest/releases" },
+  "9.1.1": {
+    "sha256": "sha256-EIj73o8rSdlaVJoZVwevp6dqPOm8rcJrbXHw/9pf4xM="
+  },
   "9.0.3": {
     "sha256": "sha256-uGraUIr4HRnt6yE8aBsdSCRsGpHTBMbIGkJ2dMF+uRw="
   }
