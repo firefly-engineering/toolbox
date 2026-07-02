@@ -1,5 +1,11 @@
 {
-  "_meta": { "default": "0.8.34", "releases": "https://github.com/ethereum/solidity/releases" },
+  "_meta": { "default": "0.8.35", "releases": "https://github.com/ethereum/solidity/releases" },
+  "0.8.35": {
+    "x86_64-linux": { "sha256": "sha256-+orJoy0wGtAjo27lop+OKR/jIAxgJE5DwUJTnoKmF/Q=" },
+    "aarch64-linux": { "sha256": "sha256-QhjSk20rWCvFdR2sVI+Xs2qGUrId7VK2ChwSWRQ+4OQ=" },
+    "x86_64-darwin": { "sha256": "sha256-bkMlgNlzyudMhp709zdSnnP+xbIA3OPAjV52xKaxkVk=" },
+    "aarch64-darwin": { "sha256": "sha256-bkMlgNlzyudMhp709zdSnnP+xbIA3OPAjV52xKaxkVk=" }
+  },
   "0.8.34": {
     "x86_64-linux": { "sha256": "sha256-1Arcb5/bsiqX0yoC+gVoi/LueIav/EjJhRsK/Upyazk=" },
     "aarch64-linux": { "sha256": "sha256-5CYOWPn2U/mEyMBy9yYoVcpGKFcHUqq8mls1jFfSpuU=" },
