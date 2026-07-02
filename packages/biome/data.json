@@ -1,5 +1,11 @@
 {
-  "_meta": { "default": "2.4.7", "releases": "https://github.com/biomejs/biome/releases" },
+  "_meta": { "default": "2.5.2", "releases": "https://github.com/biomejs/biome/releases" },
+  "2.5.2": {
+    "x86_64-linux": { "sha256": "sha256-zNatxQu5l79PX5EUAlWXfzpc0Sy93oLVQGuNfHFUqWs=" },
+    "aarch64-linux": { "sha256": "sha256-/mnfmavcEBpmWX3+tyDdQIGPxY/pbWxTucLjLFBlq3o=" },
+    "x86_64-darwin": { "sha256": "sha256-5ajaj91t2PRwJ/epFFaNCqcXKLd+1em8kJwAr8NE878=" },
+    "aarch64-darwin": { "sha256": "sha256-Yom3HSgZKJJqUBNvVV8LNrhMH73VCQ+G9HyYq7LnQSg=" }
+  },
   "2.4.7": {
     "x86_64-linux": { "sha256": "sha256-qb1AYSaSFMlltGiGfBCYmW1rGyULfizqfQslopsN4rA=" },
     "aarch64-linux": { "sha256": "sha256-vEdso4TgDjqLhlA61JQXa8ZQY8Gp51ftTcMB0jOZTM0=" },
