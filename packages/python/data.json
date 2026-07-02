@@ -1,5 +1,12 @@
 {
-  "_meta": { "default": "3.13.12", "release": "20260310", "releases": "https://github.com/astral-sh/python-build-standalone/releases" },
+  "_meta": { "default": "3.13.14", "release": "20260623", "releases": "https://github.com/astral-sh/python-build-standalone/releases" },
+  "3.13.14": {
+    "release": "20260623",
+    "x86_64-linux": { "sha256": "sha256-RZ7XmWeswge+8v9RJNrDXXTVEIUo43sVOV0U4pIvLJI=" },
+    "aarch64-linux": { "sha256": "sha256-6THXo5P1SQJQP4dFzrNUIOfdUKBn545fRccUBPehWzA=" },
+    "x86_64-darwin": { "sha256": "sha256-/b5xmPsy8kq5nGfLaMsmVhXgu2y2WG/8y2Ke+cqGhCA=" },
+    "aarch64-darwin": { "sha256": "sha256-eVpa7rBQ8AqooiFNd5utnxuRE+22kjMXqAwEKhGgh9c=" }
+  },
   "3.13.12": {
     "release": "20260310",
     "x86_64-linux": { "sha256": "sha256-kErcm8Q3HAGyD351oZsQ8H+1d4ib4CvyH39Ekim5dhE=" },
