@@ -1,5 +1,11 @@
 {
-  "_meta": { "default": "1.8.1", "releases": "https://github.com/jqlang/jq/releases" },
+  "_meta": { "default": "1.8.2", "releases": "https://github.com/jqlang/jq/releases" },
+  "1.8.2": {
+    "x86_64-linux": { "sha256": "sha256-scIhct0wPzvknpNapWqkiot6RuC8g4tJl9O7RRSVhw8=" },
+    "aarch64-linux": { "sha256": "sha256-i4XIF4M4FN3KAKFEwzcFVGNVr8zwzzmxiPPNtIuFIwk=" },
+    "x86_64-darwin": { "sha256": "sha256-6UsmbjwmaQVQAGq+YxUreCKA9OFDdKzN8Ey96ETwC8A=" },
+    "aarch64-darwin": { "sha256": "sha256-LXU0C6V6S0tMhwiiHC3I6VikiqqLuhOyf3f25MDsoH4=" }
+  },
   "1.8.1": {
     "x86_64-linux": { "sha256": "sha256-AgRo3nU5znDvG86vfN4ujE8spsOvuEZCqrxcl9n8Kg0=" },
     "aarch64-linux": { "sha256": "sha256-a8YvJZgTKO3Tz8/m/lGwc/LX53ENfvf82sKNTjhPw9Q=" },
