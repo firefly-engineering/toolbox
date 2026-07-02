@@ -8,7 +8,7 @@ let
       let
         go = toolbox.go.versions.${versionData.go};
       in
-      pkgs.buildGoModule {
+      (pkgs.buildGoModule.override { inherit go; }) {
         pname = "gopls";
         inherit version;
         src = pkgs.fetchFromGitHub {
@@ -18,8 +18,6 @@ let
           hash = versionData.sha256;
         };
         vendorHash = versionData.vendorHash;
-
-        inherit go;
 
         sourceRoot = "source/gopls";
         subPackages = [ "." ];
