@@ -1,5 +1,11 @@
 {
-  "_meta": { "default": "2" },
+  "_meta": { "default": "3" },
+  "3": {
+    "typescript": "6.0.3",
+    "nodejs": "24.18.0",
+    "biome": "2.5.2",
+    "bun": "1.3.14"
+  },
   "2": {
     "typescript": "6.0.3",
     "nodejs": "24.18.0",
