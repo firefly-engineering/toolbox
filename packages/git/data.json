@@ -1,5 +1,8 @@
 {
-  "_meta": { "default": "2.54.0", "releases": "https://github.com/git/git/tags" },
+  "_meta": { "default": "2.55.0", "releases": "https://github.com/git/git/tags" },
+  "2.55.0": {
+    "sha256": "sha256-RX/bBNyHKOAH1GiGleaRLm9oByeSDypAvxHqzBdQU1c="
+  },
   "2.54.0": {
     "sha256": "sha256-9okWI2TBDeee+Jqo2/SHMesFfjTtu9IKylEM4BVGgaM="
   },

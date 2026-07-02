@@ -30,6 +30,9 @@ let
           "prefix=$(out)"
           "NO_TCLTK=1"
           "INSTALL_SYMLINKS=1"
+          # Rust libgitcore is optional through Git 2.x (mandatory in 3.0). Disable it
+          # to avoid pulling a Rust toolchain + crate vendoring; no-op for pre-2.55 versions.
+          "NO_RUST=1"
         ];
 
         doCheck = false;
