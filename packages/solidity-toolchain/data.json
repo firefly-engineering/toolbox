@@ -1,5 +1,9 @@
 {
-  "_meta": { "default": "2" },
+  "_meta": { "default": "3" },
+  "3": {
+    "solc": "0.8.35",
+    "foundry": "v1.5.1"
+  },
   "1": {
     "solc": "0.8.34",
     "foundry": "v1.5.1"
