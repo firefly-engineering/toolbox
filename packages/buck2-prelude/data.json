@@ -1,5 +1,9 @@
 {
-  "_meta": { "default": "2026-03-15", "releases": "https://github.com/facebook/buck2-prelude" },
+  "_meta": { "default": "2026-07-01", "releases": "https://github.com/facebook/buck2-prelude" },
+  "2026-07-01": {
+    "rev": "2480d82ad5efac0f8a57c708925607ca0791b021",
+    "sha256": "sha256-n9EVGY/YATUloQSRnIXyZxFR8+aQnvZTmyU+XUoxscU="
+  },
   "2026-03-15": {
     "rev": "27c8628d9bd9324e6dba3fd0e5c112e6ea4c5795",
     "sha256": "sha256-jTr/I75Vg7jBz0lyrud+Qr5fDtgVDkea7SwDaIyn+/8="
