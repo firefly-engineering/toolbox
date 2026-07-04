@@ -91,6 +91,7 @@ let
           mkdir -p $out/lib/qmd $out/bin
           cp -r node_modules $out/lib/qmd/
           cp -r src $out/lib/qmd/
+          cp -r skills $out/lib/qmd/
           cp package.json $out/lib/qmd/
 
           makeWrapper ${pkgs.bun}/bin/bun $out/bin/qmd \
