@@ -1,0 +1,10 @@
+{
+  "_meta": { "default": "2.5.3", "releases": "https://github.com/tobi/qmd/releases" },
+  "2.5.3": {
+    "sha256": "sha256-bFk078qQ8Ha/1na+r5ka6yNPI/Pealh0Rk6hJxKBwNs=",
+    "nodeModules": {
+      "x86_64-linux": "sha256-sVXoNWIcx1RYRtRWB4F2j7x8/cabFBKq+plFhPU7tBc=",
+      "aarch64-darwin": "sha256-gDyJ5boyH44SeXlKo+W4G36GSUejyXP5PFvW+dFS1Mk="
+    }
+  }
+}
