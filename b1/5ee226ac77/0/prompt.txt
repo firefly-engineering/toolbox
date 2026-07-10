@@ -1,0 +1,4 @@
+we seem to be missing some bundled content:
+
+╰─❯ qmd skills get qmd --full                                                                                        ─╯
+Skill not found: qmd
