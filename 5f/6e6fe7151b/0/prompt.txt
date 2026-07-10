@@ -1,0 +1,5 @@
+figure out what package updates might be warranted
+
+---
+
+let's bump rust, gh, gopls, rust-analyzer, just, ty, and hunk
