@@ -1,0 +1,1 @@
+add packages for gotestsum (and add it to the go-toolchain). Create a nix-toolchain meta-package with nixfmt-tree and nil in it. Create a proto-toolchain with protobuf and protoc-gen-go
