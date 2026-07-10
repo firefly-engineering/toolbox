@@ -1,0 +1,3 @@
+looks like the hunk package doesn't bundle the embedded skill properly (see https://github.com/modem-dev/hunk/blob/0a3cc064931a9d576882baee6daac7cfab3d0bbe/src/core/paths.ts)
+
+we need to make sure `hunk skill path` returns the proper file
