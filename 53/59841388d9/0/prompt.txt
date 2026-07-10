@@ -1,0 +1,1 @@
+add a package for qmd (https://github.com/tobi/qmd) and create a llm-toolchain meta-package with it in it
