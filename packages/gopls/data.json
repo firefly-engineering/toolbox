@@ -1,5 +1,10 @@
 {
-  "_meta": { "default": "0.22.0", "releases": "https://github.com/golang/tools/releases" },
+  "_meta": { "default": "0.23.0", "releases": "https://github.com/golang/tools/releases" },
+  "0.23.0": {
+    "sha256": "sha256-GTRZ0tS2a7Cx4qRf6PfxhkGVPYRoLYOmE+W/2x9Pttk=",
+    "vendorHash": "sha256-rvm33C3z3T6moeEQ4C7aG+dT8ROqmpBFehIpwGFZMrU=",
+    "go": "1.26.4"
+  },
   "0.22.0": {
     "sha256": "sha256-JO3FHKBjAGPPuVvrgdc4RZJreiPHbZp+4RwiZubusVg=",
     "vendorHash": "sha256-mZvjoEgVZ5iNTiduLEC3Oy4RCcxEdVlN6a0Us47IdIQ=",
