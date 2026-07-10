@@ -1,0 +1,1 @@
+come on, of course we need to use the upstream lock. Why aren't we picking it up automatically? Aren't we using pnpm as part of our nix package? if not why?
