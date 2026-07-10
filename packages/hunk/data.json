@@ -1,7 +1,13 @@
 {
   "_meta": {
-    "default": "0.16.0",
+    "default": "0.17.0",
     "releases": "https://github.com/modem-dev/hunk/releases"
+  },
+  "0.17.0": {
+    "x86_64-linux": { "sha256": "sha256-DGJvemaHqYJjBOod9pbaXUnt+EJx7M31f//1g0KJ4OI=" },
+    "aarch64-linux": { "sha256": "sha256-RhZBJhSLf7RZwV+5qSGTkX2lt6XFCbSzai3N86sE9Ns=" },
+    "x86_64-darwin": { "sha256": "sha256-Y24JxZp0gdehL7wvDcVKz7wChoE2BNhqUrNkRzkiJiQ=" },
+    "aarch64-darwin": { "sha256": "sha256-cAIhZppRt4yDWYW0nKZ+Wku6r9tDSmygP50mL3qCaT4=" }
   },
   "0.16.0": {
     "x86_64-linux": { "sha256": "sha256-DdgMdnkmXfcmF4d6Atr+/WrGqDRSjhAldWdkLrLAXqY=" },
