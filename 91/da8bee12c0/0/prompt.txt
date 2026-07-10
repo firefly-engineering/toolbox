@@ -1,0 +1,1 @@
+add a package for https://github.com/Fission-AI/OpenSpec/ and add it to the llm toolchain
