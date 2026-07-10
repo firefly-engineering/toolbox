@@ -1,0 +1,1 @@
+I want a new toolchain package "kbd-toolchain" that provides packages for qmk and dos2unix. Those packages will have to be built from source I think
