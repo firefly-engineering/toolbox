@@ -1,5 +1,19 @@
 {
-  "_meta": { "default": "1.96.0", "releases": "https://github.com/rust-lang/rust/releases" },
+  "_meta": { "default": "1.97.0", "releases": "https://github.com/rust-lang/rust/releases" },
+  "1.97.0": {
+    "x86_64-linux": {
+      "sha256": "sha256-HPF+SQW4QdTI4/dkZ6wUjVX7P1S/ITyG8NKHo2Rx2QQ="
+    },
+    "aarch64-linux": {
+      "sha256": "sha256-TIj+MKdIqIU8GfToh2pksyAFvEy83kjpNzLQakMOgIo="
+    },
+    "x86_64-darwin": {
+      "sha256": "sha256-UIL1QtgAxK1p2zIKH1MXh8XCk0ZUre5DGo/jaD2/kLg="
+    },
+    "aarch64-darwin": {
+      "sha256": "sha256-RPNQiWBcirjK+30h40l6V8JK5I54lym1kk/ScZ2uA4g="
+    }
+  },
   "1.96.0": {
     "x86_64-linux": {
       "sha256": "sha256-wpUEdYOlYjjqBrQ/hJ9Lh3+hK/1McQP42adMlMnE4Qg="
