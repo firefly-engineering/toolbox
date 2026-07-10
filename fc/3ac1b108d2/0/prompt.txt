@@ -1,0 +1,1 @@
+add more packages to kbd-toolchain: qmk_hid and vitaly (you can look at ~/src/github.com/sigma/via_hacks/devenv.nix for a vitaly recipe)
