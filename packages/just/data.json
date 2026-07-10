@@ -1,5 +1,11 @@
 {
-  "_meta": { "default": "1.54.0", "releases": "https://github.com/casey/just/releases" },
+  "_meta": { "default": "1.56.0", "releases": "https://github.com/casey/just/releases" },
+  "1.56.0": {
+    "x86_64-linux": { "sha256": "sha256-+iqOwQFdnfUzCUGt4SQ3SI/EDTP5yfjNTrcKJt4Rtjk=" },
+    "aarch64-linux": { "sha256": "sha256-yMHWVun0dWnsGuK/h3mvJiHN7qa7u6Owys1k+VHSXis=" },
+    "x86_64-darwin": { "sha256": "sha256-CbNf9tFwI/+uN85AjRp4qXbZ4AHK5UuI4jj39A25t4M=" },
+    "aarch64-darwin": { "sha256": "sha256-81eY1LzcTbAg7vfShTrZi7+5ek0p7mlboELxjn/tzBE=" }
+  },
   "1.54.0": {
     "x86_64-linux": { "sha256": "sha256-GT4rBLrI/zVo/4HPYvjJ2wj4CD4WZl4o1ADdNbrEf/0=" },
     "aarch64-linux": { "sha256": "sha256-IWKsy1TQh8b70WXBuu3MsPk7SVOvfwAwm4+SgBbEnK4=" },
