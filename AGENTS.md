@@ -4,6 +4,48 @@
 
 Toolbox is a self-contained, data-driven package registry for [turnkey](https://github.com/firefly-engineering/turnkey). Version metadata lives in JSON data files — Nix code reads this data to build derivations automatically. Adding a new version means adding a JSON entry, not editing Nix code.
 
+## Reproducibility Is Non-Negotiable
+
+Every derivation must build identically from pinned inputs, forever. A build whose output depends on *when* it runs is a bug, not a convenience.
+
+- **Pin everything by content hash.** Source archives (`sha256`), Go deps (`vendorHash`), Rust deps (`cargoHash`), and dependency trees are all fixed-output. Never leave a hash to be resolved "live" at build time.
+- **Never resolve version ranges at build time.** If a package's dependencies are expressed as semver *ranges* (npm `^`/`~`, etc.), resolving them during the build ties the output to the registry's state on that day — a rebuild months later can silently pull different transitive versions. This is unacceptable. The fully-resolved tree must come from a **lockfile** (see below).
+- **Use upstream's own lockfile.** Upstream already resolved and tested a specific dependency tree; their committed lockfile is the source of truth. Do not regenerate or re-resolve it — build from the source tree that contains it so a Nix dep-fetcher consumes it directly.
+- **Fail loudly, never drift silently.** Prefer tools that verify a lockfile (`npm ci`, `pnpm --frozen-lockfile`, `cargo --locked`) over ones that will happily update it. If pinned inputs no longer match, the build must error, not paper over it.
+
+The failure mode to design against: "it built for me today." If it won't build byte-identically in a year, it isn't done.
+
+### Node/JS Packages (npm, pnpm, yarn)
+
+**Build from the tagged source repository, not the published npm tarball.** The npm registry tarball ships compiled output but usually no lockfile, which would force you to re-resolve dependencies — exactly what must not happen. The source repo contains the committed lockfile; build from it so a Nix dep-fetcher pins the tree upstream actually tested.
+
+Pick the fetcher by the lockfile upstream commits:
+
+- **pnpm** (`pnpm-lock.yaml`): use `buildNpmPackage` with `npmDeps = null` and `pnpmDeps = fetchPnpmDeps { … }`. Match the pnpm major version to the repo's `packageManager` field (`pnpm@9.x` → `pkgs.pnpm_9`); the lockfile's `lockfileVersion` must be readable by that pnpm or the fetcher errors. Set `fetcherVersion = 3` (reproducible tarball). Reference: `packages/openspec/`:
+  ```nix
+  pkgs.buildNpmPackage (finalAttrs: {
+    pname = "openspec";
+    inherit version;
+    src = pkgs.fetchFromGitHub { owner = "…"; repo = "…"; rev = "v${version}"; hash = versionData.sha256; };
+    npmDeps = null;
+    pnpmDeps = pkgs.fetchPnpmDeps {
+      inherit (finalAttrs) pname version src;
+      pnpm = pkgs.pnpm_9;
+      fetcherVersion = 3;
+      hash = versionData.pnpmDeps;   # the only dep hash in data.json
+    };
+    nativeBuildInputs = [ pkgs.pnpm_9 ];
+    npmConfigHook = pkgs.pnpmConfigHook;
+    dontNpmPrune = true;             # node_modules is pnpm-managed
+  });
+  ```
+- **npm** (`package-lock.json`): plain `buildNpmPackage` with `npmDepsHash = versionData.npmDepsHash;` (it reads the committed lock via `fetchNpmDeps`).
+- **yarn** (`yarn.lock`): `fetchYarnDeps` / `yarnConfigHook`.
+
+The dep hash (`pnpmDeps`/`npmDepsHash`) can't be precomputed — set it to `lib.fakeHash` (`sha256-AAAA…`), build, and copy the `got:` value into `data.json`. The dep-fetcher FODs already include `pkgs.cacert`, so TLS works.
+
+**Last resort — vendoring a lockfile.** Only when upstream ships *no* usable lockfile anywhere (not in the repo, not in the tarball) may you generate one. Then vendor it **version-namespaced** like a patch — `package-lock-<version>.json` (never a shared name), generated with `npm install --package-lock-only --ignore-scripts`, referenced as `${./. + "/package-lock-${version}.json"}`, and installed with `npm ci` (never `npm install`). A vendored, self-generated lock is strictly worse than upstream's — it pins *a* tree, not *the tested* tree — so reach for it only when there is no alternative, and say so in a comment.
+
 ## Repository Structure
 
 ```
