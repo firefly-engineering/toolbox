@@ -1,0 +1,1 @@
+can we exclude entire/checkpoints/* branches from jj display?
