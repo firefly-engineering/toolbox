@@ -1,0 +1,9 @@
+{
+  "_meta": { "default": "4.53.3", "releases": "https://github.com/mikefarah/yq/releases" },
+  "4.53.3": {
+    "x86_64-linux": { "sha256": "sha256-+lKk51jGPTgpkWP73R7ftMSWMkeRi/nBxdMdhHie3tQ=" },
+    "aarch64-linux": { "sha256": "sha256-V4ZI5GOhHBtttgEMv0Hq/ta+55Rm/P+hu0Rmcs95Reo=" },
+    "x86_64-darwin": { "sha256": "sha256-tLoezOPEfwCAP0+WTeODlDJsejLrZUBhbgT7KTWg8I0=" },
+    "aarch64-darwin": { "sha256": "sha256-h33jF1Ok3SQBqgSJN6qaf8TV9s6FjPMVCMWAKVQpchM=" }
+  }
+}
