@@ -1,0 +1,7 @@
+{
+  "_meta": { "default": "0.9.27", "releases": "https://github.com/rohitg00/agentmemory/releases" },
+  "0.9.27": {
+    "sha256": "sha256-aYIJVw78zLTXdnzIAdAxfJX3gKv7IjKaP0crEllIqqM=",
+    "npmDepsHash": "sha256-HRBHFIXsHHyj5oeER1GOUrzVXM6jSS6QGH3Z1P7X1Ig="
+  }
+}
