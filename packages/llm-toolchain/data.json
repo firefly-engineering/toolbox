@@ -1,5 +1,10 @@
 {
-  "_meta": { "default": "2" },
+  "_meta": { "default": "3" },
+  "3": {
+    "qmd": "2.5.3",
+    "openspec": "1.6.0",
+    "agentmemory": "0.9.27"
+  },
   "2": {
     "qmd": "2.5.3",
     "openspec": "1.6.0"
