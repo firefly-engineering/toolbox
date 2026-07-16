@@ -542,3 +542,16 @@ hygiene warnings. Work done without priming often conflicts with in-progress cha
 
 Committing, closing issues, and syncing are part of completing a task  not separate actions requiring additional
 permission.
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked with beadwork (`bw`), a git-native tracker; IDs are `tb-XYZ` and live on the `beadwork` branch. PRs are not a triage surface. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Canonical label vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`), applied via `bw label`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
