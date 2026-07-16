@@ -328,6 +328,8 @@ programs.claude-code.plugins = [ inputs.toolbox.packages.${system}.mypackage-ski
 programs.claude-code.skills = "${inputs.toolbox.packages.${system}.mypackage-skills.skills}";
 ```
 
+Use one route, not both. The `plugins` route requires Claude Code ≥ 2.1.76 (≥ 2.1.157 for persistent personal plugins); the `skills` route has no version floor. Both need a home-manager recent enough to expose `programs.claude-code.skills` / `.plugins`.
+
 ### Bundling into a toolchain
 
 A skill bundle can be a component of a toolchain (see *Adding a New Toolchain*); its `skills/` and `.claude-plugin/` trees are symlinked into the toolchain output alongside the other tools. Only **one** skill bundle per toolchain, though — `symlinkJoin` cannot merge two `.claude-plugin/plugin.json` files.

@@ -39,6 +39,32 @@ registryExtensions = {
 };
 ```
 
+### With home-manager (Claude Code skills)
+
+Skill-bundle packages (e.g. `mattpocock-skills`) are Claude Code plugin directories, wired into the home-manager [`claude-code` module](https://nix-community.github.io/home-manager/options.xhtml) one of two ways:
+
+```nix
+# flake input
+inputs.toolbox.url = "github:firefly-engineering/toolbox";
+
+# in your home-manager configuration
+{ inputs, pkgs, ... }:
+let toolbox = inputs.toolbox.packages.${pkgs.system};
+in {
+  programs.claude-code = {
+    enable = true;
+
+    # As a plugin — the bundle's plugin.json drives which skills load:
+    plugins = [ toolbox.mattpocock-skills ];
+
+    # …OR as a flat skills directory (mutually exclusive with the plugin above):
+    # skills = "${toolbox.mattpocock-skills.skills}";
+  };
+}
+```
+
+Use one route, not both. The `plugins` route needs Claude Code ≥ 2.1.76 (≥ 2.1.157 for persistent personal plugins); the `skills` route has no version floor. Both need a home-manager recent enough to expose `programs.claude-code.skills` / `.plugins`. Bundles are filtered to upstream's `.claude-plugin/plugin.json`, so only the curated skills are installed.
+
 ## Platforms
 
 All packages target:
