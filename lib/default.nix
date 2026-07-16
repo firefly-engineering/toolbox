@@ -67,3 +67,6 @@ in
   # "1.25.6" -> "1_25_6"
   versionToAttr = builtins.replaceStrings [ "." ] [ "_" ];
 }
+# Skill-bundle support code lives in its own file for separation from the small
+# registry helpers above; merged in so it's reachable as toolboxLib.buildSkillBundle.
+// import ./skill-bundle.nix { inherit lib readData; }
