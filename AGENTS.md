@@ -249,6 +249,89 @@ nix build .#my-toolchain.default
 nix build .#my-toolchain.1
 ```
 
+## Adding a Skill Bundle
+
+A *skill bundle* packages agent skills from a pinned upstream repository into a Claude Code **plugin directory** — `.claude-plugin/plugin.json` plus the selected skill directories. Downstream consumers wire the result into home-manager's `programs.claude-code` module as either a whole plugin or a flattened set of skills.
+
+The generic support code is `toolboxLib.buildSkillBundle` (in `lib/skill-bundle.nix`); each bundle package is thin and data-driven, like a toolchain.
+
+### Reproducibility
+
+Skill *selection* happens inside the build sandbox with `jq` (a real JSON parser) reading the upstream `.claude-plugin/plugin.json` — never at Nix evaluation time. There is no import-from-derivation, and the output is a pure function of the pinned source hash. Which skills end up in the bundle can never depend on *when* the build runs.
+
+### 1. Compute the source hash
+
+The builder uses `fetchFromGitHub`, so prefetch with `--unpack` and pin a **commit** — a plugin's `version` field and its git tags drift independently (`main` may already be a version ahead of the newest tag):
+
+```bash
+nix-prefetch-url --type sha256 --unpack https://github.com/OWNER/REPO/archive/<commit>.tar.gz
+nix hash convert --hash-algo sha256 --to sri <hash>
+```
+
+### 2. Create `data.json`
+
+```json
+{
+  "_meta": {
+    "default": "1.1.0",
+    "releases": "https://github.com/OWNER/REPO/releases",
+    "fromClaudePlugin": true
+  },
+  "1.1.0": {
+    "owner": "OWNER",
+    "repo": "REPO",
+    "rev": "<commit-sha>",
+    "sha256": "sha256-XXXX"
+  }
+}
+```
+
+Per-version fields:
+
+- **`owner` / `repo` / `rev` / `sha256`**: the `fetchFromGitHub` source pin (`rev` is a commit).
+- **`fromClaudePlugin`**: (bool) when `true`, include only the skills listed in the upstream manifest's `skills` array — repo extras (`skills/deprecated`, `skills/in-progress`, …) are dropped, and the upstream manifest is shipped verbatim with its `skills` array rewritten to the selection. When `false`, include every directory under `skills/` that contains a `SKILL.md`, and synthesize a `{ name, skills }` manifest. Defaults from `_meta.fromClaudePlugin`, else `false`.
+- **`pluginJsonPath`**: (optional) manifest location; defaults to `.claude-plugin/plugin.json`.
+- **`select`** / **`exclude`**: (optional) allowlist / denylist of skill *basenames*, applied on top of the above. `exclude` wins over `select`.
+
+`_meta.fromClaudePlugin` sets the package-wide default; a version entry may override it.
+
+### 3. Create `default.nix`
+
+```nix
+{ pkgs, lib, toolbox, toolboxLib }:
+
+toolboxLib.buildSkillBundle {
+  inherit pkgs;
+  name = "mypackage-skills";
+  dataPath = ./data.json;
+}
+```
+
+### 4. Test
+
+```bash
+nix build .#mypackage-skills.default            # the plugin directory
+nix build .#mypackage-skills.1_1_0
+jq '{name, count: (.skills | length)}' result/.claude-plugin/plugin.json
+nix build .#mypackage-skills.skills             # flattened one-folder-per-skill view (passthru)
+```
+
+### Consuming from home-manager
+
+The bundle derivation *is* a plugin directory, and it exposes a flattened `passthru.skills` for the path form of the `skills` option (which cannot consume the upstream category nesting):
+
+```nix
+# As a plugin — the manifest drives what Claude Code loads:
+programs.claude-code.plugins = [ inputs.toolbox.packages.${system}.mypackage-skills ];
+
+# As a flat skills directory:
+programs.claude-code.skills = "${inputs.toolbox.packages.${system}.mypackage-skills.skills}";
+```
+
+### Bundling into a toolchain
+
+A skill bundle can be a component of a toolchain (see *Adding a New Toolchain*); its `skills/` and `.claude-plugin/` trees are symlinked into the toolchain output alongside the other tools. Only **one** skill bundle per toolchain, though — `symlinkJoin` cannot merge two `.claude-plugin/plugin.json` files.
+
 ## Builder Versioning
 
 When the build process changes across versions (new flags, different structure), add a new builder variant instead of modifying the existing one:
