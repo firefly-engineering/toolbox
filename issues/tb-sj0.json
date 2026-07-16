@@ -2,13 +2,14 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-07-16T19:06:25Z",
   "created": "2026-07-16T19:00:13Z",
   "description": "Add generic toolboxLib.buildSkillBundle support code (lib/skill-bundle.nix) that assembles a Claude Code plugin dir from a pinned source, with fromClaudePlugin manifest filtering and a flattened passthru.skills view. First consumer: packages/mattpocock-skills at v1.1.0 (commit d574778, fromClaudePlugin=true). Consumable via home-manager programs.claude-code.plugins or .skills.",
   "id": "tb-sj0",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Package Claude skill bundles (buildSkillBundle + mattpocock-skills v1.1.0)",
   "type": "task",
-  "updated_at": "2026-07-16T19:00:13Z"
+  "updated_at": "2026-07-16T19:06:25Z"
 }
