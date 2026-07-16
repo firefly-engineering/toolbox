@@ -1,5 +1,11 @@
 {
-  "_meta": { "default": "3" },
+  "_meta": { "default": "4" },
+  "4": {
+    "qmd": "2.5.3",
+    "openspec": "1.6.0",
+    "agentmemory": "0.9.27",
+    "mattpocock-skills": "1.1.0"
+  },
   "3": {
     "qmd": "2.5.3",
     "openspec": "1.6.0",
