@@ -33,10 +33,49 @@ def parse_toolchain_data(
     return default, version_names, version_map
 
 
+def classify_entry(name: str, data: dict) -> PackageInfo | ToolchainInfo:
+    """Classify one package entry from its name and parsed data.json.
+
+    Pure: no filesystem access, dict in / model out. Mirrors the already-pure
+    parse_toolchain_data seam so classification can be tested without an
+    on-disk tree.
+
+    A directory whose name ends in ``-toolchain`` is a toolchain; everything
+    else is a package. (See docs/adr for why the name suffix — not the Nix
+    builder — is the classification rule.)
+    """
+    if name.endswith("-toolchain"):
+        default, version_names, version_map = parse_toolchain_data(data)
+        return ToolchainInfo(
+            name=name,
+            default=default,
+            versions=version_names,
+            expansion=version_map,
+        )
+
+    meta = data.get("_meta", {})
+    versions = sorted(
+        [k for k in data if k != "_meta"],
+        key=version_key,
+        reverse=True,
+    )
+    return PackageInfo(
+        name=name,
+        default=meta.get("default", ""),
+        versions=versions,
+        releases=meta.get("releases", ""),
+        inactive=meta.get("inactive", False),
+    )
+
+
 def scan_packages(
     packages_dir: Path,
 ) -> tuple[list[PackageInfo], list[ToolchainInfo]]:
-    """Scan a packages directory and return classified package and toolchain info."""
+    """Scan a packages directory and return classified package and toolchain info.
+
+    A thin filesystem walk: find each ``data.json``, parse it, and delegate
+    classification to the pure :func:`classify_entry`.
+    """
     packages: list[PackageInfo] = []
     toolchains: list[ToolchainInfo] = []
 
@@ -44,42 +83,15 @@ def scan_packages(
         if not pkg_dir.is_dir():
             continue
 
-        name = pkg_dir.name
         data_json = pkg_dir / "data.json"
-
         if not data_json.exists():
             continue
 
         data = json.loads(data_json.read_text())
-        meta = data.get("_meta", {})
-
-        if name.endswith("-toolchain"):
-            default, version_names, version_map = parse_toolchain_data(data)
-            toolchains.append(
-                ToolchainInfo(
-                    name=name,
-                    default=default,
-                    versions=version_names,
-                    expansion=version_map,
-                )
-            )
+        entry = classify_entry(pkg_dir.name, data)
+        if isinstance(entry, ToolchainInfo):
+            toolchains.append(entry)
         else:
-            default_version = meta.get("default", "")
-            releases_url = meta.get("releases", "")
-            inactive = meta.get("inactive", False)
-            versions = sorted(
-                [k for k in data if k != "_meta"],
-                key=version_key,
-                reverse=True,
-            )
-            packages.append(
-                PackageInfo(
-                    name=name,
-                    default=default_version,
-                    versions=versions,
-                    releases=releases_url,
-                    inactive=inactive,
-                )
-            )
+            packages.append(entry)
 
     return packages, toolchains
