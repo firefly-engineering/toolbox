@@ -10,21 +10,6 @@ let
       meta = data._meta;
       versions = lib.filterAttrs (n: _: n != "_meta") data;
     };
-in
-{
-  inherit readData;
-
-  # Resolve a tool from the registry by name and optional version
-  # If version is null, returns the default version's derivation
-  # If version is specified, returns that version's derivation
-  resolveTool = registry: name: version:
-    let
-      entry = registry.${name}
-        or (throw "Unknown tool '${name}' in toolbox registry");
-      ver = if version == null then entry.default else version;
-    in
-    entry.versions.${ver}
-      or (throw "Unknown version '${ver}' for tool '${name}'");
 
   # Build all versions from a data.json versions attrset using named builders.
   # Each version entry may specify "builder" (defaults to "default").
@@ -37,6 +22,37 @@ in
       in
       builder version versionData
     ) versionEntries;
+
+  # Build a registry package from a data.json file and a builders attrset.
+  # The canonical entry point for versioned packages: reads meta+versions from
+  # data.json, dispatches each version through `builders` (keyed by the optional
+  # "builder" field, default "default"), and returns the { versions; default; }
+  # shape the registry expects — the same shape buildToolchain/buildSkillBundle
+  # produce. Reach for buildVersions directly only when a package needs to
+  # pre-process its version set (e.g. platform filtering); see packages/bun-baseline.
+  buildPackage = { name, dataPath, builders }:
+    let
+      inherit (readData dataPath) meta versions;
+    in
+    {
+      versions = buildVersions name builders versions;
+      default = meta.default;
+    };
+in
+{
+  inherit readData buildVersions buildPackage;
+
+  # Resolve a tool from the registry by name and optional version
+  # If version is null, returns the default version's derivation
+  # If version is specified, returns that version's derivation
+  resolveTool = registry: name: version:
+    let
+      entry = registry.${name}
+        or (throw "Unknown tool '${name}' in toolbox registry");
+      ver = if version == null then entry.default else version;
+    in
+    entry.versions.${ver}
+      or (throw "Unknown version '${ver}' for tool '${name}'");
 
   # Build a toolchain meta-package from a data.json file.
   # Component names in data.json must match toolbox package names.
