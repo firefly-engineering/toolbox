@@ -1,8 +1,6 @@
 { pkgs, lib, toolbox, toolboxLib }:
 
 let
-  inherit (toolboxLib.readData ./data.json) meta versions;
-
   builders = {
     default = version: versionData:
       pkgs.llvmPackages.stdenv.mkDerivation {
@@ -74,7 +72,4 @@ let
       };
   };
 in
-{
-  versions = toolboxLib.buildVersions "nix" builders versions;
-  default = meta.default;
-}
+toolboxLib.buildPackage { name = "nix"; dataPath = ./data.json; inherit builders; }

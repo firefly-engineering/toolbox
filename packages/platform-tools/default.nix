@@ -6,7 +6,6 @@
 # cargo-build-sbf download it at build time) is what makes the SBF build
 # reproducible / offline.
 let
-  inherit (toolboxLib.readData ./data.json) meta versions;
 
   asset = {
     "x86_64-linux" = "platform-tools-linux-x86_64.tar.bz2";
@@ -77,7 +76,4 @@ let
       };
   };
 in
-{
-  versions = toolboxLib.buildVersions "platform-tools" builders versions;
-  default = meta.default;
-}
+toolboxLib.buildPackage { name = "platform-tools"; dataPath = ./data.json; inherit builders; }

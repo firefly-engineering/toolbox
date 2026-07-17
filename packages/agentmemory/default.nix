@@ -1,8 +1,6 @@
 { pkgs, lib, toolbox, toolboxLib }:
 
 let
-  inherit (toolboxLib.readData ./data.json) meta versions;
-
   # onnxruntime-node ships native libs for every OS inside one package; we keep
   # only the host's. These are the platform subdir names under bin/napi-v*/.
   onnxHostOs = if pkgs.stdenv.hostPlatform.isDarwin then "darwin" else "linux";
@@ -114,7 +112,4 @@ let
       });
   };
 in
-{
-  versions = toolboxLib.buildVersions "agentmemory" builders versions;
-  default = meta.default;
-}
+toolboxLib.buildPackage { name = "agentmemory"; dataPath = ./data.json; inherit builders; }

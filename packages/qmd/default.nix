@@ -1,8 +1,6 @@
 { pkgs, lib, toolbox, toolboxLib }:
 
 let
-  inherit (toolboxLib.readData ./data.json) meta versions;
-
   system = pkgs.stdenv.hostPlatform.system;
 
   # qmd is a Bun/TypeScript app. Adapted from upstream's flake.nix:
@@ -115,7 +113,4 @@ let
       };
   };
 in
-{
-  versions = toolboxLib.buildVersions "qmd" builders versions;
-  default = meta.default;
-}
+toolboxLib.buildPackage { name = "qmd"; dataPath = ./data.json; inherit builders; }

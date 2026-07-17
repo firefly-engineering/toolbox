@@ -1,8 +1,6 @@
 { pkgs, lib, toolbox, toolboxLib }:
 
 let
-  inherit (toolboxLib.readData ./data.json) meta versions;
-
   builders = {
     default = version: versionData:
       let
@@ -39,7 +37,4 @@ let
       };
   };
 in
-{
-  versions = toolboxLib.buildVersions "mdbook-graphviz" builders versions;
-  default = meta.default;
-}
+toolboxLib.buildPackage { name = "mdbook-graphviz"; dataPath = ./data.json; inherit builders; }

@@ -1,8 +1,6 @@
 { pkgs, lib, toolbox, toolboxLib }:
 
 let
-  inherit (toolboxLib.readData ./data.json) meta versions;
-
   assetPlatform = {
     "x86_64-linux" = "linux-x86_64";
     "aarch64-linux" = "linux-aarch_64";
@@ -59,7 +57,4 @@ let
       };
   };
 in
-{
-  versions = toolboxLib.buildVersions "protobuf" builders versions;
-  default = meta.default;
-}
+toolboxLib.buildPackage { name = "protobuf"; dataPath = ./data.json; inherit builders; }

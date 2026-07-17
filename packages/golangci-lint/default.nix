@@ -1,8 +1,6 @@
 { pkgs, lib, toolbox, toolboxLib }:
 
 let
-  inherit (toolboxLib.readData ./data.json) meta versions;
-
   platformKey = {
     "x86_64-linux"   = "linux-amd64";
     "aarch64-linux"  = "linux-arm64";
@@ -64,7 +62,4 @@ let
       };
   };
 in
-{
-  versions = toolboxLib.buildVersions "golangci-lint" builders versions;
-  default = meta.default;
-}
+toolboxLib.buildPackage { name = "golangci-lint"; dataPath = ./data.json; inherit builders; }

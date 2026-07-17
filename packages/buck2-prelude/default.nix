@@ -1,8 +1,6 @@
 { pkgs, lib, toolbox, toolboxLib }:
 
 let
-  inherit (toolboxLib.readData ./data.json) meta versions;
-
   builders = {
     default = version: versionData:
       pkgs.fetchFromGitHub {
@@ -19,7 +17,4 @@ let
       };
   };
 in
-{
-  versions = toolboxLib.buildVersions "buck2-prelude" builders versions;
-  default = meta.default;
-}
+toolboxLib.buildPackage { name = "buck2-prelude"; dataPath = ./data.json; inherit builders; }

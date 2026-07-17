@@ -1,8 +1,6 @@
 { pkgs, lib, toolbox, toolboxLib }:
 
 let
-  inherit (toolboxLib.readData ./data.json) meta versions;
-
   # goreleaser archives: binaries + completions at the archive root (no wrapping
   # directory), so sourceRoot is ".". Each tarball also ships git-remote-entire,
   # the git remote helper the CLI drives, so both binaries are installed.
@@ -68,7 +66,4 @@ let
       };
   };
 in
-{
-  versions = toolboxLib.buildVersions "entire" builders versions;
-  default = meta.default;
-}
+toolboxLib.buildPackage { name = "entire"; dataPath = ./data.json; inherit builders; }

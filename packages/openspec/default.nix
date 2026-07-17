@@ -1,8 +1,6 @@
 { pkgs, lib, toolbox, toolboxLib }:
 
 let
-  inherit (toolboxLib.readData ./data.json) meta versions;
-
   # OpenSpec is a pnpm/TypeScript CLI. We build from the tagged GitHub source so
   # that dependencies are pinned by upstream's own committed `pnpm-lock.yaml` —
   # resolved once, by upstream, and fetched reproducibly by `fetchPnpmDeps` (a
@@ -51,7 +49,4 @@ let
       });
   };
 in
-{
-  versions = toolboxLib.buildVersions "openspec" builders versions;
-  default = meta.default;
-}
+toolboxLib.buildPackage { name = "openspec"; dataPath = ./data.json; inherit builders; }

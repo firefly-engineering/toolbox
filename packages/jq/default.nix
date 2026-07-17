@@ -1,8 +1,6 @@
 { pkgs, lib, toolbox, toolboxLib }:
 
 let
-  inherit (toolboxLib.readData ./data.json) meta versions;
-
   platformKey = {
     "x86_64-linux"   = "linux-amd64";
     "aarch64-linux"  = "linux-arm64";
@@ -55,7 +53,4 @@ let
       };
   };
 in
-{
-  versions = toolboxLib.buildVersions "jq" builders versions;
-  default = meta.default;
-}
+toolboxLib.buildPackage { name = "jq"; dataPath = ./data.json; inherit builders; }

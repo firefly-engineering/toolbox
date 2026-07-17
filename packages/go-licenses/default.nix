@@ -1,8 +1,6 @@
 { pkgs, lib, toolbox, toolboxLib }:
 
 let
-  inherit (toolboxLib.readData ./data.json) meta versions;
-
   mkBuilder = extraArgs: version: versionData:
     let
       go = toolbox.go.versions.${versionData.go};
@@ -35,7 +33,4 @@ let
     };
   };
 in
-{
-  versions = toolboxLib.buildVersions "go-licenses" builders versions;
-  default = meta.default;
-}
+toolboxLib.buildPackage { name = "go-licenses"; dataPath = ./data.json; inherit builders; }

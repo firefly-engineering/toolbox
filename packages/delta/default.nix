@@ -1,8 +1,6 @@
 { pkgs, lib, toolbox, toolboxLib }:
 
 let
-  inherit (toolboxLib.readData ./data.json) meta versions;
-
   system = pkgs.stdenv.hostPlatform.system;
 
   targetTriple = {
@@ -89,7 +87,4 @@ let
         mkFromSource version versionData;
   };
 in
-{
-  versions = toolboxLib.buildVersions "delta" builders versions;
-  default = meta.default;
-}
+toolboxLib.buildPackage { name = "delta"; dataPath = ./data.json; inherit builders; }

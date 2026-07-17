@@ -1,8 +1,6 @@
 { pkgs, lib, toolbox, toolboxLib }:
 
 let
-  inherit (toolboxLib.readData ./data.json) meta versions;
-
   # Map Nix system names to buck2 release triples
   targetTriple = {
     "x86_64-linux"   = "x86_64-unknown-linux-gnu";
@@ -67,7 +65,4 @@ let
       };
   };
 in
-{
-  versions = toolboxLib.buildVersions "buck2" builders versions;
-  default = meta.default;
-}
+toolboxLib.buildPackage { name = "buck2"; dataPath = ./data.json; inherit builders; }

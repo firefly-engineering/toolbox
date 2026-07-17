@@ -1,8 +1,6 @@
 { pkgs, lib, toolbox, toolboxLib }:
 
 let
-  inherit (toolboxLib.readData ./data.json) meta versions;
-
   # Attributes expected by buildGoModule when overriding `go`
   GOOS = pkgs.go.GOOS;
   GOARCH = pkgs.go.GOARCH;
@@ -45,7 +43,4 @@ let
       };
   };
 in
-{
-  versions = toolboxLib.buildVersions "go" builders versions;
-  default = meta.default;
-}
+toolboxLib.buildPackage { name = "go"; dataPath = ./data.json; inherit builders; }

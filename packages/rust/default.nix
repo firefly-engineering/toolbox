@@ -1,8 +1,6 @@
 { pkgs, lib, toolbox, toolboxLib }:
 
 let
-  inherit (toolboxLib.readData ./data.json) meta versions;
-
   # Map Nix system names to Rust target triples
   targetTriple = {
     "x86_64-linux"  = "x86_64-unknown-linux-gnu";
@@ -74,7 +72,4 @@ let
       };
   };
 in
-{
-  versions = toolboxLib.buildVersions "rust" builders versions;
-  default = meta.default;
-}
+toolboxLib.buildPackage { name = "rust"; dataPath = ./data.json; inherit builders; }

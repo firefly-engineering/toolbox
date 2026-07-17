@@ -1,8 +1,6 @@
 { pkgs, lib, toolbox, toolboxLib }:
 
 let
-  inherit (toolboxLib.readData ./data.json) meta versions;
-
   builders = {
     default = version: versionData:
       let
@@ -34,7 +32,4 @@ let
       };
   };
 in
-{
-  versions = toolboxLib.buildVersions "reindeer" builders versions;
-  default = meta.default;
-}
+toolboxLib.buildPackage { name = "reindeer"; dataPath = ./data.json; inherit builders; }

@@ -1,8 +1,6 @@
 { pkgs, lib, toolbox, toolboxLib }:
 
 let
-  inherit (toolboxLib.readData ./data.json) meta versions;
-
   # solc only provides binaries for x86_64-linux and macOS (universal)
   platformKey = {
     "x86_64-linux"   = "solc-static-linux";
@@ -56,7 +54,4 @@ let
       };
   };
 in
-{
-  versions = toolboxLib.buildVersions "solc" builders versions;
-  default = meta.default;
-}
+toolboxLib.buildPackage { name = "solc"; dataPath = ./data.json; inherit builders; }

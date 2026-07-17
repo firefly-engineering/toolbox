@@ -1,8 +1,6 @@
 { pkgs, lib, toolbox, toolboxLib }:
 
 let
-  inherit (toolboxLib.readData ./data.json) meta versions;
-
   platformSuffix = {
     "x86_64-linux" = "linux-amd64";
     "aarch64-linux" = "linux-arm64";
@@ -57,7 +55,4 @@ let
       };
   };
 in
-{
-  versions = toolboxLib.buildVersions "jjui" builders versions;
-  default = meta.default;
-}
+toolboxLib.buildPackage { name = "jjui"; dataPath = ./data.json; inherit builders; }

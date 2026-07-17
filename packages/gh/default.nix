@@ -1,8 +1,6 @@
 { pkgs, lib, toolbox, toolboxLib }:
 
 let
-  inherit (toolboxLib.readData ./data.json) meta versions;
-
   assetSuffix = {
     "x86_64-linux" = "linux_amd64.tar.gz";
     "aarch64-linux" = "linux_arm64.tar.gz";
@@ -57,7 +55,4 @@ let
       };
   };
 in
-{
-  versions = toolboxLib.buildVersions "gh" builders versions;
-  default = meta.default;
-}
+toolboxLib.buildPackage { name = "gh"; dataPath = ./data.json; inherit builders; }

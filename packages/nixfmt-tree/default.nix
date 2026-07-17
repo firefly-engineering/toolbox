@@ -1,8 +1,6 @@
 { pkgs, lib, toolbox, toolboxLib }:
 
 let
-  inherit (toolboxLib.readData ./data.json) meta versions;
-
   builders = {
     # treefmt comes from toolbox (pinned, prebuilt). nixfmt is a Haskell
     # program with no toolbox builder, so it is taken from the pinned nixpkgs.
@@ -41,7 +39,4 @@ let
       };
   };
 in
-{
-  versions = toolboxLib.buildVersions "nixfmt-tree" builders versions;
-  default = meta.default;
-}
+toolboxLib.buildPackage { name = "nixfmt-tree"; dataPath = ./data.json; inherit builders; }

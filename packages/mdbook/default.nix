@@ -1,8 +1,6 @@
 { pkgs, lib, toolbox, toolboxLib }:
 
 let
-  inherit (toolboxLib.readData ./data.json) meta versions;
-
   targetTriple = {
     "x86_64-linux"   = "x86_64-unknown-linux-gnu";
     "aarch64-linux"  = "aarch64-unknown-linux-musl";
@@ -64,7 +62,4 @@ let
       };
   };
 in
-{
-  versions = toolboxLib.buildVersions "mdbook" builders versions;
-  default = meta.default;
-}
+toolboxLib.buildPackage { name = "mdbook"; dataPath = ./data.json; inherit builders; }

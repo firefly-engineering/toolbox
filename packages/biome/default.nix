@@ -1,8 +1,6 @@
 { pkgs, lib, toolbox, toolboxLib }:
 
 let
-  inherit (toolboxLib.readData ./data.json) meta versions;
-
   assetName = {
     "x86_64-linux"   = "biome-linux-x64";
     "aarch64-linux"  = "biome-linux-arm64";
@@ -63,7 +61,4 @@ let
       };
   };
 in
-{
-  versions = toolboxLib.buildVersions "biome" builders versions;
-  default = meta.default;
-}
+toolboxLib.buildPackage { name = "biome"; dataPath = ./data.json; inherit builders; }

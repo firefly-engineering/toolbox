@@ -1,8 +1,6 @@
 { pkgs, lib, toolbox, toolboxLib }:
 
 let
-  inherit (toolboxLib.readData ./data.json) meta versions;
-
   assetSpec = {
     "x86_64-linux"   = { suffix = "linux-amd64";  ext = "tar.gz"; };
     "aarch64-linux"  = { suffix = "linux-arm64";  ext = "tar.gz"; };
@@ -65,7 +63,4 @@ let
       };
   };
 in
-{
-  versions = toolboxLib.buildVersions "git-lfs" builders versions;
-  default = meta.default;
-}
+toolboxLib.buildPackage { name = "git-lfs"; dataPath = ./data.json; inherit builders; }
