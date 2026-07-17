@@ -33,6 +33,18 @@ def parse_toolchain_data(
     return default, version_names, version_map
 
 
+def is_skill_bundle(data: dict) -> bool:
+    """Whether a data.json describes a skill bundle.
+
+    A skill bundle declares itself with ``_meta.fromClaudePlugin`` — the same
+    field the Nix ``buildSkillBundle`` reads. Presence of the key (regardless
+    of its boolean value) is the marker; plain packages never carry it. This is
+    the pure, data-driven signal that classify_entry can observe (it cannot see
+    which Nix builder a package uses). See docs/adr/0001.
+    """
+    return "fromClaudePlugin" in data.get("_meta", {})
+
+
 def classify_entry(name: str, data: dict) -> PackageInfo | ToolchainInfo:
     """Classify one package entry from its name and parsed data.json.
 
@@ -41,8 +53,9 @@ def classify_entry(name: str, data: dict) -> PackageInfo | ToolchainInfo:
     on-disk tree.
 
     A directory whose name ends in ``-toolchain`` is a toolchain; everything
-    else is a package. (See docs/adr for why the name suffix — not the Nix
-    builder — is the classification rule.)
+    else is a package. Skill bundles are recognized (see :func:`is_skill_bundle`)
+    and folded into the package list. See docs/adr/0001 for why the name suffix —
+    not the Nix builder — is the toolchain rule, and why skill bundles fold in.
     """
     if name.endswith("-toolchain"):
         default, version_names, version_map = parse_toolchain_data(data)
@@ -65,6 +78,7 @@ def classify_entry(name: str, data: dict) -> PackageInfo | ToolchainInfo:
         versions=versions,
         releases=meta.get("releases", ""),
         inactive=meta.get("inactive", False),
+        skill_bundle=is_skill_bundle(data),
     )
 
 
