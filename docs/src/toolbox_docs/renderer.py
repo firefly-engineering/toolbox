@@ -1,21 +1,28 @@
 """Render HTML documentation from package and toolchain metadata."""
 
+from html import escape
 from string import Template
 
 from .models import PackageInfo, ToolchainInfo
+
+
+def _version_span(version: str, is_default: bool) -> str:
+    default_class = " default" if is_default else ""
+    return f'<span class="version{default_class}">{escape(version)}</span>'
 
 
 def _render_package_rows(packages: list[PackageInfo]) -> str:
     rows = ""
     for pkg in packages:
         versions_html = ", ".join(
-            f'<span class="version{" default" if v == pkg.default else ""}">{v}</span>'
-            for v in pkg.versions
+            _version_span(v, v == pkg.default) for v in pkg.versions
         )
         if pkg.releases:
-            name_html = f'<a href="{pkg.releases}" class="pkg-name">{pkg.name}</a>'
+            name_html = (
+                f'<a href="{escape(pkg.releases)}" class="pkg-name">{escape(pkg.name)}</a>'
+            )
         else:
-            name_html = f'<span class="pkg-name">{pkg.name}</span>'
+            name_html = f'<span class="pkg-name">{escape(pkg.name)}</span>'
         if pkg.inactive:
             name_html += ' <span class="badge-inactive">inactive</span>'
         row_class = ' class="inactive"' if pkg.inactive else ""
@@ -35,15 +42,15 @@ def _render_toolchain_rows(toolchains: list[ToolchainInfo]) -> str:
             is_default = ver == tc.default
             components = tc.expansion.get(ver, [])
             comp_rows = "".join(
-                f'<tr><td><code>{c.name}</code></td><td>{c.version}</td></tr>'
+                f'<tr><td><code>{escape(c.name)}</code></td><td>{escape(c.version)}</td></tr>'
                 for c in components
             )
             versions_html += f"""<details class="tc-details">
-          <summary><span class="version{" default" if is_default else ""}">{ver}</span></summary>
+          <summary>{_version_span(ver, is_default)}</summary>
           <table class="tc-expansion"><tbody>{comp_rows}</tbody></table>
         </details>"""
         rows += f"""      <tr>
-        <td class="pkg-name">{tc.name}</td>
+        <td class="pkg-name">{escape(tc.name)}</td>
         <td>{versions_html}</td>
       </tr>
 """

@@ -66,6 +66,37 @@ def test_toolchain_details_expansion():
     assert "1.0.0" in html
 
 
+def test_package_rows_escape_html_special_chars():
+    pkg = PackageInfo(
+        name="a<b>&c",
+        default='1"<v>',
+        versions=['1"<v>'],
+        releases="https://example.com/?a=1&b=2<x>",
+    )
+    html = _render_package_rows([pkg])
+    # Raw special characters must not leak into the markup.
+    assert "a<b>&c" not in html
+    assert "&lt;b&gt;" in html and "&amp;c" in html
+    # Attribute value is escaped (quotes included).
+    assert 'href="https://example.com/?a=1&amp;b=2&lt;x&gt;"' in html
+    # The version string is escaped in text content.
+    assert "1&quot;&lt;v&gt;" in html
+
+
+def test_toolchain_rows_escape_html_special_chars():
+    tc = ToolchainInfo(
+        name="tc<&>",
+        default="1",
+        versions=["1<&>"],
+        expansion={"1<&>": [ToolchainComponent(name="c<&>", version="v<&>")]},
+    )
+    html = _render_toolchain_rows([tc])
+    assert "tc<&>" not in html
+    assert "tc&lt;&amp;&gt;" in html
+    assert "<code>c&lt;&amp;&gt;</code>" in html
+    assert "v&lt;&amp;&gt;" in html
+
+
 def test_render_html_produces_valid_structure():
     pkg = PackageInfo(name="test", default="1.0", versions=["1.0"])
     tc = ToolchainInfo(
