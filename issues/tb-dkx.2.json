@@ -4,6 +4,7 @@
     "tb-dkx.1"
   ],
   "blocks": [],
+  "closed_at": "2026-07-17T07:32:29Z",
   "created": "2026-07-17T07:19:17Z",
   "description": "## What to build\n\nNow that classification lives in one pure place (classify_entry), make it stop drifting from Nix. Two known discrepancies:\n\n1. Skill bundles (e.g. mattpocock-skills, _meta.fromClaudePlugin: true) currently fall through and are mislabeled as plain packages in the docs. They should be recognized as their own category (or explicitly folded, by decision).\n2. Python decides 'toolchain' by name.endswith('-toolchain'); Nix decides by which builder (buildToolchain) is used. Reconcile the rule so the two sides agree.\n\n## Decision needed (human)\n\nHow should a skill bundle render in the generated docs? Its own section, folded into packages, or omitted? This gates the implementation and is why the ticket is ready-for-human, not agent-grabbable.\n\n## Acceptance criteria\n\n- [ ] Decision recorded (likely an ADR under docs/adr/) on how skill bundles and the toolchain rule are classified for docs\n- [ ] classify_entry recognizes skill bundles per the decision, no longer silently treating them as plain packages\n- [ ] Toolchain classification rule reconciled with Nix's builder-based notion (or the divergence documented as intentional)\n- [ ] Tests cover the new classification branches with dict fixtures\n- [ ] Generated docs reflect the decided treatment\n\n## Blocked by\n\n- Extract pure classify_entry; make scan_packages a thin walk (tb-dkx.1)",
   "id": "tb-dkx.2",
@@ -12,8 +13,8 @@
   ],
   "parent": "tb-dkx",
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Reconcile Nix/skill-bundle classification drift in classify_entry",
   "type": "task",
-  "updated_at": "2026-07-17T07:28:09Z"
+  "updated_at": "2026-07-17T07:32:29Z"
 }
