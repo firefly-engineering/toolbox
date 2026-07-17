@@ -4,6 +4,7 @@
     "tb-9sd.1"
   ],
   "blocks": [],
+  "closed_at": "2026-07-17T07:35:49Z",
   "created": "2026-07-17T07:25:44Z",
   "description": "## What to build\n\nPackage and toolchain fields interpolated into HTML rows (names, versions, release URLs, component names) are HTML-escaped with stdlib html.escape instead of raw f-string concatenation, closing the escaping/injection gap in _render_package_rows and _render_toolchain_rows.\n\nOut of scope: swapping the templating engine (Jinja2 etc.) — the review kept that dependency decision out. This is a stdlib correctness fix only.\n\n## Acceptance criteria\n\n- [ ] All dynamic values interpolated into row HTML pass through html.escape (attribute values escaped with quote=True where relevant)\n- [ ] Tests cover a value containing HTML-special characters (e.g. \u0026, \u003c, \u003e, quotes) and assert it is escaped\n- [ ] No templating-engine dependency added\n- [ ] Existing test suite green (docs/tests)\n\n## Blocked by\n\n- Inject template + css through render_html's interface (tb-9sd.1)",
   "id": "tb-9sd.2",
@@ -12,8 +13,8 @@
   ],
   "parent": "tb-9sd",
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Escape interpolated values in row rendering",
   "type": "task",
-  "updated_at": "2026-07-17T07:25:49Z"
+  "updated_at": "2026-07-17T07:35:49Z"
 }
