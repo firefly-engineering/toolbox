@@ -7,6 +7,15 @@ from .models import PackageInfo, ToolchainComponent, ToolchainInfo
 from .sorting import version_key
 
 
+def sorted_version_names(data: dict) -> list[str]:
+    """The version keys of a data.json (all keys except ``_meta``), newest first."""
+    return sorted(
+        (k for k in data if k != "_meta"),
+        key=version_key,
+        reverse=True,
+    )
+
+
 def parse_toolchain_data(
     data: dict,
 ) -> tuple[str, list[str], dict[str, list[ToolchainComponent]]]:
@@ -17,18 +26,14 @@ def parse_toolchain_data(
     meta = data.get("_meta", {})
     default = meta.get("default", "")
 
-    version_names = []
-    version_map: dict[str, list[ToolchainComponent]] = {}
-    for ver, ver_data in sorted(
-        ((k, v) for k, v in data.items() if k != "_meta"),
-        key=lambda x: version_key(x[0]),
-        reverse=True,
-    ):
-        version_names.append(ver)
-        version_map[ver] = [
+    version_names = sorted_version_names(data)
+    version_map: dict[str, list[ToolchainComponent]] = {
+        ver: [
             ToolchainComponent(name=pkg, version=pin)
-            for pkg, pin in sorted(ver_data.items())
+            for pkg, pin in sorted(data[ver].items())
         ]
+        for ver in version_names
+    }
 
     return default, version_names, version_map
 
@@ -67,15 +72,10 @@ def classify_entry(name: str, data: dict) -> PackageInfo | ToolchainInfo:
         )
 
     meta = data.get("_meta", {})
-    versions = sorted(
-        [k for k in data if k != "_meta"],
-        key=version_key,
-        reverse=True,
-    )
     return PackageInfo(
         name=name,
         default=meta.get("default", ""),
-        versions=versions,
+        versions=sorted_version_names(data),
         releases=meta.get("releases", ""),
         inactive=meta.get("inactive", False),
         skill_bundle=is_skill_bundle(data),
