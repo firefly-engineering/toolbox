@@ -4,6 +4,7 @@
   "blocks": [
     "tb-9sd.2"
   ],
+  "closed_at": "2026-07-17T07:35:49Z",
   "created": "2026-07-17T07:25:37Z",
   "description": "## What to build\n\nrender_html accepts the template and css as parameters and does no file I/O of its own; __main__ loads assets/style.css and assets/index.html.tmpl and passes them in. The model-\u003eHTML transform becomes a pure, deep module.\n\nBehavior-preserving: generated HTML must be byte-identical before and after.\n\n## Acceptance criteria\n\n- [ ] render_html takes template and css as parameters and performs no filesystem access\n- [ ] __main__ loads style.css and index.html.tmpl and injects them into render_html\n- [ ] Renderer tests exercise render_html with a fixed inline template/css, not the real asset files on disk\n- [ ] Generated HTML output is unchanged (byte-identical) vs. before\n- [ ] Existing test suite green (docs/tests)\n\n## Blocked by\n\n- None — can start immediately.",
   "id": "tb-9sd.1",
@@ -12,8 +13,8 @@
   ],
   "parent": "tb-9sd",
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Inject template + css through render_html's interface",
   "type": "task",
-  "updated_at": "2026-07-17T07:25:49Z"
+  "updated_at": "2026-07-17T07:35:49Z"
 }
