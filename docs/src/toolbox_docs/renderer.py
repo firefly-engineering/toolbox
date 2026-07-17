@@ -1,6 +1,5 @@
 """Render HTML documentation from package and toolchain metadata."""
 
-from pathlib import Path
 from string import Template
 
 from .models import PackageInfo, ToolchainInfo
@@ -51,18 +50,24 @@ def _render_toolchain_rows(toolchains: list[ToolchainInfo]) -> str:
     return rows
 
 
-def render_html(packages: list[PackageInfo], toolchains: list[ToolchainInfo]) -> str:
-    """Render the full HTML page from package and toolchain metadata."""
-    assets_dir = Path(__file__).parent / "assets"
+def render_html(
+    packages: list[PackageInfo],
+    toolchains: list[ToolchainInfo],
+    *,
+    template: str,
+    css: str,
+) -> str:
+    """Render the full HTML page from package and toolchain metadata.
 
-    css = (assets_dir / "style.css").read_text()
-    template_str = (assets_dir / "index.html.tmpl").read_text()
-
+    ``template`` and ``css`` are supplied by the caller so this transform is
+    pure — it performs no filesystem access. The ``__main__`` edge loads the
+    asset files and injects them.
+    """
     package_rows = _render_package_rows(packages)
     toolchain_rows = _render_toolchain_rows(toolchains)
     total_versions = sum(len(p.versions) for p in packages)
 
-    tmpl = Template(template_str)
+    tmpl = Template(template)
     return tmpl.substitute(
         css=css,
         num_packages=len(packages),

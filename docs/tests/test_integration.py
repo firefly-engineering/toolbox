@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+from toolbox_docs.__main__ import load_assets
 from toolbox_docs.renderer import render_html
 from toolbox_docs.scanner import scan_packages
 
@@ -9,7 +10,8 @@ from toolbox_docs.scanner import scan_packages
 def test_end_to_end_with_fixtures(tmp_packages: Path):
     """Generate HTML from test fixtures and verify basic structure."""
     packages, toolchains = scan_packages(tmp_packages)
-    html = render_html(packages, toolchains)
+    template, css = load_assets()
+    html = render_html(packages, toolchains, template=template, css=css)
     assert "<!DOCTYPE html>" in html
     assert "mypkg" in html
     assert "my-toolchain" in html
@@ -23,7 +25,8 @@ def test_end_to_end_real_packages(repo_root: Path):
         return
 
     packages, toolchains = scan_packages(packages_dir)
-    html = render_html(packages, toolchains)
+    template, css = load_assets()
+    html = render_html(packages, toolchains, template=template, css=css)
 
     assert "<!DOCTYPE html>" in html
     assert len(packages) > 0

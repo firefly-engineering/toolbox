@@ -3,6 +3,20 @@
 from toolbox_docs.models import PackageInfo, ToolchainComponent, ToolchainInfo
 from toolbox_docs.renderer import _render_package_rows, _render_toolchain_rows, render_html
 
+# A fixed inline template/css so render_html is exercised without touching the
+# real asset files on disk. It carries every substitution placeholder the
+# transform fills in.
+INLINE_TEMPLATE = """<!DOCTYPE html>
+<title>Toolbox Package Registry</title>
+<style>$css</style>
+<div class="stat-value">$num_packages</div>
+<div class="stat-value">$total_versions</div>
+<div class="stat-value">$num_toolchains</div>
+<tbody>$package_rows</tbody>
+<tbody>$toolchain_rows</tbody>
+"""
+INLINE_CSS = "body { color: black; }"
+
 
 def test_default_version_highlighted():
     pkg = PackageInfo(name="foo", default="2.0", versions=["2.0", "1.0"])
@@ -60,8 +74,9 @@ def test_render_html_produces_valid_structure():
         versions=["1"],
         expansion={"1": [ToolchainComponent(name="test", version="1.0")]},
     )
-    html = render_html([pkg], [tc])
+    html = render_html([pkg], [tc], template=INLINE_TEMPLATE, css=INLINE_CSS)
     assert "<!DOCTYPE html>" in html
     assert "<title>Toolbox Package Registry</title>" in html
     assert '<div class="stat-value">1</div>' in html  # num_packages
+    assert "body { color: black; }" in html  # css injected verbatim
     assert "test-toolchain" in html
