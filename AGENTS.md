@@ -209,6 +209,66 @@ nix build .#mypackage.default
 nix build .#mypackage.1_0_0   # Version dots become underscores
 ```
 
+## Prebuilt-Binary Packages
+
+Tools distributed as prebuilt per-platform binaries or archives (no source build) use `toolboxLib.buildPrebuiltBinary`, which returns a **builder function** that slots into `buildPackage`'s `builders` attrset. It hides the invariant ritual — per-system asset resolution with a throw on unsupported platforms, `fetchurl` against `versionData.<system>.sha256`, the `dontConfigure`/`dontBuild`/`dontStrip` trio, optional Linux `autoPatchelfHook`, `.zip` unpacking, and installing named executables into `$out/bin`:
+
+```nix
+{ pkgs, lib, toolbox, toolboxLib }:
+
+let
+  builders.default = toolboxLib.buildPrebuiltBinary {
+    inherit pkgs;
+    pname = "jq";
+    platforms = {
+      "x86_64-linux"   = "linux-amd64";
+      "aarch64-linux"  = "linux-arm64";
+      "x86_64-darwin"  = "macos-amd64";
+      "aarch64-darwin" = "macos-arm64";
+    };
+    url = { version, platform }:
+      "https://github.com/jqlang/jq/releases/download/jq-${version}/jq-${platform}";
+    binaries = [ "jq" ];
+    patchelf = false;   # static binary
+    meta = with lib; { description = "…"; homepage = "…"; license = licenses.mit; };
+  };
+in
+toolboxLib.buildPackage { name = "jq"; dataPath = ./data.json; inherit builders; }
+```
+
+The `data.json` for a prebuilt package nests the source hash **per system** (one binary per platform):
+
+```json
+{
+  "_meta": { "default": "1.8.2", "releases": "https://github.com/jqlang/jq/releases" },
+  "1.8.2": {
+    "x86_64-linux":   { "sha256": "sha256-…" },
+    "aarch64-linux":  { "sha256": "sha256-…" },
+    "x86_64-darwin":  { "sha256": "sha256-…" },
+    "aarch64-darwin": { "sha256": "sha256-…" }
+  }
+}
+```
+
+### Parameters
+
+| Param | Required | Meaning |
+|---|---|---|
+| `pkgs` | yes | nixpkgs instance |
+| `pname` | yes | package name |
+| `platforms` | yes | `system -> asset string`; throws on unsupported system |
+| `url` | yes | `{ version, platform } -> URL` |
+| `binaries` | yes | executables to install into `$out/bin`; each entry a string (installed under its basename) or `{ from; to; }` to rename — `from` may be a fn `{ version, platform } -> string` for assets whose binary is named e.g. `tool-${version}-${triple}` |
+| `sourceRoot` | no | `null` (default) → single binary (`dontUnpack`); a transport-compression suffix (`.zst`/`.gz`/`.xz`/`.bz2`) is auto-detected and the binary decompressed. Else a string, or fn `{ version, platform } -> string`, naming the unpacked dir (`"."` for a flat tarball). `.zip` archives get `unzip` automatically |
+| `patchelf` | no | Linux `autoPatchelfHook` + `cc.cc.lib` (default `true`; set `false` for static binaries) |
+| `symlinks` | no | `{ link = target; }` → `$out/bin/<link>` → `$out/bin/<target>` |
+| `postInstall` | no | extra shell appended inside `installPhase` (shell completions, man pages, shipped asset trees, relative symlinks) |
+| `meta` | no | derivation meta |
+
+### When *not* to use it
+
+`buildPrebuiltBinary` installs *named executables* — including single binaries shipped transport-compressed (`.zst`/`.gz`/`.xz`/`.bz2`, decompressed automatically; e.g. `buck2`, `rust-analyzer`). Tools that install a whole toolchain tree (`nodejs`, `python`, `rust`, `git`, `platform-tools`, `typescript`) stay on plain `mkDerivation` — they're a different shape.
+
 ## Adding a New Toolchain
 
 Toolchains are meta-packages that bundle related tools via `symlinkJoin`. They use `toolboxLib.buildToolchain` — no custom Nix logic needed.
