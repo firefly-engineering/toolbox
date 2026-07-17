@@ -86,3 +86,6 @@ in
 # Skill-bundle support code lives in its own file for separation from the small
 # registry helpers above; merged in so it's reachable as toolboxLib.buildSkillBundle.
 // import ./skill-bundle.nix { inherit lib readData; }
+# Prebuilt-binary builder, likewise in its own file; reachable as
+# toolboxLib.buildPrebuiltBinary.
+// import ./prebuilt-binary.nix { inherit lib; }
