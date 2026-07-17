@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "unknown",
   "blocked_by": [],
   "blocks": [
     "tb-dkx.2"
@@ -12,8 +12,8 @@
   ],
   "parent": "tb-dkx",
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "Extract pure classify_entry; make scan_packages a thin walk",
   "type": "task",
-  "updated_at": "2026-07-17T07:19:22Z"
+  "updated_at": "2026-07-17T07:24:56Z"
 }
