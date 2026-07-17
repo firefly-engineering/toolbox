@@ -7,7 +7,9 @@
   "created": "2026-07-17T07:19:08Z",
   "description": "## What to build\n\nPackage/toolchain classification becomes a pure function classify_entry(name, data) -\u003e PackageInfo | ToolchainInfo, and scan_packages shrinks to a thin filesystem walk (iterdir + read + json.loads) that delegates to it. Mirrors the existing pure parse_toolchain_data seam.\n\nBehavior-preserving: the generated docs HTML must be byte-identical before and after. This is a pure deepening, not a behavior change.\n\n## Acceptance criteria\n\n- [ ] classify_entry(name, data) is pure: no filesystem access, dict in / model out\n- [ ] scan_packages is a thin walk that reads each data.json and delegates classification to classify_entry\n- [ ] Classification tests feed dicts directly to classify_entry and no longer build a tmp_packages tree\n- [ ] A small number of thin tests still cover the scan_packages walk itself (finds data.json, skips non-dirs)\n- [ ] Generated HTML output is unchanged (byte-identical) vs. before the refactor\n- [ ] Existing test suite green (docs/tests)\n\n## Blocked by\n\n- None — can start immediately.",
   "id": "tb-dkx.1",
-  "labels": [],
+  "labels": [
+    "ready-for-agent"
+  ],
   "parent": "tb-dkx",
   "priority": 2,
   "status": "open",
