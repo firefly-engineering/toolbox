@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-07-17T07:25:31Z",
+  "description": "Make the model-\u003eHTML transform in the Python docs generator a pure, deep module by feeding its assets (template + css) through its interface instead of reading them from disk itself.\n\nSource: architecture review (2026-07-17), candidate 4 ('worth exploring', ports \u0026 adapters). Independent of the candidate-3 scanner epic (tb-dkx) — different module.\n\nToday render_html(packages, toolchains) reads assets/style.css and assets/index.html.tmpl via Path(__file__).parent, so the transform cannot be exercised without those files on disk and its tests assert on substrings of hand-built HTML while silently depending on the real assets. Injecting template + css concentrates file I/O at the __main__ edge and makes the transform pure. A follow-up closes the adjacent no-escaping gap in row rendering.",
+  "id": "tb-9sd",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Deepen docs renderer: assets through the interface",
+  "type": "epic",
+  "updated_at": "2026-07-17T07:25:31Z"
+}
