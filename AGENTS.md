@@ -52,7 +52,7 @@ The dep hash (`pnpmDeps`/`npmDepsHash`) can't be precomputed — set it to `lib.
 toolbox/
 ├── flake.nix              # Flake assembly: auto-discovers packages/, exposes registry + packages
 ├── lib/
-│   └── default.nix        # Registry helpers (resolveTool, readData, buildVersions, buildToolchain, resolvePatches, versionToAttr)
+│   └── default.nix        # Registry helpers (resolveTool, readData, buildPackage, buildVersions, buildToolchain, resolvePatches, versionToAttr)
 └── packages/
     ├── go/
     │   ├── default.nix    # Go builder: builds Go from source using pkgs.go as bootstrap
@@ -180,8 +180,6 @@ Full template:
 { pkgs, lib, toolbox, toolboxLib }:
 
 let
-  inherit (toolboxLib.readData ./data.json) meta versions;
-
   builders = {
     default = version: versionData:
       pkgs.stdenv.mkDerivation {
@@ -195,11 +193,12 @@ let
       };
   };
 in
-{
-  versions = toolboxLib.buildVersions "mypackage" builders versions;
-  default = meta.default;
-}
+toolboxLib.buildPackage { name = "mypackage"; dataPath = ./data.json; inherit builders; }
 ```
+
+`toolboxLib.buildPackage` is the canonical entry point for versioned packages: it reads `meta` + `versions` from `data.json`, dispatches each version through `builders` (keyed by the optional `"builder"` field — see *Builder Versioning*), and returns the `{ versions; default; }` shape the registry expects. It's the same shape `buildToolchain` and `buildSkillBundle` produce.
+
+**Escape hatch.** Reach for the lower-level `toolboxLib.buildVersions name builders versions` directly (and hand-build the `{ versions; default; }` return) only when a package must pre-process its version set before building — e.g. `packages/bun-baseline` filters versions by platform and exposes an empty set on unsupported systems, which `buildPackage` deliberately does not model.
 
 ### 4. Test
 
