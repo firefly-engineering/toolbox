@@ -2,13 +2,14 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-07-17T07:32:29Z",
   "created": "2026-07-17T07:19:00Z",
   "description": "Make package/toolchain classification in the Python docs generator a pure function, mirroring the already-pure parse_toolchain_data.\n\nSource: architecture review (2026-07-17), candidate 3. Candidates 1 \u0026 2 (buildPackage / buildPrebuiltBinary) already landed in the Nix registry; this epic is the remaining live piece, on the docs side.\n\nToday scan_packages(packages_dir) interleaves filesystem I/O (iterdir + read_text + json.loads) with classification (name.endswith('-toolchain'), _meta extraction, version sorting, model construction), so the interpretation can only be tested through a real on-disk tree. parse_toolchain_data(dict) is already pure. This epic extracts a pure classify_entry seam and then reconciles the Nix/skill-bundle classification drift behind it.",
   "id": "tb-dkx",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Deepen docs scanner: pure package classification",
   "type": "epic",
-  "updated_at": "2026-07-17T07:19:00Z"
+  "updated_at": "2026-07-17T07:32:29Z"
 }
