@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "unknown",
   "blocked_by": [
     "tb-dkx.1"
   ],
@@ -12,8 +12,8 @@
   ],
   "parent": "tb-dkx",
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "Reconcile Nix/skill-bundle classification drift in classify_entry",
   "type": "task",
-  "updated_at": "2026-07-17T07:19:22Z"
+  "updated_at": "2026-07-17T07:28:09Z"
 }
