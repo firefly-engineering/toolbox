@@ -1,0 +1,8 @@
+{
+  "_meta": { "default": "11.17.0", "releases": "https://github.com/pnpm/pnpm/releases" },
+  "11.17.0": {
+    "x86_64-linux": { "sha256": "sha256-vbHbAb8PdXSVQFpZoJxcKH8xWIncmNOxS8N0uf5DoL8=" },
+    "aarch64-linux": { "sha256": "sha256-cw0X3nQqPvuwILqR16z8BFbGumrRzY60n0win+n1BNM=" },
+    "aarch64-darwin": { "sha256": "sha256-Hpo112+dOCrzZdlcZPOr94FeJDUGU/W7GjfkVGJlvCs=" }
+  }
+}
