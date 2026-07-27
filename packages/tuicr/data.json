@@ -1,0 +1,9 @@
+{
+  "_meta": { "default": "0.19.1", "releases": "https://github.com/agavra/tuicr/releases" },
+  "0.19.1": {
+    "x86_64-linux":   { "sha256": "sha256-Z63azCjunG0c6EIglU8f8MaoKzdIIhQt2MthWz1CXsU=" },
+    "aarch64-linux":  { "sha256": "sha256-Bwxc7ghixRz7lxhZHH+qTBY6RBU8ubWW0QfPtchsmas=" },
+    "x86_64-darwin":  { "sha256": "sha256-RstHMsmIOSILXVuN0JlFDdNbTeJNz4c+9HsK2URRnwg=" },
+    "aarch64-darwin": { "sha256": "sha256-+Jpmgt77m4EITuid3mveZLf+bouQeIp6NJDS1srL8tQ=" }
+  }
+}
