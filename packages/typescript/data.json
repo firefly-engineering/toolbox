@@ -2,5 +2,12 @@
   "_meta": { "default": "6.0.3", "releases": "https://github.com/microsoft/TypeScript/releases" },
   "6.0.3": {
     "sha256": "sha256-M80O4b6qjJ6dFanag2xi3epMNKQtfC00nbyA2UFl0io="
+  },
+  "7.0.0-dev.20260707.2": {
+    "builder": "tsgo",
+    "x86_64-linux": { "sha256": "sha256-Xm7hBSGQUmrgrCd7L7UroMfogGGSAUk71TQpdqCzPrY=" },
+    "aarch64-linux": { "sha256": "sha256-69ni9tdIMVGthW+u+sXXlt5lvaW9vL2kyrw+kRkQtjg=" },
+    "x86_64-darwin": { "sha256": "sha256-yqQTWDL6nWsyHXxtSLhyYFSvPjzdpd5GHEPzPUnx39Q=" },
+    "aarch64-darwin": { "sha256": "sha256-ptC0bXE1jbLWAjJMVTNmpY+h0DH136EsCaNba+F/5QM=" }
   }
 }
