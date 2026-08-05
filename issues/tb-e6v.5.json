@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "tb-e6v.1"
+  ],
   "blocks": [],
   "created": "2026-08-05T14:02:21Z",
   "description": "## Question\n\nGiven the baseline numbers, the mechanism survey, and the agreed CI contract: which mechanism does toolbox adopt for deciding what CI builds?\n\nThe decision must state:\n- The chosen mechanism, and explicitly which correctness property it gives up (if any) in exchange for speed.\n- How the set is computed in practice: what job computes it, what it outputs (a JSON matrix? a list of installables?), and how downstream jobs consume it.\n- How the repo’s specific shapes are handled: multiple versions per package, `symlinkJoin` toolchains, `lib/` changes, `flake.lock` / nix-pins changes, and `devShells`.\n- What happens when the computation itself fails or the base ref is unavailable (fail open to a full build, or fail closed?).\n\nHITL — run `/grilling` against the collected evidence.",
@@ -11,5 +13,5 @@
   "status": "open",
   "title": "Choose the affected-set mechanism",
   "type": "task",
-  "updated_at": "2026-08-05T14:02:21Z"
+  "updated_at": "2026-08-05T14:02:26Z"
 }
