@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-08-05T14:02:04Z",
+  "description": "## Question\n\nWhat is the current cost breakdown of a `cachix.yml` run, in numbers? Without a baseline every later decision is guesswork.\n\nMeasure, on `x86_64-linux` (a CI-like machine) and locally:\n- Wall-clock of `nix eval` over `packages.\u003csystem\u003e` — i.e. how expensive is it to merely enumerate/instantiate all 79 packages and their versions? This is the floor cost of any eval-based affected-set mechanism.\n- Wall-clock and bytes of the substitution phase on a fully-warm cache (the \"we download everything\" complaint) — how much of the current run is download vs. build vs. fixed setup (nix-installer, cachix-action)?\n- Number of derivations and total closure size for `attrValues packages.\u003csystem\u003e ++ attrValues devShells.\u003csystem\u003e`.\n- How long a single representative package build takes when it is a genuine cache miss.\n\nRecord the numbers as a linked asset (markdown under `docs/` or the ticket comment). Later tickets cite them.",
+  "id": "tb-e6v.1",
+  "labels": [],
+  "parent": "tb-e6v",
+  "priority": 1,
+  "status": "open",
+  "title": "Baseline: where does CI time actually go today?",
+  "type": "task",
+  "updated_at": "2026-08-05T14:02:04Z"
+}
