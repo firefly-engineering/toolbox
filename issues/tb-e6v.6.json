@@ -1,6 +1,8 @@
 {
   "assignee": "",
-  "blocked_by": [],
+  "blocked_by": [
+    "tb-e6v.5"
+  ],
   "blocks": [],
   "created": "2026-08-05T14:02:21Z",
   "description": "## Question\n\nDefine the gate precisely.\n\n- **Trigger**: what counts as a \"mass rebuild\"? A count threshold over the computed to-build set? A specific input having changed (`nix-pins` / `flake.lock`)? Something derived from cache-miss counts? State the rule in terms the chosen mechanism can actually evaluate.\n- **What the gate asks**: the human is attesting that they pre-populated the cache for `aarch64-darwin` and `x86_64-linux`. What exactly should the prompt say, and what should the human have run locally to be able to answer honestly?\n- **Verification vs. trust**: can CI *check* the attestation cheaply — e.g. query the substituter for the affected out-paths rather than take the human’s word? If so, is the manual approval still needed, or does it degrade to a notification?\n- **Waiting behaviour**: while unapproved, does the run hold a runner, fail, or stay pending? What happens on timeout?\n- **Approval mechanism**: pick from the GitHub primitives survey.\n\nHITL — run `/grilling`.",
@@ -11,5 +13,5 @@
   "status": "open",
   "title": "Decide the mass-rebuild gate: trigger, approver, and waiting behaviour",
   "type": "task",
-  "updated_at": "2026-08-05T14:02:21Z"
+  "updated_at": "2026-08-05T14:02:27Z"
 }
