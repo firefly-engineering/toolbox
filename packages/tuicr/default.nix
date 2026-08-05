@@ -59,6 +59,8 @@ let
       "https://github.com/agavra/tuicr/releases/download/v${version}/tuicr-${version}-${platform}.tar.gz";
     sourceRoot = ".";
     binaries = [ "tuicr" ];
+    # The release binary links libgit2 against the system zlib.
+    extraLibs = [ pkgs.zlib ];
     inherit meta;
   };
 in
