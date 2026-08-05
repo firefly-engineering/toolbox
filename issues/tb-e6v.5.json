@@ -2,7 +2,8 @@
   "assignee": "",
   "blocked_by": [
     "tb-e6v.1",
-    "tb-e6v.2"
+    "tb-e6v.2",
+    "tb-e6v.4"
   ],
   "blocks": [],
   "created": "2026-08-05T14:02:21Z",
@@ -14,5 +15,5 @@
   "status": "open",
   "title": "Choose the affected-set mechanism",
   "type": "task",
-  "updated_at": "2026-08-05T14:02:26Z"
+  "updated_at": "2026-08-05T14:02:27Z"
 }
