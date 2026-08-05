@@ -94,7 +94,7 @@
           "nix-pins",
           "flake-parts"
         ],
-        "ghostty": "ghostty",
+        "ghostty": [],
         "git-hooks": "git-hooks",
         "nix": [],
         "nixd": [],
@@ -267,22 +267,6 @@
       "original": {
         "owner": "numtide",
         "repo": "flake-utils",
-        "type": "github"
-      }
-    },
-    "ghostty": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1784602798,
-        "narHash": "sha256-298x90knBUWX5GHGXh2SKsAKvStjU2ri9UgOGoF79/8=",
-        "owner": "ghostty-org",
-        "repo": "ghostty",
-        "rev": "88b4cd047fa627cdca6781bc7e7dc8b75a2cecb9",
-        "type": "github"
-      },
-      "original": {
-        "owner": "ghostty-org",
-        "repo": "ghostty",
         "type": "github"
       }
     },

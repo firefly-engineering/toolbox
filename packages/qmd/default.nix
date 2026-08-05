@@ -9,11 +9,29 @@ let
   # addon with node-gyp and wraps `bun src/cli/qmd.ts`. node_modules content is
   # platform-specific (optional sqlite-vec/native deps), so its hash is keyed by
   # system in data.json.
+  #
+  # Bun comes from toolbox, pinned per-version in data.json. On x86_64 we take
+  # the *baseline* build unconditionally: stock bun requires AVX2, so a binary
+  # built (or cached) on a modern host dies with SIGILL on pre-Haswell CPUs —
+  # both at build time (`bun install`) and at runtime (the `bun src/cli/qmd.ts`
+  # wrapper). aarch64 has no such split and uses the regular build.
+  bunForSystem = bunVersion:
+    let
+      baseline = toolbox."bun-baseline".versions.${bunVersion} or null;
+    in
+    if pkgs.stdenv.hostPlatform.isx86_64 && baseline != null then
+      baseline
+    else
+      toolbox.bun.versions.${bunVersion}
+        or (throw "qmd: no toolbox bun ${bunVersion} for ${system}");
+
   builders = {
     default = version: versionData:
       let
         nodeModulesHash = versionData.nodeModules.${system}
           or (throw "qmd ${version} has no node_modules hash for ${system}");
+
+        bun = bunForSystem versionData.bun;
 
         src = pkgs.fetchFromGitHub {
           owner = "tobi";
@@ -31,7 +49,7 @@ let
             "SOCKS_SERVER"
           ];
 
-          nativeBuildInputs = [ pkgs.bun ];
+          nativeBuildInputs = [ bun ];
           dontConfigure = true;
 
           buildPhase = ''
@@ -60,7 +78,7 @@ let
         inherit version src;
 
         nativeBuildInputs = [
-          pkgs.bun
+          bun
           pkgs.makeWrapper
           pkgs.nodejs
           pkgs.node-gyp
@@ -92,7 +110,7 @@ let
           cp -r skills $out/lib/qmd/
           cp package.json $out/lib/qmd/
 
-          makeWrapper ${pkgs.bun}/bin/bun $out/bin/qmd \
+          makeWrapper ${bun}/bin/bun $out/bin/qmd \
             --add-flags "$out/lib/qmd/src/cli/qmd.ts" \
             --set DYLD_LIBRARY_PATH "${pkgs.sqlite.out}/lib" \
             --set LD_LIBRARY_PATH "${pkgs.sqlite.out}/lib"
