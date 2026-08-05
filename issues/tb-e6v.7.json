@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-08-05T14:02:21Z",
+  "description": "## Question\n\nAssemble every resolved decision into a single implementable spec — the destination of this map.\n\nMust contain:\n- The workflow topology: files, triggers, jobs, and the data flowing between them.\n- The affected-set computation, spelled out concretely enough to implement without re-deciding anything.\n- The mass-rebuild gate: trigger rule, approval mechanism, prompt text, and the local commands the human runs to pre-populate.\n- What the human must change outside the repo (branch protection, environment configuration, secrets).\n- The rollout plan and how to verify the new pipeline is correct before removing the old one.\n- Explicitly: what this spec does *not* cover (darwin CI coverage, fork PRs).\n\nLand it as a committed markdown document (`docs/adr/` or `docs/`), linked from this ticket.",
+  "id": "tb-e6v.7",
+  "labels": [],
+  "parent": "tb-e6v",
+  "priority": 1,
+  "status": "open",
+  "title": "Write the CI design spec",
+  "type": "task",
+  "updated_at": "2026-08-05T14:02:21Z"
+}
