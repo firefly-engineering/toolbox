@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-08-05T14:02:04Z",
+  "description": "## Question\n\nWhat mechanisms does GitHub Actions offer for pausing a workflow pending human approval, and what are their constraints?\n\nCover at minimum:\n- **Deployment environments with required reviewers** — the canonical gate. Who can approve, how it renders on the PR, timeout behaviour, whether it works on `push`-triggered runs, and any plan/permission requirements for private vs public repos.\n- **`workflow_dispatch` with inputs** — human re-triggers a second workflow manually.\n- **Label-driven re-run** — a job that fails/skips until a label like `cache-prepopulated` is applied.\n- **Third-party approval actions** (issue-comment pollers etc.) and why they may or may not be worth the dependency.\n\nFor each: does the run *hold* a runner while waiting (cost), does it block required status checks, and can the approval be self-service by the repo owner? Deliver as a linked markdown asset.",
+  "id": "tb-e6v.3",
+  "labels": [],
+  "parent": "tb-e6v",
+  "priority": 2,
+  "status": "open",
+  "title": "Survey: manual-approval primitives in GitHub Actions",
+  "type": "task",
+  "updated_at": "2026-08-05T14:02:04Z"
+}
