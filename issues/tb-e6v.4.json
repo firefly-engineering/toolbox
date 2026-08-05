@@ -1,0 +1,15 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-08-05T14:02:04Z",
+  "description": "## Question\n\nBefore choosing a mechanism, settle the contract the new CI must satisfy.\n\n- What must a PR prove before it can merge — that affected packages build? that they build *and* are pushed to the cache? that eval succeeds repo-wide (`nix flake check`)?\n- What, if anything, still runs on push to `main` once PRs build? Is the main-branch job a safety net, a cache-push step, or gone?\n- Which checks are *required* for branch protection, given the matrix is dynamic — a fixed umbrella job that fans out, or per-package checks?\n- Does the human ever want to force a full build on demand (a `workflow_dispatch` escape hatch)?\n- What is the acceptable worst-case PR latency, and what is the target for the common case (one package bumped)?\n\nHITL — run `/grilling`.",
+  "id": "tb-e6v.4",
+  "labels": [],
+  "parent": "tb-e6v",
+  "priority": 1,
+  "status": "open",
+  "title": "Decide the CI contract: what runs on PR vs on main",
+  "type": "task",
+  "updated_at": "2026-08-05T14:02:04Z"
+}
