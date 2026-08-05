@@ -7,11 +7,13 @@
   "created": "2026-08-05T14:02:04Z",
   "description": "## Question\n\nWhat are the candidate mechanisms for reducing a full build to only what a change affects, and what does each cost/guarantee?\n\nSurvey at least:\n- **Path heuristics** — `git diff` → `packages/\u003cname\u003e/**` → build that package. Cheap, no eval; but blind to `lib/`, `flake.lock`, and toolchain meta-packages that depend on a bumped component.\n- **Derivation-level diff** — evaluate `packages.\u003csystem\u003e` on base and on head, compare `drvPath`/`outPath` per attribute, build the difference. Exact by construction. Cost = 2× full eval (see the baseline ticket).\n- **Cache-query-based** — skip \"what changed\" entirely: evaluate once, then ask the substituter which out-paths it already has (narinfo `HEAD` / `nix path-info --store https://firefly-toolbox.cachix.org`) and build only the misses. Notably this *also* answers \"is the cache pre-populated?\" without downloading anything.\n- **Off-the-shelf tooling** — `nix-eval-jobs`, `nix-fast-build`, `nixbuild.net`, `garnix`, DeterminateSystems magic-nix-cache, and any GitHub Action that already does base-vs-head flake diffing.\n\nFor each: exactness (false negatives?), eval cost, whether it needs a base checkout, whether it needs the cachix token, and how it handles this repo’s shape (nested versions, `symlinkJoin` toolchains, `legacyPackages` vs `packages`).\n\nDeliver a comparison table as a linked markdown asset.",
   "id": "tb-e6v.2",
-  "labels": [],
+  "labels": [
+    "wayfinder:research"
+  ],
   "parent": "tb-e6v",
   "priority": 1,
   "status": "open",
   "title": "Survey: mechanisms for computing the set to build",
   "type": "task",
-  "updated_at": "2026-08-05T14:02:26Z"
+  "updated_at": "2026-08-05T14:02:27Z"
 }
