@@ -48,6 +48,9 @@
   #              string) names the unpacked directory ("." for a flat tarball).
   #   patchelf   run autoPatchelfHook + cc.cc.lib on Linux (default true; set
   #              false for static binaries)
+  #   extraLibs  additional shared libraries the binary links against, for
+  #              autoPatchelfHook to resolve on Linux (e.g. [ pkgs.zlib ] when
+  #              the asset wants libz.so.1). Ignored when patchelf is false.
   #   symlinks   attrset  link -> target, creating $out/bin/<link> -> $out/bin/<target>
   #   postInstall  extra shell appended inside installPhase (completions, man
   #              pages, shipped asset trees, relative symlinks, …)
@@ -60,6 +63,7 @@
     , binaries
     , sourceRoot ? null
     , patchelf ? true
+    , extraLibs ? [ ]
     , symlinks ? { }
     , postInstall ? ""
     , meta ? { }
@@ -127,7 +131,7 @@
         ++ lib.optionals isZip [ pkgs.unzip ]
         ++ lib.optionals (decompressor != null) [ decompressor.pkg ]
         ++ lib.optionals (patchelf && onLinux) [ pkgs.autoPatchelfHook ];
-      buildInputs = lib.optionals (patchelf && onLinux) [ pkgs.stdenv.cc.cc.lib ];
+      buildInputs = lib.optionals (patchelf && onLinux) ([ pkgs.stdenv.cc.cc.lib ] ++ extraLibs);
 
       installPhase = ''
         runHook preInstall

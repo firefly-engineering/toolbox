@@ -261,6 +261,7 @@ The `data.json` for a prebuilt package nests the source hash **per system** (one
 | `binaries` | yes | executables to install into `$out/bin`; each entry a string (installed under its basename) or `{ from; to; }` to rename — `from` may be a fn `{ version, platform } -> string` for assets whose binary is named e.g. `tool-${version}-${triple}` |
 | `sourceRoot` | no | `null` (default) → single binary (`dontUnpack`); a transport-compression suffix (`.zst`/`.gz`/`.xz`/`.bz2`) is auto-detected and the binary decompressed. Else a string, or fn `{ version, platform } -> string`, naming the unpacked dir (`"."` for a flat tarball). `.zip` archives get `unzip` automatically |
 | `patchelf` | no | Linux `autoPatchelfHook` + `cc.cc.lib` (default `true`; set `false` for static binaries) |
+| `extraLibs` | no | extra shared libraries for `autoPatchelfHook` to resolve on Linux (e.g. `[ pkgs.zlib ]` for `libz.so.1`); ignored when `patchelf = false` |
 | `symlinks` | no | `{ link = target; }` → `$out/bin/<link>` → `$out/bin/<target>` |
 | `postInstall` | no | extra shell appended inside `installPhase` (shell completions, man pages, shipped asset trees, relative symlinks) |
 | `meta` | no | derivation meta |
