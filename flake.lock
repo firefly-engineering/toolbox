@@ -388,11 +388,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1785939347,
-        "narHash": "sha256-rbRjChnb7wo737WkcGsmF4QO3xNCd5HhHPc/Y8Hkp0I=",
+        "lastModified": 1785965067,
+        "narHash": "sha256-Te89NzFzNplqobjaOS/Mv6INLLJY7GbJlWoKoRoMRn0=",
         "owner": "firefly-engineering",
         "repo": "nix-pins",
-        "rev": "ae38717f191acccd6384df0dfa6ca64c2581d2af",
+        "rev": "93b65eac402b3f3187bbc0a293479e36bb3fdde7",
         "type": "github"
       },
       "original": {
@@ -490,16 +490,16 @@
     },
     "nixpkgs-stable": {
       "locked": {
-        "lastModified": 1782847189,
-        "narHash": "sha256-twXPFqFsrrY5r28Zh7Homgcp2gUMBgQ6WDS98Q/3xFI=",
+        "lastModified": 1785858998,
+        "narHash": "sha256-fKCq5jphd6l/Ms6gc3dptkw/TcKLYub9lQE5g6rbbkc=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "b6018f87da91d19d0ab4cf979885689b469cdd41",
+        "rev": "04607e1165ac22c5fde6dcc54c9e0b3c0487c555",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
-        "ref": "nixos-25.11",
+        "ref": "nixos-26.05",
         "repo": "nixpkgs",
         "type": "github"
       }
