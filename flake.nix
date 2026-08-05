@@ -14,9 +14,9 @@
     devenv.inputs.flake-parts.follows = "nix-pins/flake-parts";
     devenv.inputs.nixpkgs.follows = "nix-pins/nixpkgs";
     devenv.inputs.crate2nix.follows = "";
+    devenv.inputs.ghostty.follows = "";
     devenv.inputs.nix.follows = "";
     devenv.inputs.nixd.follows = "";
-    devenv.inputs.git-hooks.inputs.gitignore.follows = "nix-pins/pre-commit-hooks-nix/gitignore";
 
     devenv-root = {
       url = "file+file:///dev/null";

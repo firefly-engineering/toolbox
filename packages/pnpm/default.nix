@@ -54,6 +54,14 @@ let
           runHook postInstall
         '';
 
+        # nixpkgs' `fetchPnpmDeps` reads `pnpm.nodejs-slim` (to build its
+        # `pnpm-fixup-state-db` helper), so expose it the way nixpkgs' own pnpm
+        # derivation does — that makes this package a drop-in for the nixpkgs
+        # pnpm build helpers.
+        passthru = {
+          inherit (pkgs) nodejs-slim;
+        };
+
         meta = {
           description = "Fast, disk space efficient package manager for JavaScript";
           homepage = "https://pnpm.io/";

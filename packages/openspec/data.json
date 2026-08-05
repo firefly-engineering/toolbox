@@ -2,6 +2,7 @@
   "_meta": { "default": "1.6.0", "releases": "https://github.com/Fission-AI/OpenSpec/releases" },
   "1.6.0": {
     "sha256": "sha256-lvg10gpx6tB6eSv5iesqhUQqYqkVuU4hpSVfYy/f3bE=",
-    "pnpmDeps": "sha256-cFY6phUPK4IOthG/aOtMenyQlLYCCilcOIG+G+v/q04="
+    "pnpm": "11.17.0",
+    "pnpmDeps": "sha256-+392kmJ9fWQZW4R7n3sompLirulmA5VfTUWH6IL9MBU="
   }
 }

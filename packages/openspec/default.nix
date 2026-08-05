@@ -6,12 +6,18 @@ let
   # resolved once, by upstream, and fetched reproducibly by `fetchPnpmDeps` (a
   # fixed-output derivation keyed on `pnpmDeps` in data.json). No dependency
   # versions are resolved at our build time; a stale lock fails the build rather
-  # than drifting. pnpm_9 matches upstream's `packageManager: pnpm@9.15.9`.
+  # than drifting. The pnpm used to install is toolbox's own pinned pnpm
+  # (data-driven via the `pnpm` field) rather than nixpkgs' — upstream's
+  # `packageManager: pnpm@9.15.9` is EOL and marked insecure in nixpkgs, while
+  # the lockfile is `lockfileVersion: '9.0'`, which pnpm 11 reads natively.
   #
   # The npm registry tarball ships a prebuilt `dist/` but no lockfile, so it is
   # deliberately NOT used — building from source is what lets us honor the lock.
   builders = {
     default = version: versionData:
+      let
+        pnpm = toolbox.pnpm.versions.${versionData.pnpm};
+      in
       pkgs.buildNpmPackage (finalAttrs: {
         pname = "openspec";
         inherit version;
@@ -27,11 +33,11 @@ let
         npmDeps = null;
         pnpmDeps = pkgs.fetchPnpmDeps {
           inherit (finalAttrs) pname version src;
-          pnpm = pkgs.pnpm_9;
-          fetcherVersion = 3;
+          inherit pnpm;
+          fetcherVersion = 4;
           hash = versionData.pnpmDeps;
         };
-        nativeBuildInputs = [ pkgs.pnpm_9 ];
+        nativeBuildInputs = [ pnpm ];
         npmConfigHook = pkgs.pnpmConfigHook;
 
         # `npm run build` executes the package-manager-agnostic `node build.js`
