@@ -3,11 +3,14 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from toolbox_docs.models import PackageInfo, ToolchainInfo
 from toolbox_docs.scanner import (
     classify_entry,
     is_skill_bundle,
     parse_toolchain_data,
+    resolve_data_from,
     scan_packages,
 )
 
@@ -106,6 +109,47 @@ def test_parse_toolchain_data_sorts_components():
     assert version_map["1"][1].name == "zebra"
 
 
+# --- resolve_data_from: pure merge of a pointer data.json with its source ----
+
+
+def test_resolve_data_from_takes_versions_from_source():
+    local = {"_meta": {"dataFrom": "tuicr"}}
+    source = {
+        "_meta": {"default": "0.20.0", "releases": "https://example.com/releases"},
+        "0.20.0": {"sha256": "sha256-a"},
+        "0.19.1": {"sha256": "sha256-b"},
+    }
+    merged = resolve_data_from(local, source)
+    assert merged["0.20.0"] == {"sha256": "sha256-a"}
+    assert merged["0.19.1"] == {"sha256": "sha256-b"}
+    assert merged["_meta"]["default"] == "0.20.0"
+    assert merged["_meta"]["releases"] == "https://example.com/releases"
+
+
+def test_resolve_data_from_local_meta_wins():
+    local = {"_meta": {"dataFrom": "tuicr", "releases": "https://local/releases"}}
+    source = {"_meta": {"default": "1.0.0", "releases": "https://source/releases"}}
+    merged = resolve_data_from(local, source)
+    # Local states what is true of the pointer package ...
+    assert merged["_meta"]["releases"] == "https://local/releases"
+    # ... and inherits the rest from the source it shares a pin with.
+    assert merged["_meta"]["default"] == "1.0.0"
+
+
+def test_resolve_data_from_drops_the_pointer_key():
+    merged = resolve_data_from({"_meta": {"dataFrom": "tuicr"}}, {"_meta": {"default": "1.0.0"}})
+    assert "dataFrom" not in merged["_meta"]
+
+
+def test_resolve_data_from_carries_skill_bundle_marker():
+    """The marker lives locally: the shared source data.json is a plain package."""
+    local = {"_meta": {"dataFrom": "tuicr", "fromClaudePlugin": False}}
+    source = {"_meta": {"default": "1.0.0"}, "1.0.0": {"sha256": "sha256-x"}}
+    entry = classify_entry("tuicr-skills", resolve_data_from(local, source))
+    assert entry.skill_bundle is True
+    assert entry.versions == ["1.0.0"]
+
+
 # --- scan_packages: thin filesystem walk over classify_entry -----------------
 
 
@@ -124,6 +168,41 @@ def test_scan_walk_skips_non_dirs_and_missing_data(tmp_path: Path):
     packages, toolchains = scan_packages(pkgs)
     assert packages == []
     assert toolchains == []
+
+
+def test_scan_walk_follows_data_from_pointer(tmp_path: Path):
+    pkgs = tmp_path / "packages"
+    (pkgs / "src").mkdir(parents=True)
+    (pkgs / "src" / "data.json").write_text(
+        json.dumps(
+            {
+                "_meta": {"default": "2.0.0", "releases": "https://example.com/releases"},
+                "2.0.0": {"sha256": "sha256-a"},
+                "1.0.0": {"sha256": "sha256-b"},
+            }
+        )
+    )
+    (pkgs / "src-skills").mkdir()
+    (pkgs / "src-skills" / "data.json").write_text(
+        json.dumps({"_meta": {"dataFrom": "src", "fromClaudePlugin": False}})
+    )
+
+    packages, _ = scan_packages(pkgs)
+    by_name = {p.name: p for p in packages}
+    assert set(by_name) == {"src", "src-skills"}
+    assert by_name["src-skills"].versions == ["2.0.0", "1.0.0"]
+    assert by_name["src-skills"].default == "2.0.0"
+    assert by_name["src-skills"].releases == "https://example.com/releases"
+    assert by_name["src-skills"].skill_bundle is True
+    assert by_name["src"].skill_bundle is False
+
+
+def test_scan_walk_dangling_data_from_is_an_error(tmp_path: Path):
+    pkgs = tmp_path / "packages"
+    (pkgs / "orphan").mkdir(parents=True)
+    (pkgs / "orphan" / "data.json").write_text(json.dumps({"_meta": {"dataFrom": "gone"}}))
+    with pytest.raises(FileNotFoundError, match="orphan"):
+        scan_packages(pkgs)
 
 
 def test_scan_walk_reads_data_json(tmp_path: Path):
