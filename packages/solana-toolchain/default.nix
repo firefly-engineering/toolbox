@@ -8,13 +8,21 @@
 # RUSTUP_HOME / --tools-version dance, no platform-tools download, no
 # dependence on the host's rustup. `anchor build` works too, since it
 # finds the wrapped cargo-build-sbf on PATH.
+#
+# Unlike the other `*-toolchain` packages this is a hand-written `symlinkJoin`
+# rather than `buildToolchain` — the wrapped `cargo-build-sbf` is custom logic
+# `buildToolchain` does not model. The version and its toolbox component pin
+# still live in `data.json`, so the registry stays data-driven and the docs
+# generator (which discovers packages by walking `packages/*/data.json`) sees
+# it. See docs/adr/0003.
 let
-  version = "v1.54"; # tracks the pinned platform-tools
+  data = toolboxLib.readData ./data.json;
+  version = data.meta.default;
 
   solanaCli = pkgs.solana-cli;
   anchor = pkgs.anchor;
   rustup = pkgs.rustup;
-  platformTools = toolbox.platform-tools.versions.${version};
+  platformTools = toolbox.platform-tools.versions.${data.versions.${version}.platform-tools};
 
   # A complete SBF SDK: nixpkgs' SDK scaffolding with the pinned
   # platform-tools mounted where cargo-build-sbf --skip-tools-install

@@ -1,0 +1,9 @@
+{
+  "_meta": {
+    "default": "v1.54",
+    "releases": "https://github.com/anza-xyz/platform-tools/releases"
+  },
+  "v1.54": {
+    "platform-tools": "v1.54"
+  }
+}
