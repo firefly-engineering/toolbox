@@ -50,6 +50,27 @@ def is_skill_bundle(data: dict) -> bool:
     return "fromClaudePlugin" in data.get("_meta", {})
 
 
+def resolve_data_from(local: dict, source: dict) -> dict:
+    """Merge a pointer ``data.json`` with the one it points at.
+
+    A package whose Nix builder reads a *sibling's* ``data.json`` (so the two can
+    never pin different sources) has no version entries of its own. It declares
+    ``_meta.dataFrom: "<sibling>"`` and this merge supplies them: version entries
+    come wholesale from the source, while the local ``_meta`` overrides the
+    source's field by field — that is where the pointer package states what is
+    true of *it* rather than of its source (``fromClaudePlugin``, a different
+    ``releases`` URL, …). The ``dataFrom`` key itself is dropped, so the result is
+    an ordinary ``data.json`` as far as classify_entry is concerned.
+
+    Pure: dicts in / dict out. The filesystem lookup lives in scan_packages.
+    """
+    merged = {k: v for k, v in source.items() if k != "_meta"}
+    meta = {**source.get("_meta", {}), **local.get("_meta", {})}
+    meta.pop("dataFrom", None)
+    merged["_meta"] = meta
+    return merged
+
+
 def classify_entry(name: str, data: dict) -> PackageInfo | ToolchainInfo:
     """Classify one package entry from its name and parsed data.json.
 
@@ -87,8 +108,9 @@ def scan_packages(
 ) -> tuple[list[PackageInfo], list[ToolchainInfo]]:
     """Scan a packages directory and return classified package and toolchain info.
 
-    A thin filesystem walk: find each ``data.json``, parse it, and delegate
-    classification to the pure :func:`classify_entry`.
+    A thin filesystem walk: find each ``data.json``, parse it, follow a
+    ``_meta.dataFrom`` pointer if present, and delegate classification to the
+    pure :func:`classify_entry`.
     """
     packages: list[PackageInfo] = []
     toolchains: list[ToolchainInfo] = []
@@ -102,6 +124,17 @@ def scan_packages(
             continue
 
         data = json.loads(data_json.read_text())
+
+        source_name = data.get("_meta", {}).get("dataFrom")
+        if source_name:
+            source_json = packages_dir / source_name / "data.json"
+            if not source_json.exists():
+                raise FileNotFoundError(
+                    f"{pkg_dir.name}: _meta.dataFrom points at '{source_name}', "
+                    f"but {source_json} does not exist"
+                )
+            data = resolve_data_from(data, json.loads(source_json.read_text()))
+
         entry = classify_entry(pkg_dir.name, data)
         if isinstance(entry, ToolchainInfo):
             toolchains.append(entry)
