@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-08-06T08:39:38Z",
+  "description": "The docs generator discovers packages by walking packages/*/data.json. tuicr-skills reads its pin from ../tuicr/data.json (one pin, one place) and solana-toolchain hardcoded its version in Nix, so neither had a data.json of its own and both were absent from https://firefly-engineering.github.io/toolbox/ while fully present in the flake.\n\nFix: _meta.dataFrom pointer support in the scanner (ADR 0002), a pointer data.json for tuicr-skills, solana-toolchain's pin moved into data.json (ADR 0003), and an integration test asserting the flake's and docs' package sets agree.",
+  "id": "tb-m16",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Docs: tuicr-skills and solana-toolchain missing from generated site",
+  "type": "bug",
+  "updated_at": "2026-08-06T08:39:38Z"
+}
