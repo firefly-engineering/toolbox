@@ -16,8 +16,11 @@ let
           rev = version;
           hash = versionData.sha256;
         };
+        # nil's Cargo.lock is vendored version-namespaced: the upstream lock is
+        # only reachable through `src`, and reading it from the store at eval
+        # time would be import-from-derivation.
         cargoLock = {
-          lockFile = ./Cargo.lock;
+          lockFile = ./. + "/Cargo-${version}.lock";
         };
         doCheck = false;
 

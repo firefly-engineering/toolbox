@@ -1,7 +1,11 @@
 {
   "_meta": {
-    "default": "2025-06-13",
+    "default": "2026-07-23",
     "releases": "https://github.com/oxalica/nil/releases"
+  },
+  "2026-07-23": {
+    "sha256": "sha256-upJVI2pq9sOKgF2AILt8l6O4/3GNcMtT/s0rmnbO5UA=",
+    "rust": "1.97.0"
   },
   "2025-06-13": {
     "sha256": "sha256-oxvVAFUO9husnRk6XZcLFLjLWL9z0pW25Fk6kVKwt1c=",
