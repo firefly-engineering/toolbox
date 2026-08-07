@@ -1,8 +1,14 @@
 {
   "_meta": {
-    "default": "1.1.0",
+    "default": "1.2.3",
     "releases": "https://github.com/mattpocock/skills/releases",
     "fromClaudePlugin": true
+  },
+  "1.2.3": {
+    "owner": "mattpocock",
+    "repo": "skills",
+    "rev": "84fdeffd12f2ee307994d1eb6feb48173b6e0502",
+    "sha256": "sha256-pseSJJb5nBBGPzpxA1GzjGLB9OrT+u0At1saJ4NqZ1E="
   },
   "1.1.0": {
     "owner": "mattpocock",
