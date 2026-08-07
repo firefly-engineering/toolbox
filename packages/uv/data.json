@@ -1,33 +1,90 @@
 {
-  "_meta": { "default": "0.11.26", "releases": "https://github.com/astral-sh/uv/releases" },
+  "_meta": {
+    "default": "0.12.2",
+    "releases": "https://github.com/astral-sh/uv/releases"
+  },
+  "0.12.2": {
+    "x86_64-linux": {
+      "sha256": "sha256-1m6WtfHKO5mAbu4oOoEl0zoL1mnm5tm8Srf/2mPEG/Q="
+    },
+    "aarch64-linux": {
+      "sha256": "sha256-Gbfx9miVJh+6oH+OqR2g+GM3rU5H76WU6HZBwXGP/FI="
+    },
+    "x86_64-darwin": {
+      "sha256": "sha256-puZQapEJgBIi1l0XRhq/TtE73sxdKxOvBJVBioKXLGs="
+    },
+    "aarch64-darwin": {
+      "sha256": "sha256-+pCf6jvAb0YNt5AXAwoiH9vEPsRHjwictVTYM1wJCBc="
+    }
+  },
   "0.11.26": {
-    "x86_64-linux": { "sha256": "sha256-ZCanPDg35uJIPuNEy8APNjlNF5r8umGDy3dDfmfbSvA=" },
-    "aarch64-linux": { "sha256": "sha256-vvoaWckelutgGw/ZqXwD3WZvF7q6ZEsrTbnFmnZ+OH4=" },
-    "x86_64-darwin": { "sha256": "sha256-kitGAgJwfdX0zKy62+f2pUbMRugqmb9Qypmnl3p47d0=" },
-    "aarch64-darwin": { "sha256": "sha256-j3+/Fwg5m5IYV7znHh1g8NPM9SowyuvBwaLxddzhOrY=" }
+    "x86_64-linux": {
+      "sha256": "sha256-ZCanPDg35uJIPuNEy8APNjlNF5r8umGDy3dDfmfbSvA="
+    },
+    "aarch64-linux": {
+      "sha256": "sha256-vvoaWckelutgGw/ZqXwD3WZvF7q6ZEsrTbnFmnZ+OH4="
+    },
+    "x86_64-darwin": {
+      "sha256": "sha256-kitGAgJwfdX0zKy62+f2pUbMRugqmb9Qypmnl3p47d0="
+    },
+    "aarch64-darwin": {
+      "sha256": "sha256-j3+/Fwg5m5IYV7znHh1g8NPM9SowyuvBwaLxddzhOrY="
+    }
   },
   "0.11.6": {
-    "x86_64-linux": { "sha256": "sha256-DGurd6Z6RF3ISe1ejujTyzM7bi66hjZDzh4igHXyeUM=" },
-    "aarch64-linux": { "sha256": "sha256-1b5L9wFeoAA3jLPDq6U7qBqGc0WKzpx/oloL4AW3SAI=" },
-    "x86_64-darwin": { "sha256": "sha256-x5ktu3BGv+NXX0G1CE50SWjZUidJ5xUtKSJPO4ZUV5Q=" },
-    "aarch64-darwin": { "sha256": "sha256-S2mk42bsOM1fMFcH3pXhKVEYHESGeaANzip4ho38n1s=" }
+    "x86_64-linux": {
+      "sha256": "sha256-DGurd6Z6RF3ISe1ejujTyzM7bi66hjZDzh4igHXyeUM="
+    },
+    "aarch64-linux": {
+      "sha256": "sha256-1b5L9wFeoAA3jLPDq6U7qBqGc0WKzpx/oloL4AW3SAI="
+    },
+    "x86_64-darwin": {
+      "sha256": "sha256-x5ktu3BGv+NXX0G1CE50SWjZUidJ5xUtKSJPO4ZUV5Q="
+    },
+    "aarch64-darwin": {
+      "sha256": "sha256-S2mk42bsOM1fMFcH3pXhKVEYHESGeaANzip4ho38n1s="
+    }
   },
   "0.11.2": {
-    "x86_64-linux": { "sha256": "sha256-esLKBEnI1o2um5nmNc07ybIqTLHeZLfENxY5hEfUKYE=" },
-    "aarch64-linux": { "sha256": "sha256-BHksrHYcSmungmfzbyr1Qbf5IZbUKsVdIdP/aw9atqU=" },
-    "x86_64-darwin": { "sha256": "sha256-qcNlMkUDEwTFDdYKwDAb9sES4Sw4wyMCpx1PpqY7oss=" },
-    "aarch64-darwin": { "sha256": "sha256-S+qpVQ+T738PwC98KMnEjNYf4w2wD1rIlH4KQlw/soI=" }
+    "x86_64-linux": {
+      "sha256": "sha256-esLKBEnI1o2um5nmNc07ybIqTLHeZLfENxY5hEfUKYE="
+    },
+    "aarch64-linux": {
+      "sha256": "sha256-BHksrHYcSmungmfzbyr1Qbf5IZbUKsVdIdP/aw9atqU="
+    },
+    "x86_64-darwin": {
+      "sha256": "sha256-qcNlMkUDEwTFDdYKwDAb9sES4Sw4wyMCpx1PpqY7oss="
+    },
+    "aarch64-darwin": {
+      "sha256": "sha256-S+qpVQ+T738PwC98KMnEjNYf4w2wD1rIlH4KQlw/soI="
+    }
   },
   "0.10.10": {
-    "x86_64-linux": { "sha256": "sha256-PhAn8mzox+TDLiJ3p/7Sy0EPLx+TINPfl2U9QOIfQVs=" },
-    "aarch64-linux": { "sha256": "sha256-K4BFe5UN7aEujV3DubdJSsFD6uR/H7EbHG5ahJWmQh4=" },
-    "x86_64-darwin": { "sha256": "sha256-3RhCBZHWJfm0yitXp6b+PM5DkQ8C4C2Q5HpBAUKN4Uo=" },
-    "aarch64-darwin": { "sha256": "sha256-ignw71Huf3FwcxtMuL3lv5um2lME9Jp99s2rQqHze10=" }
+    "x86_64-linux": {
+      "sha256": "sha256-PhAn8mzox+TDLiJ3p/7Sy0EPLx+TINPfl2U9QOIfQVs="
+    },
+    "aarch64-linux": {
+      "sha256": "sha256-K4BFe5UN7aEujV3DubdJSsFD6uR/H7EbHG5ahJWmQh4="
+    },
+    "x86_64-darwin": {
+      "sha256": "sha256-3RhCBZHWJfm0yitXp6b+PM5DkQ8C4C2Q5HpBAUKN4Uo="
+    },
+    "aarch64-darwin": {
+      "sha256": "sha256-ignw71Huf3FwcxtMuL3lv5um2lME9Jp99s2rQqHze10="
+    }
   },
   "0.10.9": {
-    "x86_64-linux": { "sha256": "sha256-INeXCCImEfpUC1ye2E81K805N3QOUarMD4sVsnHFdZQ=" },
-    "aarch64-linux": { "sha256": "sha256-zAxahXPn1teK7LlU4KYrXA0YIXu4Hx4ZNjtCjFeplio=" },
-    "x86_64-darwin": { "sha256": "sha256-nMLefRlfoVf5izBqihyxUd7ZP0iJObkzY868i51ZjCg=" },
-    "aarch64-darwin": { "sha256": "sha256-qS9h6aybDylmjBX1YVLkpgFD/KFI/1v624ZxhHLD83Y=" }
+    "x86_64-linux": {
+      "sha256": "sha256-INeXCCImEfpUC1ye2E81K805N3QOUarMD4sVsnHFdZQ="
+    },
+    "aarch64-linux": {
+      "sha256": "sha256-zAxahXPn1teK7LlU4KYrXA0YIXu4Hx4ZNjtCjFeplio="
+    },
+    "x86_64-darwin": {
+      "sha256": "sha256-nMLefRlfoVf5izBqihyxUd7ZP0iJObkzY868i51ZjCg="
+    },
+    "aarch64-darwin": {
+      "sha256": "sha256-qS9h6aybDylmjBX1YVLkpgFD/KFI/1v624ZxhHLD83Y="
+    }
   }
 }
