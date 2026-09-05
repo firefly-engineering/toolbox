@@ -1,7 +1,27 @@
 {
   "_meta": {
-    "default": "0.13.0",
+    "default": "0.13.3",
     "releases": "https://github.com/jallum/beadwork/releases"
+  },
+  "0.13.3": {
+    "sha256": "sha256-OtjWkdYtTDNmjfSWAUg0cFJ7B7pnH8lk0S+g42JvHbA=",
+    "vendorHash": "sha256-oWF8f6pUitM0zdfC6UonhU5BgDdh/fnljDohVVbyk+Q=",
+    "go": "1.26.1",
+    "subPackages": [
+      "cmd/bw",
+      "cmd/bw-tui"
+    ],
+    "patches": [
+      {
+        "file": "patches/sigma-tui-0.13.3.patch",
+        "source": {
+          "owner": "sigma",
+          "repo": "beadwork",
+          "branch": "tui",
+          "commit": "9ccad924a1a395a8abb0510d0420db666d444d4f"
+        }
+      }
+    ]
   },
   "0.13.0": {
     "sha256": "sha256-SuIQygsd/X8khQ1+S/af5haREBxsznFfcefLwsJRv/g=",
