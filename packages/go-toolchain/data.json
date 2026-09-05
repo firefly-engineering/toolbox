@@ -1,5 +1,12 @@
 {
-  "_meta": { "default": "5" },
+  "_meta": { "default": "6" },
+  "6": {
+    "go": "1.27.1",
+    "golangci-lint": "2.12.2",
+    "gopls": "0.23.0",
+    "gotestsum": "1.13.0",
+    "go-licenses": "2.0.1"
+  },
   "5": {
     "go": "1.26.4",
     "golangci-lint": "2.12.2",
