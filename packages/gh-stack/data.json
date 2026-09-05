@@ -1,7 +1,13 @@
 {
   "_meta": {
-    "default": "0.1.0",
+    "default": "0.1.1",
     "releases": "https://github.com/github/gh-stack/releases"
+  },
+  "0.1.1": {
+    "x86_64-linux": { "sha256": "sha256-ntEDk0+rD5DTNB/fxKNCeFOW059WIfxzE6YmAs4rVGI=" },
+    "aarch64-linux": { "sha256": "sha256-LaE/jEbydwI3x0SzQatr6fB1CFhaZ2JjTEqIqjVUYLw=" },
+    "x86_64-darwin": { "sha256": "sha256-QHQPgmRcKMTh2kfGvQKmrEl9OCpFfBCTaUozaxdQr3E=" },
+    "aarch64-darwin": { "sha256": "sha256-8Jqssu5y/bHUAe5PW5DgYpGahS/Dx7Zr8bGoUxBGF9g=" }
   },
   "0.1.0": {
     "x86_64-linux": {
