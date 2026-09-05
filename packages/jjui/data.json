@@ -1,5 +1,11 @@
 {
-  "_meta": { "default": "0.10.7", "releases": "https://github.com/idursun/jjui/releases" },
+  "_meta": { "default": "0.10.9", "releases": "https://github.com/idursun/jjui/releases" },
+  "0.10.9": {
+    "x86_64-linux": { "sha256": "sha256-Ylcy4lvpWNIfx0C3GzeFJM0RuLZL1wWHK23Fp36lMeM=" },
+    "aarch64-linux": { "sha256": "sha256-O1rODMbVkvHgZR3OjuK9fCV/RTvebVxDyLpxm9eJnPI=" },
+    "x86_64-darwin": { "sha256": "sha256-Z62HuBpHVvEjv2kflsiFJtdMfRFeuXIJnzp1SuDhICU=" },
+    "aarch64-darwin": { "sha256": "sha256-Vj3XGgdI/pG6rnox/0IXPfGsgtVm27aozMPBDk9znoA=" }
+  },
   "0.10.7": {
     "x86_64-linux": { "sha256": "sha256-ronHLTfKiLH+DnBgO70B3C7uLTmulgvOUA8Z5p3E0EY=" },
     "aarch64-linux": { "sha256": "sha256-F7PIpyRN9paWw9gaU+lmFL7JADdFn2/ueiJh6aqMQms=" },
