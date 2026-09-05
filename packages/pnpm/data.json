@@ -1,5 +1,10 @@
 {
-  "_meta": { "default": "11.17.0", "releases": "https://github.com/pnpm/pnpm/releases" },
+  "_meta": { "default": "12.3.4", "releases": "https://github.com/pnpm/pnpm/releases" },
+  "12.3.4": {
+    "x86_64-linux": { "sha256": "sha256-lwXlcEtGeftQPJY6GNGsTxBeOar6/Kii7TRvrN+CDNA=" },
+    "aarch64-linux": { "sha256": "sha256-lecaKjC7wLd1Eflc8JZ3kGjcrW/8u/3wzU3eneKyuXw=" },
+    "aarch64-darwin": { "sha256": "sha256-lWAkPU6SeAxEZrrC7mqsQWbIu2Aa08Y/BwzdcBso82A=" }
+  },
   "11.17.0": {
     "x86_64-linux": { "sha256": "sha256-vbHbAb8PdXSVQFpZoJxcKH8xWIncmNOxS8N0uf5DoL8=" },
     "aarch64-linux": { "sha256": "sha256-cw0X3nQqPvuwILqR16z8BFbGumrRzY60n0win+n1BNM=" },
