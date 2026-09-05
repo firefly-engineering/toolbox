@@ -1,5 +1,11 @@
 {
-  "_meta": { "default": "2.96.0", "releases": "https://github.com/cli/cli/releases" },
+  "_meta": { "default": "2.100.0", "releases": "https://github.com/cli/cli/releases" },
+  "2.100.0": {
+    "x86_64-linux": { "sha256": "sha256-5NS7RJjo0Aer5UW2VokmeTrOG2RH2lmClKYQAYyxZL4=" },
+    "aarch64-linux": { "sha256": "sha256-6k56WBoyzK1sx5I8sVdqxYWbpLmharIuuPipbnji6WE=" },
+    "x86_64-darwin": { "sha256": "sha256-/Nd5noXrV188fSsWeb+/7a76EmnUvH0Ja1HhCTm0gSs=" },
+    "aarch64-darwin": { "sha256": "sha256-RfmmLaL25kGn+tV+LOOWVt/X7zMTctgKKirtZauwFkI=" }
+  },
   "2.96.0": {
     "x86_64-linux": { "sha256": "sha256-g9XCzK1UmPWL9jaKyxqzJYjPQ6s6SxwwG/NjKLHIvWA=" },
     "aarch64-linux": { "sha256": "sha256-BvhuxxA9QZk7ds14By9DWVw0qqVlBtlx2YYOZxQL+Qk=" },
