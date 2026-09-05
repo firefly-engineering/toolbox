@@ -1,5 +1,12 @@
 {
-  "_meta": { "default": "4" },
+  "_meta": { "default": "5" },
+  "5": {
+    "typescript": "7.0.2",
+    "nodejs": "24.20.0",
+    "biome": "2.5.2",
+    "bun": "1.4.2",
+    "pnpm": "12.3.4"
+  },
   "4": {
     "typescript": "6.0.3",
     "nodejs": "24.18.0",
