@@ -2,13 +2,15 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-09-05T15:19:49Z",
+  "close_reason": "Done: golangci-lint is at 2.12.2",
   "created": "2026-03-29T21:24:41Z",
   "description": "golangci-lint 2.11.3 → 2.12.2 (was originally 2.11.4; upstream has moved further, minor bump)",
   "id": "tb-d1o",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Bump golangci-lint to 2.12.2",
   "type": "task",
-  "updated_at": "2026-05-15T07:33:13Z"
+  "updated_at": "2026-09-05T15:19:49Z"
 }
