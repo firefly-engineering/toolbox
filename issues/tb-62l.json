@@ -2,13 +2,15 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-09-05T15:19:49Z",
+  "close_reason": "Superseded: nix bumped to 2.35.2",
   "created": "2026-03-29T21:24:38Z",
   "description": "Patch bump from 2.34.1 to 2.34.4",
   "id": "tb-62l",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Bump nix to 2.34.4",
   "type": "task",
-  "updated_at": "2026-03-29T21:24:38Z"
+  "updated_at": "2026-09-05T15:19:49Z"
 }
