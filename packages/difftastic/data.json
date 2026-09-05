@@ -1,5 +1,11 @@
 {
-  "_meta": { "default": "0.69.0", "releases": "https://github.com/Wilfred/difftastic/releases" },
+  "_meta": { "default": "0.70.0", "releases": "https://github.com/Wilfred/difftastic/releases" },
+  "0.70.0": {
+    "x86_64-linux": { "sha256": "sha256-KZfSu+YgU07b15sASfAM6E7vP+2xXHgiRW1Y442LBck=" },
+    "aarch64-linux": { "sha256": "sha256-5yloSQfWfRoXJ6CPRDh34Z5A7rLv682Vwbj3/uQoTo4=" },
+    "x86_64-darwin": { "sha256": "sha256-wYBUHveWOq1PddTvma7Sv39cEy0lo7gVKyAwm+H7qC8=" },
+    "aarch64-darwin": { "sha256": "sha256-GSEmciH8tXedMMTcwLO0Ygq76FH/1VlqRxVXZYFRj1E=" }
+  },
   "0.69.0": {
     "x86_64-linux": { "sha256": "sha256-A425ag6PzmnyVU4z4E/3X79vlupFy07bntYgOixHUP8=" },
     "aarch64-linux": { "sha256": "sha256-q9L0LSr9QkMStIYqp8e7AyBEdnCuIvq8xRWdsD4tzL0=" },
