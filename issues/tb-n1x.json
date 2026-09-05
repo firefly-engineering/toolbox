@@ -2,13 +2,15 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-09-05T15:19:49Z",
+  "close_reason": "Superseded: ruff bumped to 0.16.6",
   "created": "2026-03-29T21:24:37Z",
   "description": "ruff 0.15.6 → 0.15.13 (was originally 0.15.8; upstream has moved further)",
   "id": "tb-n1x",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Bump ruff to 0.15.13",
   "type": "task",
-  "updated_at": "2026-05-15T07:33:12Z"
+  "updated_at": "2026-09-05T15:19:49Z"
 }
