@@ -1,7 +1,13 @@
 {
   "_meta": {
-    "default": "35.1",
+    "default": "36.1",
     "releases": "https://github.com/protocolbuffers/protobuf/releases"
+  },
+  "36.1": {
+    "x86_64-linux": { "sha256": "sha256-xLxnLZ1JIU3Iyv3OrfTfkhgtbKjj7GWlay195WAmabQ=" },
+    "aarch64-linux": { "sha256": "sha256-I3pohW7fG9KLYgS93QWWwc9G0pi8KcYgASVAsuRMc+c=" },
+    "x86_64-darwin": { "sha256": "sha256-7ixUluSvCqaiJIlLwPcCUUUmDgBNiQSH1RByXOi0c+s=" },
+    "aarch64-darwin": { "sha256": "sha256-3lbVev4wxdGRsR0k/5PdQCVyjX+0O3c4hrLTYT4L27I=" }
   },
   "35.1": {
     "x86_64-linux": { "sha256": "sha256-aTDr9ivU6mB7mP/wUllsbuVkuYNbTOFyx1o/U66dkbc=" },
