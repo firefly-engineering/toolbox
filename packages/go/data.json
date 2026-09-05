@@ -1,5 +1,8 @@
 {
-  "_meta": { "default": "1.26.4", "releases": "https://go.dev/dl/" },
+  "_meta": { "default": "1.27.1", "releases": "https://go.dev/dl/" },
+  "1.27.1": {
+    "sha256": "sha256-TkCKuuEm2Ra2FkYnGT8sVPDjyhMS1pO4bbRfhiqyOLE="
+  },
   "1.26.4": {
     "sha256": "sha256-T2aKMvv8ETLmqIH7lowvHa2mMUkqM5IRc1+7JVpCYC0="
   },
