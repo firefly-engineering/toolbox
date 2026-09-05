@@ -70,6 +70,7 @@ if [[ -z "$upstream_repo" ]]; then
   echo "Error: could not extract upstream repo from releases URL: $releases_url" >&2
   exit 1
 fi
+upstream_owner="${upstream_repo%%/*}"
 
 echo "Package:  $pkg_dir"
 echo "Version:  $version"
@@ -101,8 +102,14 @@ fi
 patch_path="$pkg_dir/$patch_file"
 mkdir -p "$(dirname "$patch_path")"
 echo ""
-echo "Fetching diff $tag...$commit ..."
-gh api "repos/$source_owner/$source_repo/compare/$tag...$commit" \
+echo "Fetching diff $upstream_owner:$tag...$source_owner:$commit ..."
+# Compare across repos rather than within the fork: the fork only has the
+# upstream tags it happened to fetch, so a freshly-released tag is usually
+# absent there and a same-repo `compare/$tag...$commit` 404s. The cross-repo
+# form resolves the base in the upstream repo, and is equivalent when the fork
+# does have the tag. Either way this is a three-dot diff — merge base to head —
+# so the patch carries only the fork's own changes.
+gh api "repos/$source_owner/$source_repo/compare/$upstream_owner:$tag...$source_owner:$commit" \
   -H 'Accept: application/vnd.github.v3.diff' > "$patch_path"
 
 lines=$(wc -l < "$patch_path")
