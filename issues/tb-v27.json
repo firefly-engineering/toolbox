@@ -2,13 +2,15 @@
   "assignee": "",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-09-05T15:19:49Z",
+  "close_reason": "Superseded: biome is at 2.5.2",
   "created": "2026-03-29T21:24:36Z",
   "description": "biome 2.4.7 → 2.4.15 (was originally 2.4.9; upstream has moved further)",
   "id": "tb-v27",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "closed",
   "title": "Bump biome to 2.4.15",
   "type": "task",
-  "updated_at": "2026-05-15T07:33:11Z"
+  "updated_at": "2026-09-05T15:19:49Z"
 }
