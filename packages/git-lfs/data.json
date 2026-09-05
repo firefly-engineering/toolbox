@@ -1,5 +1,11 @@
 {
-  "_meta": { "default": "3.7.1", "releases": "https://github.com/git-lfs/git-lfs/releases" },
+  "_meta": { "default": "3.8.0", "releases": "https://github.com/git-lfs/git-lfs/releases" },
+  "3.8.0": {
+    "x86_64-linux": { "sha256": "sha256-5FXgDxXZuVZhuNU0mP+wwzZ5Ys8exzwxq3NpUWzWq40=" },
+    "aarch64-linux": { "sha256": "sha256-rJyO+smAuwUF6tOE0IfirLZIb9hJhpGiFl+hdOxhGMI=" },
+    "x86_64-darwin": { "sha256": "sha256-8cF67KC06quepgYiZHfb7TuEtW/ggRqfln0uorI5PFM=" },
+    "aarch64-darwin": { "sha256": "sha256-yv92p9Bw2BYMibw5tuhdmPJBNbb+0DijtN4lkNJRAtg=" }
+  },
   "3.7.1": {
     "x86_64-linux": { "sha256": "sha256-HAtu5SAMpwjFzr67GP3rDhyY8a9cGpy6IFpMCrWl7Ag=" },
     "aarch64-linux": { "sha256": "sha256-c6nJDutDEhM6Y8Pq7gw4wBnqe/oJU9F0gJ0lsYWI3Y0=" },
