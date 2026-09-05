@@ -104,6 +104,68 @@ let
           ];
         };
       };
+
+    # TypeScript 7 — the native Go compiler, now shipped on the main `typescript`
+    # npm package as per-platform `@typescript/typescript-<platform>` packages
+    # (the `native-preview` line the `tsgo` builder above fetches was the
+    # pre-release channel). Each package ships `lib/tsc` alongside the
+    # `lib.*.d.ts` standard library it loads relative to its own real path, so
+    # the whole `lib/` tree stays together and `bin/tsc` symlinks into it.
+    #
+    # TS7 has no separate `tsserver` binary — the language server is `tsc --lsp`
+    # — so unlike the 6.x `default` builder this installs `tsc` only.
+    ts7 = version: versionData:
+      let
+        system = pkgs.stdenv.hostPlatform.system;
+        platform = {
+          "x86_64-linux"   = "linux-x64";
+          "aarch64-linux"  = "linux-arm64";
+          "x86_64-darwin"  = "darwin-x64";
+          "aarch64-darwin" = "darwin-arm64";
+        }.${system}
+          or (throw "typescript ${version} has no binary for ${system}");
+        platformData = versionData.${system}
+          or (throw "typescript ${version} has no binary for ${system}");
+      in
+      pkgs.stdenv.mkDerivation {
+        pname = "typescript";
+        inherit version;
+
+        src = pkgs.fetchurl {
+          url = "https://registry.npmjs.org/@typescript/typescript-${platform}/-/typescript-${platform}-${version}.tgz";
+          hash = platformData.sha256;
+        };
+
+        dontConfigure = true;
+        dontBuild = true;
+        dontStrip = true;
+
+        # Statically-linked Go binaries — no autoPatchelfHook needed on Linux.
+        installPhase = ''
+          runHook preInstall
+
+          mkdir -p $out/lib/typescript
+          cp -r lib/. $out/lib/typescript/
+
+          mkdir -p $out/bin
+          ln -s $out/lib/typescript/tsc $out/bin/tsc
+
+          runHook postInstall
+        '';
+
+        meta = with lib; {
+          description = "TypeScript native compiler (TypeScript 7)";
+          homepage = "https://www.typescriptlang.org";
+          license = licenses.asl20;
+          mainProgram = "tsc";
+          platforms = [
+            "x86_64-linux"
+            "aarch64-linux"
+            "x86_64-darwin"
+            "aarch64-darwin"
+          ];
+        };
+      };
   };
 in
 toolboxLib.buildPackage { name = "typescript"; dataPath = ./data.json; inherit builders; }

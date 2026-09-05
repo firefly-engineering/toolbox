@@ -1,5 +1,12 @@
 {
-  "_meta": { "default": "6.0.3", "releases": "https://github.com/microsoft/TypeScript/releases" },
+  "_meta": { "default": "7.0.2", "releases": "https://github.com/microsoft/TypeScript/releases" },
+  "7.0.2": {
+    "builder": "ts7",
+    "x86_64-linux": { "sha256": "sha256-fsrW9nN36DGFY2erBi7zlPIVBqYRQFv4rA/wOTSGN9M=" },
+    "aarch64-linux": { "sha256": "sha256-yD2TGsnddUnN5ucSRqqdapgShDAj3z4nf+O13PQd0Oo=" },
+    "x86_64-darwin": { "sha256": "sha256-66FYy1QFD3I9X/eBQ48z3lZABURAu08r0XDP6bwutVE=" },
+    "aarch64-darwin": { "sha256": "sha256-kC4v4c8HmRmO+QLGuMMQpFD+9immurpB1FZB73XATr0=" }
+  },
   "6.0.3": {
     "sha256": "sha256-M80O4b6qjJ6dFanag2xi3epMNKQtfC00nbyA2UFl0io="
   },
