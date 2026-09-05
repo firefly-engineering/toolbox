@@ -1,5 +1,13 @@
 {
-  "_meta": { "default": "2.5.3", "releases": "https://github.com/tobi/qmd/releases" },
+  "_meta": { "default": "2.8.3", "releases": "https://github.com/tobi/qmd/releases" },
+  "2.8.3": {
+    "sha256": "sha256-/7Z94r/9rXqzKlz/YkB6/nToSCPamV4Dnxm8EhelTDo=",
+    "bun": "1.4.2",
+    "nodeModules": {
+      "x86_64-linux": "sha256-jvq2TO0SxEV1BHyT6C32VQ916wMTM/D1nsV2rNcJQSo=",
+      "aarch64-darwin": "sha256-9vvR3KLmBc+4bfyWEyyM8FHWg+DfiDzUlwqUlm3NFc8="
+    }
+  },
   "2.5.3": {
     "sha256": "sha256-bFk078qQ8Ha/1na+r5ka6yNPI/Pealh0Rk6hJxKBwNs=",
     "bun": "1.3.14",
