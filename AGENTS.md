@@ -82,7 +82,7 @@ Each package directory has a `data.json` with version entries and a `_meta` key:
 ```
 
 - **`_meta.default`**: Which version is the default (used by `nix build .#<pkg>.default`)
-- **`_meta.releases`**: URL to the upstream releases page (e.g., GitHub releases, official download page). Used by the docs generator to link package names, and by agents to check for new versions.
+- **`_meta.releases`**: URL to the upstream releases page (e.g., GitHub releases, official download page). Read by the builder into the entry's `toolbox` stamp, from which the docs generator links package names; also used by agents to check for new versions.
 - **`_meta.inactive`**: (optional) When `true`, the package is no longer actively maintained — no new versions will be added. Existing versions remain fully functional. Inactive packages are skipped by update checks and shown with reduced emphasis in generated docs. To mark a package inactive, add `"inactive": true` to its `_meta` object.
 - **Version keys**: Semantic version strings (e.g., `"1.25.6"`, `"0.52.0"`)
 - **`sha256`**: SRI hash of the source archive
@@ -650,6 +650,44 @@ nix build --no-link --print-out-paths --impure --expr '
 ```
 
 Replace `aarch64-darwin` with the target system (e.g., `x86_64-linux`) as needed.
+
+## What the Registry Publishes
+
+Every registry entry carries a `toolbox` stamp alongside its versions — the
+facts about a package that only its *builder* knows:
+
+```nix
+{
+  versions = { ... };
+  default = "1.2.3";
+  toolbox = {
+    kind = "package";      # | "toolchain" | "skill-bundle"
+    releases = "https://github.com/OWNER/REPO/releases";   # from _meta
+    inactive = false;                                      # from _meta
+    components = null;     # toolchains: { <version> = { <component> = <pin>; }; }
+  };
+}
+```
+
+`buildPackage`, `buildToolchain` and `buildSkillBundle` stamp this for you, so
+an ordinary package needs to do nothing. **If you hand-build a
+`{ versions; default; }` return, you must stamp it too** — `toolboxLib.mkStamp`
+does it, and `checkRegistry` will fail the build if you don't.
+`packages/solana-toolchain/default.nix` is the one example in the registry.
+
+`nix eval --json .#manifest` serialises the whole registry from these stamps,
+plus each version and the systems it is actually available on. The docs
+generator consumes that manifest; it does **not** read `packages/*/data.json`.
+Two consequences worth knowing:
+
+- A package does not need a `data.json` of its own to be documented — see
+  `packages/tuicr-skills/`, which builds from a sibling's data file and has no
+  data file at all.
+- `_meta.releases` and `_meta.inactive` reach the site through the stamp, so
+  they are read by Nix now, not only by the docs.
+
+See [ADR 0004](docs/adr/0004-registry-publishes-its-own-classification.md) for
+why classification moved here.
 
 ## Verification Checklist
 
