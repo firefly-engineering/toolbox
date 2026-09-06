@@ -89,3 +89,5 @@ in
 # Prebuilt-binary builder, likewise in its own file; reachable as
 # toolboxLib.buildPrebuiltBinary.
 // import ./prebuilt-binary.nix { inherit lib; }
+# Registry-wide invariant check, reachable as toolboxLib.checkRegistry.
+// import ./check-registry.nix { inherit lib; }
