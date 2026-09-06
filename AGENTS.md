@@ -21,7 +21,7 @@ The failure mode to design against: "it built for me today." If it won't build b
 
 Pick the fetcher by the lockfile upstream commits:
 
-- **pnpm** (`pnpm-lock.yaml`): use `buildNpmPackage` with `npmDeps = null` and `pnpmDeps = fetchPnpmDeps { … }`. Match the pnpm major version to the repo's `packageManager` field (`pnpm@9.x` → `pkgs.pnpm_9`); the lockfile's `lockfileVersion` must be readable by that pnpm or the fetcher errors. Set `fetcherVersion = 3` (reproducible tarball). Reference: `packages/openspec/`:
+- **pnpm** (`pnpm-lock.yaml`): use `buildNpmPackage` with `npmDeps = null` and `pnpmDeps = fetchPnpmDeps { … }`. Drive the install with **toolbox's own pinned pnpm** (`toolbox.pnpm.versions.${versionData.pnpm}`), not nixpkgs' — upstream's `packageManager` field often names an EOL pnpm that nixpkgs marks insecure, and what actually has to hold is that the pnpm you use can read the lockfile's `lockfileVersion`, not that it matches upstream's major. Set `fetcherVersion = 4` (reproducible tarball). Reference: `packages/openspec/`:
   ```nix
   pkgs.buildNpmPackage (finalAttrs: {
     pname = "openspec";
@@ -30,11 +30,11 @@ Pick the fetcher by the lockfile upstream commits:
     npmDeps = null;
     pnpmDeps = pkgs.fetchPnpmDeps {
       inherit (finalAttrs) pname version src;
-      pnpm = pkgs.pnpm_9;
-      fetcherVersion = 3;
+      inherit pnpm;                  # toolbox.pnpm.versions.${versionData.pnpm}
+      fetcherVersion = 4;
       hash = versionData.pnpmDeps;   # the only dep hash in data.json
     };
-    nativeBuildInputs = [ pkgs.pnpm_9 ];
+    nativeBuildInputs = [ pnpm ];
     npmConfigHook = pkgs.pnpmConfigHook;
     dontNpmPrune = true;             # node_modules is pnpm-managed
   });
@@ -52,7 +52,12 @@ The dep hash (`pnpmDeps`/`npmDepsHash`) can't be precomputed — set it to `lib.
 toolbox/
 ├── flake.nix              # Flake assembly: auto-discovers packages/, exposes registry + packages
 ├── lib/
-│   └── default.nix        # Registry helpers (resolveTool, readData, buildPackage, buildVersions, buildToolchain, resolvePatches, versionToAttr)
+│   ├── default.nix        # Registry helpers (resolveTool, readData, buildPackage, buildVersions, buildToolchain, resolvePatches, availableVersions, versionToAttr)
+│   ├── prebuilt-binary.nix # buildPrebuiltBinary: tools shipped as prebuilt per-platform binaries
+│   ├── rust-package.nix   # buildRustPackage: Rust built from a tagged GitHub source
+│   ├── go-package.nix     # buildGoPackage: Go built from a tagged GitHub source
+│   ├── skill-bundle.nix   # buildSkillBundle: Claude Code skill bundles
+│   └── check-registry.nix # checkRegistry: eval-time invariants, wired to `nix flake check`
 └── packages/
     ├── go/
     │   ├── default.nix    # Go builder: builds Go from source using pkgs.go as bootstrap
@@ -198,7 +203,9 @@ toolboxLib.buildPackage { name = "mypackage"; dataPath = ./data.json; inherit bu
 
 `toolboxLib.buildPackage` is the canonical entry point for versioned packages: it reads `meta` + `versions` from `data.json`, dispatches each version through `builders` (keyed by the optional `"builder"` field — see *Builder Versioning*), and returns the `{ versions; default; }` shape the registry expects. It's the same shape `buildToolchain` and `buildSkillBundle` produce.
 
-**Escape hatch.** Reach for the lower-level `toolboxLib.buildVersions name builders versions` directly (and hand-build the `{ versions; default; }` return) only when a package must pre-process its version set before building — e.g. `packages/bun-baseline` filters versions by platform and exposes an empty set on unsupported systems, which `buildPackage` deliberately does not model.
+**A package that does not exist everywhere does not need an escape hatch.** Declare where it exists — `meta.platforms`, which `buildPrebuiltBinary` derives from its `platforms` table for free — and `toolboxLib.availableVersions` filters it out of the flake outputs on every other system. `buildToolchain` intersects its components' platforms, so a toolchain inherits the constraint. Do not hand-build the `{ versions; default; }` return to work around this; every package in the registry goes through `buildPackage`.
+
+`toolboxLib.buildVersions` remains available for a package that must genuinely pre-process its version set before building, but nothing in the registry currently needs it.
 
 ### 4. Test
 
@@ -269,6 +276,68 @@ The `data.json` for a prebuilt package nests the source hash **per system** (one
 ### When *not* to use it
 
 `buildPrebuiltBinary` installs *named executables* — including single binaries shipped transport-compressed (`.zst`/`.gz`/`.xz`/`.bz2`, decompressed automatically; e.g. `buck2`, `rust-analyzer`). Tools that install a whole toolchain tree (`nodejs`, `python`, `rust`, `git`, `platform-tools`, `typescript`) stay on plain `mkDerivation` — they're a different shape.
+
+## Source-Built Rust and Go Packages
+
+Rust and Go packages built from a tagged GitHub source use
+`toolboxLib.buildRustPackage` / `toolboxLib.buildGoPackage`. Like
+`buildPrebuiltBinary`, each returns a **builder function** that slots into
+`buildPackage`'s `builders` attrset, so the package can still grow builder
+variants. They hide the invariant ritual — resolving the pinned toolchain out
+of the registry (`versionData.rust` / `versionData.go`), constructing the
+platform (`makeRustPlatform` / `buildGoModule.override`), fetching the tagged
+source, and wiring `versionData`'s hashes in.
+
+```nix
+{ pkgs, lib, toolbox, toolboxLib }:
+
+let
+  builders.default = toolboxLib.buildRustPackage {
+    inherit pkgs toolbox;
+    pname = "cargo-edit";
+    owner = "killercup";
+    repo = "cargo-edit";
+    extraArgs = {
+      nativeBuildInputs = [ pkgs.pkg-config ];
+      buildInputs = [ pkgs.openssl ];
+    };
+    meta = with lib; { description = "…"; homepage = "…"; license = licenses.mit; };
+  };
+in
+toolboxLib.buildPackage { name = "cargo-edit"; dataPath = ./data.json; inherit builders; }
+```
+
+`buildGoPackage` takes the same shape, plus `subPackages` (default `[ "." ]`,
+overridden by `versionData.subPackages` when the data supplies it).
+
+### Parameters
+
+| Param | Required | Meaning |
+|---|---|---|
+| `pkgs` | yes | nixpkgs instance |
+| `toolbox` | yes | the registry, for the pinned Rust/Go |
+| `pname` | yes | package name |
+| `owner` / `repo` | yes | GitHub source |
+| `rev` | no | fn `{ version } -> rev` (default `"v${version}"`); e.g. `nil` uses a bare `version`, `gopls` uses `"gopls/v${version}"` |
+| `subPackages` | no | *(Go only)* build targets, default `[ "." ]` |
+| `extraArgs` | no | extra builder arguments — an attrset, or a fn `{ version, versionData, rust\|go } -> attrset` when the version or the resolved toolchain is needed. Merged last, so it overrides anything the helper sets |
+| `meta` | no | derivation meta |
+
+### Dependency pinning follows the data
+
+`buildRustPackage` sets `cargoHash` from `versionData.cargoHash` when the data
+carries one. A package vendoring a lockfile instead has no `cargoHash` in its
+`data.json` and supplies `cargoLock` through `extraArgs` — see `packages/nil`
+(version-namespaced `Cargo-${version}.lock`) and `packages/qmk_hid`.
+
+`buildGoPackage` always reads `versionData.vendorHash`.
+
+### When *not* to use them
+
+Packages whose build is not "fetch a tagged GitHub tag and compile it" stay on
+their own builders: `packages/go` (bootstraps Go from source), `packages/nix`
+(meson), `packages/delta` (prebuilt with a source fallback, dispatching on
+whether the data has an entry for this system).
 
 ## Adding a New Toolchain
 
@@ -586,11 +655,41 @@ Replace `aarch64-darwin` with the target system (e.g., `x86_64-linux`) as needed
 
 After making changes:
 
-1. `nix flake check` — no evaluation errors
-2. `nix build .#<pkg>.default` — default version builds
-3. `nix build .#<pkg>.<version>` — specific version builds
-4. Verify binary output with `./result/bin/<binary> --version` or similar
-5. `nix eval .#registry.x86_64-linux --apply 'r: builtins.mapAttrs (n: v: builtins.attrNames v.versions) r' --json` — verify registry shape
+1. **`nix flake check --all-systems`** — the registry gate. Runs
+   `toolboxLib.checkRegistry` (`lib/check-registry.nix`) on every system the
+   flake advertises, not just yours, and instantiates every version without
+   building it. This is what catches a version entry missing the hash its
+   builder dereferences, a `builder` naming no builder, a `_meta.default` that
+   is not among the versions, a toolchain component or cross-package pin
+   resolving to nothing, and a `patches[].file` that is not on disk.
+
+   devenv needs the working directory passed in, the same way the justfile's
+   `build-devshell` recipe does:
+
+   ```bash
+   printf '%s' "$PWD" > .devenv-root
+   nix flake check --all-systems --impure \
+     --override-input devenv-root "file+file://$PWD/.devenv-root"
+   ```
+
+   Without `--all-systems` Nix checks only the current system, which is how
+   platform-specific mistakes used to reach `main`.
+
+2. `nix build .#<pkg>` — default version builds (`.#<pkg>.<version>` for a specific one)
+3. Verify binary output with `./result/bin/<binary> --version` or similar
+4. **Refactoring a builder?** Compare derivation paths before and after — a
+   behaviour-preserving change must not move a single one:
+
+   ```bash
+   nix eval --json --impure --expr '
+     let f = builtins.getFlake (toString ./.);
+         pkgs = f.inputs.nixpkgs.legacyPackages.${builtins.currentSystem};
+         tl = import ./lib { inherit (pkgs) lib; };
+     in pkgs.lib.mapAttrs (_: e:
+          pkgs.lib.mapAttrs (_: d: d.drvPath)
+            (tl.availableVersions pkgs.stdenv.hostPlatform e))
+        f.registry.${builtins.currentSystem}'
+   ```
 
 ## Work Management
 
