@@ -36,10 +36,13 @@
       ...
     }:
     let
+      # x86_64-darwin is absent deliberately: nixpkgs 26.11 dropped it, so
+      # `nixpkgs.legacyPackages.x86_64-darwin` throws on import and every
+      # output for that system was already broken. Advertising it only made
+      # the breakage silent.
       systems = [
         "x86_64-linux"
         "aarch64-linux"
-        "x86_64-darwin"
         "aarch64-darwin"
       ];
 
