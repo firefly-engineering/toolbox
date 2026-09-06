@@ -22,12 +22,36 @@ jobs:
           name: firefly-toolbox
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
 
-      - name: Build all packages and devShells
+      # `nix build ... | cachix push` needs every output present *locally*,
+      # because cachix reads NARs out of the local store. A runner starts with
+      # an empty store, so that shape re-downloads the whole registry closure
+      # on every push regardless of what changed — a no-op run measured 139s,
+      # of which 125s was fetching 6.9 GiB (637 paths, 21.4 GiB unpacked),
+      # 267 of them from firefly-toolbox itself. Zero derivations were built
+      # and zero paths pushed: it downloaded its own cache to prove the cache
+      # was warm.
+      #
+      # nix-fast-build evaluates with nix-eval-jobs --check-cache-status and
+      # `--skip-cached` drops every derivation already in a substituter, so
+      # only genuinely missing outputs are built and pushed. That also helps
+      # the common case: a version bump adds one package, and this no longer
+      # drags the other 78 through the network to notice.
+      - name: Build and push what the binary cache is missing
         run: |
           printf '%s' "$PWD" > .devenv-root
-          nix build --no-link --print-out-paths --impure \
+
+          # --inputs-from . resolves nixpkgs to this flake's pinned input
+          # rather than the ambient registry.
+          nix run --inputs-from . nixpkgs#nix-fast-build -- \
+            --skip-cached --no-nom --no-link \
+            --cachix-cache firefly-toolbox \
+            --flake ".#packages.${{ matrix.system }}"
+
+          # devenv needs the working directory passed in, same as the
+          # justfile's build-devshell recipe.
+          nix run --inputs-from . nixpkgs#nix-fast-build -- \
+            --skip-cached --no-nom --no-link \
+            --cachix-cache firefly-toolbox \
+            --impure \
             --override-input devenv-root "file+file://$PWD/.devenv-root" \
-            --expr '
-              (builtins.attrValues (builtins.getFlake (toString ./.)).packages.${{ matrix.system }})
-              ++ (builtins.attrValues (builtins.getFlake (toString ./.)).devShells.${{ matrix.system }})
-            ' | cachix push firefly-toolbox
+            --flake ".#devShells.${{ matrix.system }}"
