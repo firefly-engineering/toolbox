@@ -60,11 +60,28 @@ in
     let
       inherit (readData dataPath) meta versions;
       mkToolchain = version: versionData:
-        pkgs.symlinkJoin {
-          name = "${name}-${version}";
-          paths = lib.mapAttrsToList (component: ver:
+        let
+          components = lib.mapAttrsToList (component: ver:
             toolbox.${component}.versions.${ver}
           ) versionData;
+
+          # A toolchain exists only where *every* component exists. Without
+          # this the symlinkJoin advertises no platforms at all, i.e. "runs
+          # everywhere", while forcing it throws because a component declined
+          # the system — llm-toolchain bundling qmd (x86_64-linux and
+          # aarch64-darwin only) was silently unbuildable on aarch64-linux.
+          # A component that states no platforms imposes no constraint.
+          platforms = lib.foldl' (acc: drv:
+            let p = drv.meta.platforms or null; in
+            if p == null then acc
+            else if acc == null then p
+            else lib.intersectLists acc p
+          ) null components;
+        in
+        pkgs.symlinkJoin {
+          name = "${name}-${version}";
+          paths = components;
+          meta = lib.optionalAttrs (platforms != null) { inherit platforms; };
         };
     in
     {
