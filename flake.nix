@@ -131,6 +131,24 @@
         ) { } (builtins.attrNames reg)
       );
 
+      # Eval-time registry invariants, on every system the flake advertises.
+      # Building all packages only ever gated x86_64-linux; this gates the
+      # other three too, in seconds rather than an hour.
+      checks = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          toolboxLib = import ./lib { inherit (pkgs) lib; };
+        in
+        {
+          registry = toolboxLib.checkRegistry {
+            inherit pkgs;
+            registry = self.registry.${system};
+            packagesDir = ./packages;
+          };
+        }
+      );
+
       # Flake templates for downstream consumers
       templates = {
         default = {
