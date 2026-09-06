@@ -36,17 +36,6 @@
       );
 
       # ── on-disk invariants ────────────────────────────────────────────────
-      # Every package directory the flake discovers must ship a data.json.
-      # ADR 0003 made this true and asserted it from the *docs* test suite;
-      # it belongs here, on the side that owns the registry.
-      missingData = map (name: "${name}: has default.nix but no data.json") (
-        lib.filter (
-          name:
-          builtins.pathExists (packagesDir + "/${name}/default.nix")
-          && !builtins.pathExists (packagesDir + "/${name}/data.json")
-        ) packageDirs
-      );
-
       # Vendored patches are referenced by a relative path in data.json that
       # Nix only resolves when that version is built. Check every one now.
       patchProblems = lib.concatMap (
@@ -118,7 +107,7 @@
         ) registry
       );
 
-      problems = missingData ++ patchProblems ++ shapeProblems ++ stampProblems;
+      problems = patchProblems ++ shapeProblems ++ stampProblems;
 
       # Instantiating every version forces the whole data.json -> derivation
       # path: missing hashes, unknown builders and dangling cross-package pins

@@ -10,11 +10,6 @@
 #
 # Upstream ships no `.claude-plugin/plugin.json`, so `fromClaudePlugin` stays
 # false: the builder discovers `skills/*/SKILL.md` and synthesizes the manifest.
-#
-# The `data.json` sitting next to this file holds *no version data* — it is a
-# `_meta.dataFrom` pointer read only by the docs generator, which discovers
-# packages by walking `packages/*/data.json`. Nix reads the shared file below;
-# the pointer adds no second place to bump. See docs/adr/0002.
 toolboxLib.buildSkillBundle {
   inherit pkgs;
   name = "tuicr-skills";
