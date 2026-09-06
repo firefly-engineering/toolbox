@@ -54,7 +54,8 @@
   #   symlinks   attrset  link -> target, creating $out/bin/<link> -> $out/bin/<target>
   #   postInstall  extra shell appended inside installPhase (completions, man
   #              pages, shipped asset trees, relative symlinks, …)
-  #   meta       derivation meta
+  #   meta       derivation meta. `platforms` defaults to the keys of the
+#              `platforms` table, so a package need not restate them.
   buildPrebuiltBinary =
     { pkgs
     , pname
@@ -115,7 +116,15 @@
       ) symlinks);
     in
     pkgs.stdenv.mkDerivation ({
-      inherit pname version meta;
+      inherit pname version;
+
+      # The `platforms` table is the single declaration of where this tool
+      # exists: it resolves the asset, and it states meta.platforms so that
+      # everything enumerating versions (toolboxLib.availableVersions, and
+      # through it the flake outputs and checkRegistry) can filter this
+      # package out on systems it was never built for, instead of hitting the
+      # throw above. An explicit meta.platforms still wins.
+      meta = { platforms = lib.attrNames platforms; } // meta;
 
       src = pkgs.fetchurl {
         url = theUrl;
