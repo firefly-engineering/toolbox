@@ -1,33 +1,18 @@
 { pkgs, lib, toolbox, toolboxLib }:
 
 let
-  builders = {
-    default = version: versionData:
-      let
-        rust = toolbox.rust.versions.${versionData.rust};
-        rustPlatform = pkgs.makeRustPlatform { rustc = rust; cargo = rust; };
-      in
-      rustPlatform.buildRustPackage {
-        pname = "mdbook-mermaid";
-        inherit version;
-        src = pkgs.fetchFromGitHub {
-          owner = "badboy";
-          repo = "mdbook-mermaid";
-          rev = "v${version}";
-          hash = versionData.sha256;
-        };
-        cargoHash = versionData.cargoHash;
-
-        cargoBuildFlags = [ "--bin" "mdbook-mermaid" ];
-        doCheck = false;
-
-        meta = with lib; {
-          description = "A preprocessor for mdbook to add mermaid.js support";
-          homepage = "https://github.com/badboy/mdbook-mermaid";
-          license = licenses.mpl20;
-          mainProgram = "mdbook-mermaid";
-        };
-      };
+  builders.default = toolboxLib.buildRustPackage {
+    inherit pkgs toolbox;
+    pname = "mdbook-mermaid";
+    owner = "badboy";
+    repo = "mdbook-mermaid";
+    extraArgs.cargoBuildFlags = [ "--bin" "mdbook-mermaid" ];
+    meta = with lib; {
+      description = "A preprocessor for mdbook to add mermaid.js support";
+      homepage = "https://github.com/badboy/mdbook-mermaid";
+      license = licenses.mpl20;
+      mainProgram = "mdbook-mermaid";
+    };
   };
 in
 toolboxLib.buildPackage { name = "mdbook-mermaid"; dataPath = ./data.json; inherit builders; }
