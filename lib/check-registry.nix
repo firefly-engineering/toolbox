@@ -14,23 +14,36 @@
 # component or cross-package pin that resolves to nothing. Those are all
 # `attribute missing` / `throw` at instantiation.
 #
-# It is cheap enough to run on all four systems in CI.
+# The check derivation itself is built for the *host* system, while the
+# evaluation it forces spans every system the flake advertises. That split
+# matters: instantiating a derivation is platform-independent, but realising
+# one is not, so a per-system check derivation can only be built on a machine
+# of that system — `nix flake check --all-systems` on a Linux runner fails
+# trying to build the darwin check with "platform mismatch". Forcing all
+# systems from one native derivation gets the coverage without the mismatch.
 { lib, availableVersions }:
 
 {
-  # checkRegistry { pkgs, registry, packagesDir } -> derivation
+  # checkRegistry { pkgs, systemRegistries, packagesDir } -> derivation
   #
-  #   pkgs         nixpkgs instance (for runCommand)
-  #   registry     the assembled registry: name -> { versions; default; }
-  #   packagesDir  path to packages/, for the on-disk invariants
+  #   pkgs              nixpkgs for the *host* system; only builds the trivial
+  #                     result derivation, so the check runs on any machine
+  #   systemRegistries  [ { system; registry; hostPlatform; } ] — every system
+  #                     the flake advertises. All of them are forced.
+  #   packagesDir       path to packages/, for the on-disk invariants
   #
   # Throws with every violation listed at once — a report, not a first-failure.
   checkRegistry =
     { pkgs
-    , registry
+    , systemRegistries
     , packagesDir
     }:
     let
+      # Shape and stamp are properties of the data, identical on every system,
+      # so they are checked once against the first registry. Availability is
+      # what differs, and that is what the per-system forcing below covers.
+      registry = (lib.head systemRegistries).registry;
+
       packageDirs = lib.attrNames (
         lib.filterAttrs (_: t: t == "directory") (builtins.readDir packagesDir)
       );
@@ -120,16 +133,20 @@
       # does not exist on this system (packages/qmd is one), and forcing such a
       # derivation throws "refusing to evaluate" instead of telling us anything
       # about the registry.
-      drvPaths = lib.concatLists (
-        lib.mapAttrsToList (
-          _: entry:
-          lib.mapAttrsToList (_: drv: builtins.unsafeDiscardStringContext drv.drvPath) (
-            availableVersions pkgs.stdenv.hostPlatform entry
-          )
-        ) registry
-      );
+      drvPaths = lib.concatMap (
+        sr:
+        lib.concatLists (
+          lib.mapAttrsToList (
+            _: entry:
+            lib.mapAttrsToList (_: drv: builtins.unsafeDiscardStringContext drv.drvPath) (
+              availableVersions sr.hostPlatform entry
+            )
+          ) sr.registry
+        )
+      ) systemRegistries;
 
       summary = ''
+        systems:    ${lib.concatMapStringsSep ", " (sr: sr.system) systemRegistries}
         packages:   ${toString (lib.length (lib.attrNames registry))}
         versions:   ${toString (lib.length drvPaths)}
       '';

@@ -13,16 +13,20 @@ jobs:
 
       - uses: DeterminateSystems/nix-installer-action@v22
 
-      # `nix flake check --all-systems` evaluates the registry for every system
-      # the flake advertises, not just the runner's. That is the point: building
-      # all packages (cachix.yml) only ever gated x86_64-linux, so a bad hash or
-      # a dangling pin on aarch64-linux/aarch64-darwin reached main unnoticed.
-      # This is pure evaluation — seconds, no closure.
+      # The registry check forces every system the flake advertises, not just
+      # the runner's, while its own result derivation is native. That is the
+      # point: building all packages (cachix.yml) only ever gated x86_64-linux,
+      # so a bad hash or a dangling pin on aarch64-linux/aarch64-darwin reached
+      # main unnoticed. The forcing is evaluation, so it costs seconds.
+      #
+      # Deliberately NOT --all-systems: that asks this runner to *build* the
+      # other systems' check derivations, which fails on platform mismatch.
+      # Coverage comes from what the native check forces, not from the flag.
       #
       # --impure + the devenv-root override is what devenv needs to evaluate the
       # dev shell; the justfile's build-devshell recipe does the same.
       - name: nix flake check
         run: |
           printf '%s' "$PWD" > .devenv-root
-          nix flake check --all-systems --impure \
+          nix flake check --impure \
             --override-input devenv-root "file+file://$PWD/.devenv-root"

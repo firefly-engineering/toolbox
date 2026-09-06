@@ -57,6 +57,15 @@
 
       toolboxLibFor = system: import ./lib { inherit (nixpkgs.legacyPackages.${system}) lib; };
 
+      # Every advertised system's registry, paired with the platform to test
+      # availability against. Consumed by both the checks and the manifest,
+      # which need the same cross-system view.
+      systemRegistries = map (system: {
+        inherit system;
+        registry = self.registry.${system};
+        hostPlatform = nixpkgs.legacyPackages.${system}.stdenv.hostPlatform;
+      }) systems;
+
       # Both flake package outputs come from one place in lib, so the naming
       # contract (version dots to underscores, bare name means the default
       # version) has a single owner.
@@ -105,19 +114,21 @@
 
       packages = forAllSystems (system: (outputsFor system).flat);
 
-      # Eval-time registry invariants, on every system the flake advertises.
+      # Eval-time registry invariants for every system the flake advertises.
       # Building all packages only ever gated x86_64-linux; this gates the
-      # other three too, in seconds rather than an hour.
+      # others too, in seconds rather than an hour.
+      #
+      # Each system's check forces *all* systems, and its result derivation is
+      # native, so plain `nix flake check` on any one machine covers the whole
+      # registry. Do not reach for `--all-systems` here: that asks the runner
+      # to build the other systems' check derivations, which fails on platform
+      # mismatch.
       checks = forAllSystems (
         system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
-          toolboxLib = import ./lib { inherit (pkgs) lib; };
-        in
         {
-          registry = toolboxLib.checkRegistry {
-            inherit pkgs;
-            registry = self.registry.${system};
+          registry = (toolboxLibFor system).checkRegistry {
+            pkgs = nixpkgs.legacyPackages.${system};
+            inherit systemRegistries;
             packagesDir = ./packages;
           };
         }
@@ -127,11 +138,7 @@
       # Spans every advertised system, because platform availability is decided
       # by meta.platforms and a single-system manifest would be silently wrong.
       manifest = (toolboxLibFor (builtins.head systems)).registryManifest {
-        systemRegistries = map (system: {
-          inherit system;
-          registry = self.registry.${system};
-          hostPlatform = nixpkgs.legacyPackages.${system}.stdenv.hostPlatform;
-        }) systems;
+        inherit systemRegistries;
       };
 
       # Flake templates for downstream consumers

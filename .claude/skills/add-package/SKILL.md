@@ -104,10 +104,10 @@ rather than hand-rolled.
 5. `jj st` — snapshotting the working copy is what makes the new files visible
    to Nix (flakes only see tracked files)
 6. Build and verify: `nix build .#$0 -o result-$0 && ./result-$0/bin/$0 --version`
-7. Gate the registry: `nix flake check --all-systems` — see the Verification
-   Checklist in `AGENTS.md` for the `devenv-root` override it needs. This is what
-   catches a missing hash, a bad `_meta.default`, or a dangling pin, on *every*
-   system rather than only yours.
+7. Gate the registry: `nix flake check` — see the Verification Checklist in
+   `AGENTS.md` for the `devenv-root` override it needs (and why not to add
+   `--all-systems`). This is what catches a missing hash, a bad `_meta.default`,
+   or a dangling pin, on *every* system rather than only yours.
 
 ### 4. Platform considerations
 

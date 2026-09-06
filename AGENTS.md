@@ -693,10 +693,10 @@ why classification moved here.
 
 After making changes:
 
-1. **`nix flake check --all-systems`** — the registry gate. Runs
-   `toolboxLib.checkRegistry` (`lib/check-registry.nix`) on every system the
-   flake advertises, not just yours, and instantiates every version without
-   building it. This is what catches a version entry missing the hash its
+1. **`nix flake check`** — the registry gate. Runs
+   `toolboxLib.checkRegistry` (`lib/check-registry.nix`), which forces every
+   system the flake advertises, not just yours, and instantiates every version
+   without building it. This is what catches a version entry missing the hash its
    builder dereferences, a `builder` naming no builder, a `_meta.default` that
    is not among the versions, a toolchain component or cross-package pin
    resolving to nothing, and a `patches[].file` that is not on disk.
@@ -706,12 +706,16 @@ After making changes:
 
    ```bash
    printf '%s' "$PWD" > .devenv-root
-   nix flake check --all-systems --impure \
+   nix flake check --impure \
      --override-input devenv-root "file+file://$PWD/.devenv-root"
    ```
 
-   Without `--all-systems` Nix checks only the current system, which is how
-   platform-specific mistakes used to reach `main`.
+   **Do not add `--all-systems`.** The check derivation is native, and the
+   cross-system coverage comes from what it *forces* during evaluation.
+   `--all-systems` additionally asks your machine to *build* the other
+   systems' check derivations, which fails with "platform mismatch": a
+   derivation can be instantiated anywhere, but only realised on its own
+   system.
 
 2. `nix build .#<pkg>` — default version builds (`.#<pkg>.<version>` for a specific one)
 3. Verify binary output with `./result/bin/<binary> --version` or similar
