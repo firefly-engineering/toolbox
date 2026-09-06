@@ -28,15 +28,32 @@ Add a package called `$0` at version `$1` (if provided; otherwise discover the l
 
 ### 2. Choose the builder strategy
 
-**Prebuilt only** — all 4 platforms have prebuilt binaries (e.g. uv, biome, gh):
-- `data.json` has per-platform SHA256 hashes
-- `default.nix` uses `fetchurl` + `stdenv.mkDerivation` with `dontBuild = true`
-- Reference: `packages/uv/default.nix`, `packages/gh/default.nix`
+**Do not hand-roll a builder.** `lib/` has a helper for each of these shapes, and
+each returns a *builder function* that slots into `buildPackage`'s `builders`
+attrset. Reach for `stdenv.mkDerivation` only when none of them fits.
 
-**Source only** — no prebuilt binaries, or user prefers source builds (e.g. jj, beadwork, git):
-- `data.json` has source hash + build-specific hashes (vendorHash, cargoHash)
-- `default.nix` uses `buildGoModule`, `buildRustPackage`, or `stdenv.mkDerivation`
-- Reference: `packages/jj/default.nix` (Rust), `packages/beadwork/default.nix` (Go), `packages/git/default.nix` (C)
+**Prebuilt only** — the platforms you support have prebuilt binaries (e.g. uv, biome, gh, jq, ruff):
+- `data.json` nests the hash per system: `{ "1.2.3": { "x86_64-linux": { "sha256": … }, … } }`
+- `default.nix` uses `toolboxLib.buildPrebuiltBinary` — it hides per-system asset
+  resolution, `fetchurl`, the `dontConfigure`/`dontBuild`/`dontStrip` trio, `.zip`
+  unpacking, Linux `autoPatchelfHook`, and installing named executables into
+  `$out/bin`. Its `platforms` table also becomes `meta.platforms`, so a tool that
+  does not exist everywhere needs no extra handling.
+- Reference: `packages/uv/default.nix`, `packages/gh/default.nix` (mixed
+  `.tar.gz`/`.zip` per platform), `packages/jq/default.nix` (single static binary)
+- Not for tools that install a whole toolchain *tree* (`nodejs`, `python`, `rust`,
+  `platform-tools`) — those stay on `stdenv.mkDerivation`.
+
+**Source only** — no prebuilt binaries, or user prefers source builds:
+- `data.json` has the source hash plus the toolchain pin and dependency hash:
+  `{ "rust": "1.98.1", "sha256": …, "cargoHash": … }` or
+  `{ "go": "1.27.1", "sha256": …, "vendorHash": … }`
+- `default.nix` uses `toolboxLib.buildRustPackage` or `toolboxLib.buildGoPackage`
+  — give it `pname`, `owner`, `repo`, and put anything else in `extraArgs`
+- Reference: `packages/cargo-edit/default.nix` (Rust, minimal),
+  `packages/jj/default.nix` (Rust, build inputs + postInstall),
+  `packages/gopls/default.nix` (Go, custom rev + sourceRoot),
+  `packages/git/default.nix` (C — genuinely needs `stdenv.mkDerivation`)
 
 **Hybrid** — some platforms have prebuilt binaries, others need source builds (e.g. delta):
 - `data.json` has per-platform hashes for prebuilt platforms, plus `srcHash`/`cargoHash`/`rust` (or `vendorHash`/`go`) for source builds
@@ -55,7 +72,9 @@ builders = {
 };
 ```
 
-Where `mkPrebuilt` and `mkFromSource` are defined as `let` bindings in the same file.
+Where `mkPrebuilt` and `mkFromSource` are `let` bindings in the same file — each
+built from the corresponding helper (`buildPrebuiltBinary` / `buildRustPackage`)
+rather than hand-rolled.
 
 ### 3. Create the package
 
@@ -82,15 +101,26 @@ Where `mkPrebuilt` and `mkFromSource` are defined as `let` bindings in the same 
 
    **`vendorHash` / `cargoHash`** (Go/Rust dependency hashes):
    These can't be computed upfront. Set to `""`, attempt a build, and use the hash from the error output.
-5. `git add packages/$0` — Nix flakes require tracked files
-6. Build and verify: `nix build .#$0.default -o result-$0 && ./result-$0/bin/$0 --version`
+5. `jj st` — snapshotting the working copy is what makes the new files visible
+   to Nix (flakes only see tracked files)
+6. Build and verify: `nix build .#$0 -o result-$0 && ./result-$0/bin/$0 --version`
+7. Gate the registry: `nix flake check --all-systems` — see the Verification
+   Checklist in `AGENTS.md` for the `devenv-root` override it needs. This is what
+   catches a missing hash, a bad `_meta.default`, or a dangling pin, on *every*
+   system rather than only yours.
 
 ### 4. Platform considerations
 
 - macOS zips need `pkgs.unzip` in `nativeBuildInputs`
 - Linux prebuilt binaries need `pkgs.autoPatchelfHook` and `pkgs.stdenv.cc.cc.lib`
 - macOS source builds needing system frameworks use `pkgs.apple-sdk_15` (not the removed `pkgs.darwin.apple_sdk`)
-- If a platform has no prebuilt and can't easily build from source, it's fine to omit it — document in `meta.platforms`
+- If a platform has no prebuilt and can't easily build from source, omit it. With
+  `buildPrebuiltBinary` just leave it out of the `platforms` table — `meta.platforms`
+  follows from that table, and the registry filters the package out of the flake
+  outputs on systems it does not cover. On a hand-written builder, say so in
+  `meta.platforms` explicitly, or the package will throw when someone forces it.
+- The first two bullets above are handled for you by `buildPrebuiltBinary`; they
+  only apply to a hand-written `stdenv.mkDerivation`.
 
 ### 5. Finalize
 
