@@ -46,7 +46,6 @@ jobs:
       # generator does not have to re-derive it by walking packages/*/data.json.
       # The manifest spans every advertised system, so this runs in the build
       # job and not in the test job, which stays pure Python on fixtures.
-      # Nothing consumes it yet — the generator is switched over next.
       - name: Evaluate the registry manifest
         run: nix eval --json .#manifest > docs/_manifest.json
 
@@ -54,7 +53,7 @@ jobs:
         run: pip install --quiet docs/
 
       - name: Generate documentation
-        run: python -m toolbox_docs
+        run: python -m toolbox_docs --manifest docs/_manifest.json
 
       - uses: actions/upload-pages-artifact@v5
         with:

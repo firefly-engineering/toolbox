@@ -6,37 +6,40 @@ from pathlib import Path
 import pytest
 
 
-@pytest.fixture
-def tmp_packages(tmp_path: Path) -> Path:
-    """Create a minimal packages directory with one package and one toolchain."""
-    pkg = tmp_path / "packages" / "mypkg"
-    pkg.mkdir(parents=True)
-    (pkg / "data.json").write_text(
-        json.dumps(
-            {
-                "_meta": {"default": "1.2.0", "releases": "https://example.com/releases"},
-                "1.2.0": {"sha256": "sha256-aaa"},
-                "1.1.0": {"sha256": "sha256-bbb"},
-            }
-        )
-    )
-
-    tc = tmp_path / "packages" / "my-toolchain"
-    tc.mkdir(parents=True)
-    (tc / "data.json").write_text(
-        json.dumps(
-            {
-                "_meta": {"default": "2"},
-                "2": {"mypkg": "1.2.0"},
-                "1": {"mypkg": "1.1.0"},
-            }
-        )
-    )
-
-    return tmp_path / "packages"
+def manifest_entry(
+    kind="package", default="1.2.0", versions=None, releases="", inactive=False,
+    components=None, systems=("x86_64-linux", "aarch64-darwin"),
+):
+    """One manifest entry, in the shape `nix eval .#manifest` emits."""
+    versions = versions or ["1.2.0", "1.1.0"]
+    return {
+        "kind": kind,
+        "default": default,
+        "releases": releases,
+        "inactive": inactive,
+        "components": components,
+        "versions": {v: {"systems": list(systems)} for v in versions},
+    }
 
 
 @pytest.fixture
-def repo_root() -> Path:
-    """Return the real repo root for integration tests."""
-    return Path(__file__).resolve().parent.parent.parent
+def manifest() -> dict:
+    """A minimal registry manifest with one package and one toolchain."""
+    return {
+        "packages": {
+            "mypkg": manifest_entry(releases="https://example.com/releases"),
+            "my-toolchain": manifest_entry(
+                kind="toolchain",
+                default="2",
+                versions=["2", "1"],
+                components={"2": {"mypkg": "1.2.0"}, "1": {"mypkg": "1.1.0"}},
+            ),
+        }
+    }
+
+
+@pytest.fixture
+def manifest_file(tmp_path: Path, manifest: dict) -> Path:
+    path = tmp_path / "manifest.json"
+    path.write_text(json.dumps(manifest))
+    return path
