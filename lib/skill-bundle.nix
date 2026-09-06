@@ -17,7 +17,7 @@
 # pinned source hash. `fromClaudePlugin` restricts the bundle to exactly the
 # skills the upstream manifest advertises, dropping anything else in the repo
 # (deprecated/, in-progress/, …).
-{ lib, readData }:
+{ lib, readData, mkStamp }:
 
 {
   # buildSkillBundle { pkgs, name, dataPath } -> { versions; default; }
@@ -125,5 +125,6 @@
     {
       versions = builtins.mapAttrs buildOne versions;
       default = meta.default;
+      toolbox = mkStamp { kind = "skill-bundle"; inherit meta; };
     };
 }

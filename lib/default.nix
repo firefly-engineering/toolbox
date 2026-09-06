@@ -85,6 +85,28 @@ let
       ) registry;
     };
 
+  # Every registry entry carries a `toolbox` stamp alongside its versions: the
+  # facts about a package that only its *builder* knows, published so consumers
+  # do not have to re-derive them from the directory name or the shape of
+  # data.json.
+  #
+  # This exists because the docs generator kept having to guess. It classified
+  # "toolchain" by a `-toolchain` name suffix and "skill bundle" by the presence
+  # of a `_meta.fromClaudePlugin` key, because a pure function of
+  # (name, data.json) cannot observe which builder assembled a package — see
+  # docs/adr/0001 and 0004. `kind` is that observation, stated by the builder
+  # that actually made the choice.
+  #
+  #   kind        "package" | "toolchain" | "skill-bundle"
+  #   releases    upstream releases URL from _meta, or null
+  #   inactive    _meta.inactive, default false
+  #   components  toolchains only: { <version> = { <component> = <pin>; }; }
+  mkStamp = { kind, meta, components ? null }: {
+    inherit kind components;
+    releases = meta.releases or null;
+    inactive = meta.inactive or false;
+  };
+
   # Build a registry package from a data.json file and a builders attrset.
   # The canonical entry point for versioned packages: reads meta+versions from
   # data.json, dispatches each version through `builders` (keyed by the optional
@@ -99,10 +121,11 @@ let
     {
       versions = buildVersions name builders versions;
       default = meta.default;
+      toolbox = mkStamp { kind = "package"; inherit meta; };
     };
 in
 {
-  inherit readData buildVersions buildPackage availableVersions versionToAttr registryOutputs;
+  inherit readData buildVersions buildPackage availableVersions versionToAttr registryOutputs mkStamp;
 
   # Resolve a tool from the registry by name and optional version
   # If version is null, returns the default version's derivation
@@ -149,6 +172,14 @@ in
     {
       versions = builtins.mapAttrs mkToolchain versions;
       default = meta.default;
+      # A toolchain's version entry *is* its component pin map, so the stamp
+      # carries it: the docs render the expansion, and reading it back out of
+      # data.json is exactly the re-derivation the stamp exists to remove.
+      toolbox = mkStamp {
+        kind = "toolchain";
+        inherit meta;
+        components = versions;
+      };
     };
 
   # Resolve local patch files from version data.
@@ -161,7 +192,7 @@ in
 }
 # Skill-bundle support code lives in its own file for separation from the small
 # registry helpers above; merged in so it's reachable as toolboxLib.buildSkillBundle.
-// import ./skill-bundle.nix { inherit lib readData; }
+// import ./skill-bundle.nix { inherit lib readData mkStamp; }
 # Prebuilt-binary builder, likewise in its own file; reachable as
 # toolboxLib.buildPrebuiltBinary.
 // import ./prebuilt-binary.nix { inherit lib; }

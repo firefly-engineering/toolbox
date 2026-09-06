@@ -62,4 +62,13 @@ in
 {
   versions = { ${version} = toolchain; };
   default = version;
+  # Hand-built rather than produced by buildToolchain (see the header comment),
+  # so the stamp every registry entry carries is written out here too. It is a
+  # toolchain in the sense the docs render — a meta-package expanded to its
+  # component pins — which is what `kind` records.
+  toolbox = toolboxLib.mkStamp {
+    kind = "toolchain";
+    inherit (data) meta;
+    components = data.versions;
+  };
 }
