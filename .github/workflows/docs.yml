@@ -40,6 +40,16 @@ jobs:
         with:
           python-version: "3.12"
 
+      - uses: DeterminateSystems/nix-installer-action@v22
+
+      # The registry publishes what it knows about itself here, so the
+      # generator does not have to re-derive it by walking packages/*/data.json.
+      # The manifest spans every advertised system, so this runs in the build
+      # job and not in the test job, which stays pure Python on fixtures.
+      # Nothing consumes it yet — the generator is switched over next.
+      - name: Evaluate the registry manifest
+        run: nix eval --json .#manifest > docs/_manifest.json
+
       - name: Install docs package
         run: pip install --quiet docs/
 

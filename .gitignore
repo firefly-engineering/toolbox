@@ -5,6 +5,7 @@ result-*
 .claude/*
 !.claude/skills/
 docs/_site/
+docs/_manifest.json
 __pycache__/
 *.pyc
 *.egg-info/
