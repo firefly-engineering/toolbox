@@ -37,6 +37,23 @@ jobs:
       # the common case: a version bump adds one package, and this no longer
       # drags the other 78 through the network to notice.
       - name: Build and push what the binary cache is missing
+        env:
+          # The flake declares firefly-toolbox as a substituter in `nixConfig`
+          # for downstream consumers. The previous command reached the registry
+          # through `builtins.getFlake` inside `--expr`, which never applies
+          # nixConfig, so the cache came only from cachix-action's own config.
+          # Passing `--flake .#...` makes this flake the top-level ref, so Nix
+          # now evaluates that nixConfig and refuses it: "ignoring untrusted
+          # flake configuration setting 'extra-substituters'" appeared 16 times
+          # in the first run, and fetches from firefly-toolbox dropped from 267
+          # to 5. In the same run `--skip-cached` rebuilt qmk even though its
+          # output was already in the cache — qmk is 404 on cache.nixos.org and
+          # lives only in ours, exactly the shape that falls through a cache
+          # check which cannot see it.
+          #
+          # Accept the flake's own configuration rather than restating the URL
+          # and key here, so there is still one place that declares the cache.
+          NIX_CONFIG: "accept-flake-config = true"
         run: |
           printf '%s' "$PWD" > .devenv-root
 
