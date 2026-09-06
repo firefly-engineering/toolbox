@@ -55,6 +55,8 @@
           }) systems
         );
 
+      toolboxLibFor = system: import ./lib { inherit (nixpkgs.legacyPackages.${system}) lib; };
+
       # Both flake package outputs come from one place in lib, so the naming
       # contract (version dots to underscores, bare name means the default
       # version) has a single owner.
@@ -120,6 +122,17 @@
           };
         }
       );
+
+      # The registry serialised for the docs generator: `nix eval .#manifest --json`.
+      # Spans every advertised system, because platform availability is decided
+      # by meta.platforms and a single-system manifest would be silently wrong.
+      manifest = (toolboxLibFor (builtins.head systems)).registryManifest {
+        systemRegistries = map (system: {
+          inherit system;
+          registry = self.registry.${system};
+          hostPlatform = nixpkgs.legacyPackages.${system}.stdenv.hostPlatform;
+        }) systems;
+      };
 
       # Flake templates for downstream consumers
       templates = {

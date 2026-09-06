@@ -200,5 +200,7 @@ in
 // import ./rust-package.nix { inherit lib; }
 # Go source builder, reachable as toolboxLib.buildGoPackage.
 // import ./go-package.nix { inherit lib; }
+# Registry manifest for non-Nix consumers, reachable as toolboxLib.registryManifest.
+// import ./manifest.nix { inherit lib; }
 # Registry-wide invariant check, reachable as toolboxLib.checkRegistry.
 // import ./check-registry.nix { inherit lib availableVersions; }
