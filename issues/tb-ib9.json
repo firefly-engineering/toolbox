@@ -2,13 +2,14 @@
   "assignee": "unknown",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-09-06T22:08:52Z",
   "created": "2026-09-06T22:06:54Z",
   "description": "Skill bundles (mattpocock-skills, tuicr-skills) render in the Packages table. The manifest already stamps kind=skill-bundle and the scanner already recognises it (PackageInfo.skill_bundle, ADR 0001). Route them into their own list, render a Skill Bundles section with a fourth stat tile, and keep their versions in the versions total. Supersedes the rendering half of ADR 0001.",
   "id": "tb-ib9",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Docs: give skill bundles their own section",
   "type": "task",
-  "updated_at": "2026-09-06T22:06:57Z"
+  "updated_at": "2026-09-06T22:08:52Z"
 }
