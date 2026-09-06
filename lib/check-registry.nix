@@ -73,6 +73,32 @@
       ) packageDirs;
 
       # ── interface invariants ──────────────────────────────────────────────
+      kinds = [ "package" "toolchain" "skill-bundle" ];
+
+      # The stamp is required, not optional-with-a-default. An entry that can
+      # quietly go unstamped reintroduces the silent fall-through that made a
+      # skill bundle render as a plain package (docs/adr/0001): the failure
+      # mode of a missing classification is to look like the common case.
+      stampProblems = lib.concatLists (
+        lib.mapAttrsToList (
+          name: entry:
+          if !(entry ? toolbox) then
+            [ "${name}: registry entry carries no `toolbox` stamp" ]
+          else if !(entry.toolbox ? kind) then
+            [ "${name}: `toolbox` stamp has no `kind`" ]
+          else if !(lib.elem entry.toolbox.kind kinds) then
+            [
+              "${name}: unknown kind '${entry.toolbox.kind}' (expected one of ${
+                lib.concatStringsSep ", " kinds
+              })"
+            ]
+          else if entry.toolbox.kind == "toolchain" && entry.toolbox.components == null then
+            [ "${name}: toolchain stamp carries no component pins" ]
+          else
+            [ ]
+        ) registry
+      );
+
       shapeProblems = lib.concatLists (
         lib.mapAttrsToList (
           name: entry:
@@ -92,7 +118,7 @@
         ) registry
       );
 
-      problems = missingData ++ patchProblems ++ shapeProblems;
+      problems = missingData ++ patchProblems ++ shapeProblems ++ stampProblems;
 
       # Instantiating every version forces the whole data.json -> derivation
       # path: missing hashes, unknown builders and dangling cross-package pins
