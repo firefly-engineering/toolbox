@@ -4,9 +4,16 @@ Date: 2026-08-06
 
 ## Status
 
-Accepted
+Accepted; narrowed by [ADR 0004](0004-registry-publishes-its-own-classification.md).
 
 Revisits the toolchain-rule consequence of ADR 0001.
+
+The decision below stands: `solana-toolchain` keeps its `data.json`, because it
+made the pin data-driven, which is this repo's convention independently of the
+docs. What ADR 0004 removes is the *docs-discovery* rationale and the
+"every package directory now has a `data.json`" invariant — discovery no longer
+walks the filesystem, and a package with no data file of its own is documented
+fine.
 
 ## Context
 

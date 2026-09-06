@@ -4,7 +4,9 @@ Date: 2026-08-06
 
 ## Status
 
-Accepted
+Accepted, then superseded.
+
+Superseded by [ADR 0004](0004-registry-publishes-its-own-classification.md).
 
 ## Context
 
