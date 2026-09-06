@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "unknown",
   "blocked_by": [],
   "blocks": [],
   "created": "2026-09-06T22:06:54Z",
@@ -7,8 +7,8 @@
   "id": "tb-ib9",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "Docs: give skill bundles their own section",
   "type": "task",
-  "updated_at": "2026-09-06T22:06:54Z"
+  "updated_at": "2026-09-06T22:06:57Z"
 }
