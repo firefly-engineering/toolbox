@@ -23,6 +23,17 @@ let
       builder version versionData
     ) versionEntries;
 
+  # The versions of a registry entry that exist on a given platform.
+  #
+  # `meta.platforms` is one of the ways a package says "not here" — packages/qmd
+  # names the two systems its node_modules hashes cover, and buildToolchain
+  # intersects its components' lists. Anything that *enumerates* versions must
+  # respect it: nixpkgs throws "refusing to evaluate" when an unavailable
+  # derivation is forced, so an unfiltered enumeration produces flake outputs
+  # that exist right up until someone touches them.
+  availableVersions = hostPlatform: entry:
+    lib.filterAttrs (_: drv: lib.meta.availableOn hostPlatform drv) entry.versions;
+
   # Build a registry package from a data.json file and a builders attrset.
   # The canonical entry point for versioned packages: reads meta+versions from
   # data.json, dispatches each version through `builders` (keyed by the optional
@@ -40,7 +51,7 @@ let
     };
 in
 {
-  inherit readData buildVersions buildPackage;
+  inherit readData buildVersions buildPackage availableVersions;
 
   # Resolve a tool from the registry by name and optional version
   # If version is null, returns the default version's derivation
@@ -107,4 +118,4 @@ in
 # toolboxLib.buildPrebuiltBinary.
 // import ./prebuilt-binary.nix { inherit lib; }
 # Registry-wide invariant check, reachable as toolboxLib.checkRegistry.
-// import ./check-registry.nix { inherit lib; }
+// import ./check-registry.nix { inherit lib availableVersions; }

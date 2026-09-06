@@ -15,7 +15,7 @@
 # `attribute missing` / `throw` at instantiation.
 #
 # It is cheap enough to run on all four systems in CI.
-{ lib }:
+{ lib, availableVersions }:
 
 {
   # checkRegistry { pkgs, registry, packagesDir } -> derivation
@@ -109,7 +109,7 @@
         lib.mapAttrsToList (
           _: entry:
           lib.mapAttrsToList (_: drv: builtins.unsafeDiscardStringContext drv.drvPath) (
-            lib.filterAttrs (_: drv: lib.meta.availableOn pkgs.stdenv.hostPlatform drv) entry.versions
+            availableVersions pkgs.stdenv.hostPlatform entry
           )
         ) registry
       );

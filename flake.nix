@@ -81,21 +81,23 @@
       legacyPackages = forAllSystems (
         system:
         let
+          pkgs = nixpkgs.legacyPackages.${system};
+          toolboxLib = import ./lib { inherit (pkgs) lib; };
           reg = self.registry.${system};
         in
         builtins.mapAttrs (
           name: entry:
           let
-            hasVersions = entry.versions != {};
+            avail = toolboxLib.availableVersions pkgs.stdenv.hostPlatform entry;
           in
           builtins.listToAttrs (
             map (ver: {
               name = versionToAttr ver;
-              value = entry.versions.${ver};
-            }) (builtins.attrNames entry.versions)
+              value = avail.${ver};
+            }) (builtins.attrNames avail)
           )
-          // (if hasVersions then {
-            default = entry.versions.${entry.default};
+          // (if avail ? ${entry.default} then {
+            default = avail.${entry.default};
           } else {})
         ) reg
       );
@@ -104,6 +106,8 @@
       packages = forAllSystems (
         system:
         let
+          pkgs = nixpkgs.legacyPackages.${system};
+          toolboxLib = import ./lib { inherit (pkgs) lib; };
           reg = self.registry.${system};
           lib = nixpkgs.lib;
         in
@@ -111,22 +115,22 @@
           acc: name:
           let
             entry = reg.${name};
-            hasVersions = entry.versions != {};
+            avail = toolboxLib.availableVersions pkgs.stdenv.hostPlatform entry;
           in
           acc
           // builtins.listToAttrs (
             map (ver: {
               name = "${name}-${versionToAttr ver}";
-              value = entry.versions.${ver};
-            }) (builtins.attrNames entry.versions)
+              value = avail.${ver};
+            }) (builtins.attrNames avail)
           )
-          // lib.optionalAttrs hasVersions {
+          // lib.optionalAttrs (avail ? ${entry.default}) {
             # Bare package name points to the default version
-            ${name} = entry.versions.${entry.default};
+            ${name} = avail.${entry.default};
             # Deprecated: use bare package name instead (e.g., .#go not .#go-default)
             "${name}-default" = builtins.trace
               "warning: toolbox: '${name}-default' is deprecated, use '${name}' instead"
-              entry.versions.${entry.default};
+              avail.${entry.default};
           }
         ) { } (builtins.attrNames reg)
       );
