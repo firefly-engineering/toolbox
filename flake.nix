@@ -55,7 +55,19 @@
           }) systems
         );
 
-      versionToAttr = builtins.replaceStrings [ "." ] [ "_" ];
+      # Both flake package outputs come from one place in lib, so the naming
+      # contract (version dots to underscores, bare name means the default
+      # version) has a single owner.
+      outputsFor =
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          toolboxLib = import ./lib { inherit (pkgs) lib; };
+        in
+        toolboxLib.registryOutputs {
+          inherit pkgs;
+          registry = self.registry.${system};
+        };
     in
     {
       # Teller-compatible overlay for registry composition
@@ -79,64 +91,17 @@
         toolbox
       );
 
-      # Nested packages: nix build .#go.1_25_6, nix build .#beads.default
-      # Uses legacyPackages because nix flake check requires flat packages output
-      legacyPackages = forAllSystems (
-        system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
-          toolboxLib = import ./lib { inherit (pkgs) lib; };
-          reg = self.registry.${system};
-        in
-        builtins.mapAttrs (
-          name: entry:
-          let
-            avail = toolboxLib.availableVersions pkgs.stdenv.hostPlatform entry;
-          in
-          builtins.listToAttrs (
-            map (ver: {
-              name = versionToAttr ver;
-              value = avail.${ver};
-            }) (builtins.attrNames avail)
-          )
-          // (if avail ? ${entry.default} then {
-            default = avail.${entry.default};
-          } else {})
-        ) reg
-      );
+      # Both package outputs come from one place in lib, so the naming contract
+      # (version dots to underscores, bare name means default) has a single
+      # owner. legacyPackages rather than packages for the nested one because
+      # `nix flake check` requires the packages output to be flat.
+      #
+      #   nix build .#go.1_25_6   (nested)
+      #   nix build .#go-1_25_6   (flat)
+      #   nix build .#go          (flat, the default version)
+      legacyPackages = forAllSystems (system: (outputsFor system).nested);
 
-      # Flat packages output: nix build .#go-1_25_6, nix build .#beads-default
-      packages = forAllSystems (
-        system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
-          toolboxLib = import ./lib { inherit (pkgs) lib; };
-          reg = self.registry.${system};
-          lib = nixpkgs.lib;
-        in
-        builtins.foldl' (
-          acc: name:
-          let
-            entry = reg.${name};
-            avail = toolboxLib.availableVersions pkgs.stdenv.hostPlatform entry;
-          in
-          acc
-          // builtins.listToAttrs (
-            map (ver: {
-              name = "${name}-${versionToAttr ver}";
-              value = avail.${ver};
-            }) (builtins.attrNames avail)
-          )
-          // lib.optionalAttrs (avail ? ${entry.default}) {
-            # Bare package name points to the default version
-            ${name} = avail.${entry.default};
-            # Deprecated: use bare package name instead (e.g., .#go not .#go-default)
-            "${name}-default" = builtins.trace
-              "warning: toolbox: '${name}-default' is deprecated, use '${name}' instead"
-              avail.${entry.default};
-          }
-        ) { } (builtins.attrNames reg)
-      );
+      packages = forAllSystems (system: (outputsFor system).flat);
 
       # Eval-time registry invariants, on every system the flake advertises.
       # Building all packages only ever gated x86_64-linux; this gates the

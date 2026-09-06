@@ -34,6 +34,57 @@ let
   availableVersions = hostPlatform: entry:
     lib.filterAttrs (_: drv: lib.meta.availableOn hostPlatform drv) entry.versions;
 
+  # Normalize a version string for use as a Nix attribute name
+  # "1.25.6" -> "1_25_6"
+  versionToAttr = builtins.replaceStrings [ "." ] [ "_" ];
+
+  # The flake's two package outputs, derived from the registry.
+  #
+  # This mapping — which versions appear, how a version string becomes an
+  # attribute name, and that the bare package name means the default version —
+  # is the registry's public naming contract, so it lives with the registry
+  # rather than being spelled twice in flake.nix (which had its own copy of
+  # versionToAttr and never used the one lib exports).
+  #
+  #   nested  name -> { "1_25_6" = drv; default = drv; }   (legacyPackages)
+  #   flat    "go-1_25_6" = drv; "go" = drv;               (packages)
+  registryOutputs = { pkgs, registry }:
+    let
+      hostPlatform = pkgs.stdenv.hostPlatform;
+
+      # A package with no version available here contributes nothing, and one
+      # whose default is unavailable contributes its other versions but no
+      # bare/default attribute.
+      entryAttrs = name: entry:
+        let
+          avail = availableVersions hostPlatform entry;
+          hasDefault = avail ? ${entry.default};
+        in
+        { inherit avail hasDefault; };
+    in
+    {
+      nested = builtins.mapAttrs (
+        name: entry:
+        let inherit (entryAttrs name entry) avail hasDefault; in
+        lib.mapAttrs' (ver: drv: lib.nameValuePair (versionToAttr ver) drv) avail
+        // lib.optionalAttrs hasDefault { default = avail.${entry.default}; }
+      ) registry;
+
+      flat = lib.concatMapAttrs (
+        name: entry:
+        let inherit (entryAttrs name entry) avail hasDefault; in
+        lib.mapAttrs' (ver: drv: lib.nameValuePair "${name}-${versionToAttr ver}" drv) avail
+        // lib.optionalAttrs hasDefault {
+          # Bare package name points to the default version
+          ${name} = avail.${entry.default};
+          # Deprecated: use bare package name instead (e.g., .#go not .#go-default)
+          "${name}-default" = builtins.trace
+            "warning: toolbox: '${name}-default' is deprecated, use '${name}' instead"
+            avail.${entry.default};
+        }
+      ) registry;
+    };
+
   # Build a registry package from a data.json file and a builders attrset.
   # The canonical entry point for versioned packages: reads meta+versions from
   # data.json, dispatches each version through `builders` (keyed by the optional
@@ -51,7 +102,7 @@ let
     };
 in
 {
-  inherit readData buildVersions buildPackage availableVersions;
+  inherit readData buildVersions buildPackage availableVersions versionToAttr registryOutputs;
 
   # Resolve a tool from the registry by name and optional version
   # If version is null, returns the default version's derivation
@@ -107,9 +158,6 @@ in
   resolvePatches = packageDir: versionData:
     map (p: packageDir + "/${p.file}") (versionData.patches or []);
 
-  # Normalize a version string for use as a Nix attribute name
-  # "1.25.6" -> "1_25_6"
-  versionToAttr = builtins.replaceStrings [ "." ] [ "_" ];
 }
 # Skill-bundle support code lives in its own file for separation from the small
 # registry helpers above; merged in so it's reachable as toolboxLib.buildSkillBundle.
