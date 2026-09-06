@@ -35,16 +35,20 @@ def sorted_version_names(entry: dict) -> list[str]:
     return sorted(entry["versions"], key=version_key, reverse=True)
 
 
-def build_models(manifest: dict) -> tuple[list[PackageInfo], list[ToolchainInfo]]:
-    """Split the manifest into the package and toolchain lists the renderer draws.
+def build_models(
+    manifest: dict,
+) -> tuple[list[PackageInfo], list[ToolchainInfo], list[PackageInfo]]:
+    """Split the manifest into the three lists the renderer draws.
 
     ``kind`` comes from the builder that assembled the package, so there is no
-    classification to do here — only a routing of stamped entries into the two
-    lists. Skill bundles fold into the package list, which stays a rendering
-    decision (docs/adr/0001) rather than a classification one.
+    classification to do here — only a routing of stamped entries. Skill bundles
+    get their own list, and so their own section (docs/adr/0005); they share
+    ``PackageInfo`` because they have the same shape, and the list they land in
+    is what marks them.
     """
     packages: list[PackageInfo] = []
     toolchains: list[ToolchainInfo] = []
+    skill_bundles: list[PackageInfo] = []
 
     for name, entry in sorted(manifest["packages"].items()):
         versions = sorted_version_names(entry)
@@ -66,15 +70,16 @@ def build_models(manifest: dict) -> tuple[list[PackageInfo], list[ToolchainInfo]
                 )
             )
         else:
-            packages.append(
-                PackageInfo(
-                    name=name,
-                    default=entry["default"],
-                    versions=versions,
-                    releases=entry.get("releases") or "",
-                    inactive=entry.get("inactive", False),
-                    skill_bundle=entry["kind"] == "skill-bundle",
-                )
+            info = PackageInfo(
+                name=name,
+                default=entry["default"],
+                versions=versions,
+                releases=entry.get("releases") or "",
+                inactive=entry.get("inactive", False),
             )
+            if entry["kind"] == "skill-bundle":
+                skill_bundles.append(info)
+            else:
+                packages.append(info)
 
-    return packages, toolchains
+    return packages, toolchains, skill_bundles

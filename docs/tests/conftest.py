@@ -24,10 +24,11 @@ def manifest_entry(
 
 @pytest.fixture
 def manifest() -> dict:
-    """A minimal registry manifest with one package and one toolchain."""
+    """A minimal registry manifest with one of each kind the registry stamps."""
     return {
         "packages": {
             "mypkg": manifest_entry(releases="https://example.com/releases"),
+            "my-skills": manifest_entry(kind="skill-bundle", versions=["1.2.0"]),
             "my-toolchain": manifest_entry(
                 kind="toolchain",
                 default="2",

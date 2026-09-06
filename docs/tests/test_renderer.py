@@ -12,8 +12,10 @@ INLINE_TEMPLATE = """<!DOCTYPE html>
 <div class="stat-value">$num_packages</div>
 <div class="stat-value">$total_versions</div>
 <div class="stat-value">$num_toolchains</div>
+<div class="stat-value">$num_skill_bundles</div>
 <tbody>$package_rows</tbody>
 <tbody>$toolchain_rows</tbody>
+<tbody>$skill_bundle_rows</tbody>
 """
 INLINE_CSS = "body { color: black; }"
 
@@ -105,9 +107,29 @@ def test_render_html_produces_valid_structure():
         versions=["1"],
         expansion={"1": [ToolchainComponent(name="test", version="1.0")]},
     )
-    html = render_html([pkg], [tc], template=INLINE_TEMPLATE, css=INLINE_CSS)
+    bundle = PackageInfo(name="test-skills", default="1.0", versions=["1.0"])
+    html = render_html(
+        [pkg], [tc], [bundle], template=INLINE_TEMPLATE, css=INLINE_CSS
+    )
     assert "<!DOCTYPE html>" in html
     assert "<title>Toolbox Package Registry</title>" in html
     assert '<div class="stat-value">1</div>' in html  # num_packages
     assert "body { color: black; }" in html  # css injected verbatim
     assert "test-toolchain" in html
+    assert "test-skills" in html
+
+
+def test_bundle_versions_count_toward_the_versions_total():
+    """A bundle version is as buildable as any other, so the headline counts it."""
+    pkg = PackageInfo(name="p", default="2.0", versions=["2.0", "1.0"])
+    bundle = PackageInfo(name="b", default="3.0", versions=["3.0"])
+    html = render_html([pkg], [], [bundle], template=INLINE_TEMPLATE, css=INLINE_CSS)
+    assert '<div class="stat-value">3</div>' in html  # total_versions
+
+
+def test_bundles_render_as_package_rows_in_their_own_section():
+    bundle = PackageInfo(
+        name="b", default="1.0", versions=["1.0"], releases="https://example.com"
+    )
+    html = render_html([], [], [bundle], template=INLINE_TEMPLATE, css=INLINE_CSS)
+    assert html.count('<a href="https://example.com" class="pkg-name">b</a>') == 1

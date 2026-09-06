@@ -10,11 +10,6 @@ class PackageInfo:
     versions: list[str]
     releases: str = ""
     inactive: bool = False
-    # True for skill bundles (data.json declares _meta.fromClaudePlugin). By
-    # decision (docs/adr/0001) they are folded into the package list rather than
-    # given their own docs section; this flag records the recognition so it is
-    # explicit and tested rather than a silent fall-through.
-    skill_bundle: bool = False
 
 
 @dataclass

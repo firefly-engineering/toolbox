@@ -35,12 +35,15 @@ def main():
     out_dir = Path.cwd() / "docs" / "_site"
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    packages, toolchains = build_models(load_manifest(args.manifest))
+    packages, toolchains, skill_bundles = build_models(load_manifest(args.manifest))
     template, css = load_assets()
-    html = render_html(packages, toolchains, template=template, css=css)
+    html = render_html(
+        packages, toolchains, skill_bundles, template=template, css=css
+    )
     (out_dir / "index.html").write_text(html)
     print(
-        f"Generated docs with {len(packages)} packages and {len(toolchains)} toolchains"
+        f"Generated docs with {len(packages)} packages, "
+        f"{len(toolchains)} toolchains and {len(skill_bundles)} skill bundles"
     )
 
 

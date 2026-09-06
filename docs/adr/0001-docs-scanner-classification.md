@@ -6,7 +6,9 @@ Date: 2026-07-17
 
 Accepted, then superseded.
 
-Superseded by [ADR 0004](0004-registry-publishes-its-own-classification.md).
+Superseded by [ADR 0004](0004-registry-publishes-its-own-classification.md)
+(classification) and [ADR 0005](0005-skill-bundles-get-their-own-section.md)
+(rendering skill bundles in the package list).
 
 ## Context
 

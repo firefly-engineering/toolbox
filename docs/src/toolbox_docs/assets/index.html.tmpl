@@ -24,6 +24,10 @@ $css  </style>
       <div class="stat-value">$num_toolchains</div>
       <div class="stat-label">Toolchains</div>
     </div>
+    <div class="stat">
+      <div class="stat-value">$num_skill_bundles</div>
+      <div class="stat-label">Skill Bundles</div>
+    </div>
   </div>
 
   <h2>Packages</h2>
@@ -48,6 +52,18 @@ ${package_rows}    </tbody>
     </thead>
     <tbody>
 ${toolchain_rows}    </tbody>
+  </table>
+
+  <h2>Skill Bundles</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Bundle</th>
+        <th>Versions</th>
+      </tr>
+    </thead>
+    <tbody>
+${skill_bundle_rows}    </tbody>
   </table>
 
   <footer>

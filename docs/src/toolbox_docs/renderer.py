@@ -60,11 +60,12 @@ def _render_toolchain_rows(toolchains: list[ToolchainInfo]) -> str:
 def render_html(
     packages: list[PackageInfo],
     toolchains: list[ToolchainInfo],
+    skill_bundles: list[PackageInfo],
     *,
     template: str,
     css: str,
 ) -> str:
-    """Render the full HTML page from package and toolchain metadata.
+    """Render the full HTML page from package, toolchain and bundle metadata.
 
     ``template`` and ``css`` are supplied by the caller so this transform is
     pure — it performs no filesystem access. The ``__main__`` edge loads the
@@ -72,7 +73,12 @@ def render_html(
     """
     package_rows = _render_package_rows(packages)
     toolchain_rows = _render_toolchain_rows(toolchains)
-    total_versions = sum(len(p.versions) for p in packages)
+    # Bundles render as packages — same shape, same columns; only the section
+    # they sit under differs (docs/adr/0005).
+    skill_bundle_rows = _render_package_rows(skill_bundles)
+    # Bundle versions stay in the headline total: it counts what the registry
+    # publishes, and a bundle version is as buildable as any other.
+    total_versions = sum(len(p.versions) for p in packages + skill_bundles)
 
     tmpl = Template(template)
     return tmpl.substitute(
@@ -80,6 +86,8 @@ def render_html(
         num_packages=len(packages),
         total_versions=total_versions,
         num_toolchains=len(toolchains),
+        num_skill_bundles=len(skill_bundles),
         package_rows=package_rows,
         toolchain_rows=toolchain_rows,
+        skill_bundle_rows=skill_bundle_rows,
     )
