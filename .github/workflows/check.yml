@@ -11,6 +11,14 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # Stays on the Determinate installer even though this job only evaluates,
+      # because nix-installer-action installs *Determinate* Nix and its parallel
+      # evaluator is worth more here than the slower install. Measured on this
+      # job: nixbuild/nix-quick-install-action (upstream Nix 2.34.7) cut the
+      # install from 8s to 1s but pushed `nix flake check` from ~30s to 60s,
+      # for a job total of 67s against 42-48s. The forcing below is exactly the
+      # cross-system evaluation that parallelises, so the trade is lopsided.
+      # docs.yml has the opposite shape and does use the fast installer.
       - uses: DeterminateSystems/nix-installer-action@v22
 
       # The registry check forces every system the flake advertises, not just

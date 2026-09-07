@@ -15,6 +15,14 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # Kept on the Determinate installer while check.yml and docs.yml moved to
+      # nixbuild/nix-quick-install-action. This is the only job that genuinely
+      # builds, and the fast installer gives single-user Nix: no daemon, no
+      # nixbld users, and no build sandbox on ubuntu-24.04, where unprivileged
+      # user namespaces are AppArmor-restricted. Nix's `sandbox-fallback`
+      # defaults to true, so it would disable the sandbox and retry rather than
+      # fail — silently publishing unsandboxed builds to a public cache. The
+      # ~20s is also only ~14% of a run dominated by the network anyway.
       - uses: DeterminateSystems/nix-installer-action@v22
 
       - uses: cachix/cachix-action@v17

@@ -40,7 +40,15 @@ jobs:
         with:
           python-version: "3.12"
 
-      - uses: DeterminateSystems/nix-installer-action@v22
+      # `nix eval` builds nothing at all, so this job has no use for a daemon or
+      # build users. Here the installer dominated: 23-26s to install against
+      # 8-9s of actual evaluation, more than half the job. The single-user
+      # installer unpacks in ~1s. It gives upstream Nix rather than Determinate
+      # Nix, so the manifest evaluation loses parallel eval and gets slower —
+      # but from 8-9s, which the install saving more than covers. check.yml and
+      # cachix.yml keep the Determinate installer, for different reasons; see
+      # the notes there.
+      - uses: nixbuild/nix-quick-install-action@v35
 
       # The registry publishes what it knows about itself here, so the
       # generator does not have to re-derive it by walking packages/*/data.json.
