@@ -1,0 +1,12 @@
+{
+  "_meta": {
+    "default": "0.9.0",
+    "releases": "https://github.com/herdrdev/herdr/releases"
+  },
+  "0.9.0": {
+    "owner": "herdrdev",
+    "repo": "herdr",
+    "rev": "b99002ac99b09e00b4ca692436cb15a6b0d676f1",
+    "sha256": "sha256-SUYF4bbaYwNgoe498VoCUzuLPcjBLQXR0o0DWjjoSnI="
+  }
+}
