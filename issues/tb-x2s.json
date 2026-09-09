@@ -2,13 +2,14 @@
   "assignee": "unknown",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-09-09T21:42:48Z",
   "created": "2026-09-09T21:39:53Z",
   "description": "Package herdrdev/herdr's skills/herdr/ agent skill as a toolbox skill bundle (packages/herdr-skills), following the tuicr-skills shape: upstream ships no .claude-plugin/plugin.json, so fromClaudePlugin stays false and the builder synthesizes the manifest. Upstream: https://herdr.dev/docs/agent-skill/",
   "id": "tb-x2s",
   "labels": [],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "Add herdr-skills skill bundle",
   "type": "task",
-  "updated_at": "2026-09-09T21:40:40Z"
+  "updated_at": "2026-09-09T21:42:48Z"
 }
