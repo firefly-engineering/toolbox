@@ -1,0 +1,9 @@
+{
+  "_meta": { "default": "3.13.3", "releases": "https://github.com/getsops/sops/releases" },
+  "3.13.3": {
+    "x86_64-linux": { "sha256": "sha256-5b7DNGqHOukdhxVQ8+aYwarZYq/0YqCA5A8l/eF/72s=" },
+    "aarch64-linux": { "sha256": "sha256-U7CrrNOO8bEqZtbBAJVmkbnO/OAY2R+B5z3fdDi5TXc=" },
+    "x86_64-darwin": { "sha256": "sha256-QhYtXO8Qt0/PgKBFpw5ljXzm5j1uob5vNH5EAVcURo0=" },
+    "aarch64-darwin": { "sha256": "sha256-uXwNQ0qrV33EAxDo0i/55F7vTIBjirl42q6bRoHFkoY=" }
+  }
+}
