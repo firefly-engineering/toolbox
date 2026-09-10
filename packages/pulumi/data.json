@@ -1,0 +1,9 @@
+{
+  "_meta": { "default": "3.262.0", "releases": "https://github.com/pulumi/pulumi/releases" },
+  "3.262.0": {
+    "x86_64-linux": { "sha256": "sha256-BGlEi5hT9yM0C/GSc8gXSCvKkPXALEysn6GKUw32QCo=" },
+    "aarch64-linux": { "sha256": "sha256-Ik/95zOYB6vKHuiGY3Ljf88j8noeMQVjJhiPgYI7aaQ=" },
+    "x86_64-darwin": { "sha256": "sha256-fbRab7b4ducYGSWGFhOxqirk7qdiny+0lbIhxnwOwRc=" },
+    "aarch64-darwin": { "sha256": "sha256-o8L/UO+UlicRZJ4jSijtOANhjLsvMTUFqIyobDDamOA=" }
+  }
+}
