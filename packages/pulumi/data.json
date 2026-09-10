@@ -5,5 +5,11 @@
     "aarch64-linux": { "sha256": "sha256-Ik/95zOYB6vKHuiGY3Ljf88j8noeMQVjJhiPgYI7aaQ=" },
     "x86_64-darwin": { "sha256": "sha256-fbRab7b4ducYGSWGFhOxqirk7qdiny+0lbIhxnwOwRc=" },
     "aarch64-darwin": { "sha256": "sha256-o8L/UO+UlicRZJ4jSijtOANhjLsvMTUFqIyobDDamOA=" }
+  },
+  "3.255.0": {
+    "x86_64-linux": { "sha256": "sha256-z1WVaOLDL3+uVuo96K5fpIlzuoxaqd0rPcDIiY/lDbo=" },
+    "aarch64-linux": { "sha256": "sha256-aZ+8bqhI2Zfps2RUh/EI0nsbVeyAfHV2QGEx5uCA8OM=" },
+    "x86_64-darwin": { "sha256": "sha256-GWctt0zZFY696Xh3Ikxs0Y3vHIAkNAN44yCPatZTkgA=" },
+    "aarch64-darwin": { "sha256": "sha256-rcauM47IdzB4aaJvdOXTrMX7L1kL+xnQDVDDyO0ukbc=" }
   }
 }
