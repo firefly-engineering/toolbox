@@ -1,5 +1,10 @@
 {
-  "_meta": { "default": "2026.04.27.00", "releases": "https://github.com/facebookincubator/reindeer/releases" },
+  "_meta": { "default": "2026.09.21.00", "releases": "https://github.com/facebookincubator/reindeer/releases" },
+  "2026.09.21.00": {
+    "sha256": "sha256-pNeBnpo2yA+A+8XzGNdSLXhsCQ1rO5sW+ZSiygfEeYM=",
+    "cargoHash": "sha256-lGx9At+GLp2fnP0i2OAMB5rBZhinbtGwmyG4yOElbZU=",
+    "rust": "1.98.1"
+  },
   "2026.04.27.00": {
     "sha256": "sha256-IrFIIlM8ZM2ha4R/3f6XrXlcI45bMR5LP6JYD3CDMVc=",
     "cargoHash": "sha256-WWELFOnrX+mzZMe9Xr/zumIXJqjlCZHaoWSKaLWNo3k=",
