@@ -1,5 +1,22 @@
 {
-  "_meta": { "default": "2026-07-01", "releases": "https://github.com/facebook/buck2/releases" },
+  "_meta": {
+    "default": "2026-09-15",
+    "releases": "https://github.com/facebook/buck2/releases"
+  },
+  "2026-09-15": {
+    "x86_64-linux": {
+      "sha256": "sha256-Emj84z+2EnMJHdXdjGC2XeFSGjyqNriJg4E+iCt//Yk="
+    },
+    "aarch64-linux": {
+      "sha256": "sha256-41AnqOP3Av2fCAB0rGTryA4qD+jWadRtha/DGw7EpGM="
+    },
+    "x86_64-darwin": {
+      "sha256": "sha256-rx5R8ZjszPxBudlgosebsW8B4jj3FpqGmJyu2UQPug0="
+    },
+    "aarch64-darwin": {
+      "sha256": "sha256-qs33yr40ubXcdIZrjc90EM26460tzO9Ft+6YUct4FSg="
+    }
+  },
   "2026-07-01": {
     "x86_64-linux": {
       "sha256": "sha256-XQzRG7QQHId6nSNCcFsXme6j2oU8uqAOoNCoflPFwzg="
