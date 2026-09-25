@@ -1,7 +1,16 @@
 {
   "_meta": {
-    "default": "0.26.0",
+    "default": "0.27.0",
     "releases": "https://github.com/agavra/tuicr/releases"
+  },
+  "0.27.0": {
+    "builder": "source",
+    "owner": "agavra",
+    "repo": "tuicr",
+    "rev": "v0.27.0",
+    "sha256": "sha256-kObt0MLJZYASWM1vexZTPaIeFaU2XpT9sHUSdClRz2Y=",
+    "cargoHash": "sha256-azgmxJP3iQO+WfJCWqfi19rCSb6D0a0luWcgEW+8Sbg=",
+    "rust": "1.97.0"
   },
   "0.26.0": {
     "builder": "source",
