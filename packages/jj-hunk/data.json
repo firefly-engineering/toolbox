@@ -1,7 +1,12 @@
 {
   "_meta": {
-    "default": "0.4.1",
+    "default": "0.5.1",
     "releases": "https://github.com/laulauland/jj-hunk/releases"
+  },
+  "0.5.1": {
+    "sha256": "sha256-Pe0rLEUMXmq+8eUMmjuu5KvFJ/aN53bTQ6/1rE2YcT0=",
+    "cargoHash": "sha256-tO4oGY92AieYb1SY3ylWSkOlcIKadbZLKOY6nTzXo48=",
+    "rust": "1.95.0"
   },
   "0.4.1": {
     "sha256": "sha256-lFuYTg6TW/Lsz4wwaaWFi37F2aGKpLwQgq40VTdDUKE=",
