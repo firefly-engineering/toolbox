@@ -1,7 +1,7 @@
 { pkgs, lib, toolbox, toolboxLib }:
 
 let
-  builders.default = toolboxLib.buildPrebuiltBinary {
+  prebuilt = toolboxLib.buildPrebuiltBinary {
     inherit pkgs;
     pname = "buck2";
     platforms = {
@@ -25,5 +25,16 @@ let
       ];
     };
   };
+
+  # The release tag names a date, not a build. `rev` is the buck2 commit the
+  # tag points at, so a consumer pinning a source revision (turnkey's pinned
+  # buck2 release) can check the binary against it, as it does the prelude's
+  # `preludeRev`. Passthru only: the derivation itself is unchanged.
+  builders.default = version: versionData:
+    (prebuilt version versionData).overrideAttrs (old: {
+      passthru = (old.passthru or { }) // {
+        rev = versionData.rev or (throw "buck2 ${version} has no rev in data.json");
+      };
+    });
 in
 toolboxLib.buildPackage { name = "buck2"; dataPath = ./data.json; inherit builders; }

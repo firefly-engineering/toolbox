@@ -89,6 +89,7 @@ Each package directory has a `data.json` with version entries and a `_meta` key:
 - **`vendorHash`**: (Go packages) SRI hash of vendored dependencies
 - **`go`**: (Go packages) Go version from toolbox to build with
 - **`builder`**: (optional) Builder variant name; defaults to `"default"`
+- **`rev`**: (`buck2`) the buck2 commit the release tag points at (`gh api repos/facebook/buck2/commits/<tag> --jq .sha`). Required: it is exposed as `passthru.rev`, which turnkey checks against its pinned release
 
 ## Adding a New Version of an Existing Package
 

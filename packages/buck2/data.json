@@ -4,6 +4,7 @@
     "releases": "https://github.com/facebook/buck2/releases"
   },
   "2026-09-15": {
+    "rev": "6507dd157a6f81a810c48583edf1758dd0c337c5",
     "x86_64-linux": {
       "sha256": "sha256-Emj84z+2EnMJHdXdjGC2XeFSGjyqNriJg4E+iCt//Yk="
     },
@@ -18,6 +19,7 @@
     }
   },
   "2026-07-01": {
+    "rev": "c88d791e34884e58617b92d5b98c7f71faee823c",
     "x86_64-linux": {
       "sha256": "sha256-XQzRG7QQHId6nSNCcFsXme6j2oU8uqAOoNCoflPFwzg="
     },
@@ -32,6 +34,7 @@
     }
   },
   "2026-04-15": {
+    "rev": "7600cb80070a88b88be67aa5d20d6a93cffa0223",
     "x86_64-linux": {
       "sha256": "sha256-IqDsyQ7Omy7QujT85oKrWwyirG7gwfupdxzvRoMRmQs="
     },
@@ -46,6 +49,7 @@
     }
   },
   "2026-03-15": {
+    "rev": "00b0e8f29c75e4a5bf6ffb6bd81fa6bb6deeb208",
     "x86_64-linux": {
       "sha256": "sha256-NGODtuEj2udHn1en+ZdAt7C+vqRxMFA4D9bsMJ5B/F4="
     },
@@ -60,6 +64,7 @@
     }
   },
   "2025-12-01": {
+    "rev": "75e4243c93877a3db4acf55f20d2e80a32523233",
     "x86_64-linux": {
       "sha256": "sha256-TOgL0pLnNEAhHkKvynnM91kW06K6jZPeJnpSibYg8EU="
     },
