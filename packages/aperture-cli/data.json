@@ -1,0 +1,12 @@
+{
+  "_meta": {
+    "default": "0.0.13",
+    "releases": "https://github.com/tailscale/aperture-cli/releases"
+  },
+  "0.0.13": {
+    "x86_64-linux": { "sha256": "sha256-/JSUNSPLszGkrdNVK2fsYHhlNeA1TOTjYSeoDpBRzJ8=" },
+    "aarch64-linux": { "sha256": "sha256-Pg5zr2eKtoS2t6zTvyZ2lnSgGR10Y0NRbKKPspSRxRo=" },
+    "x86_64-darwin": { "sha256": "sha256-6ZgcbONd8s1OusLss2Ir5zM65yO9No3Cq/S4Y1400SQ=" },
+    "aarch64-darwin": { "sha256": "sha256-T8IXssR2fRNX96XFctZVGZmf9SPJE8sB00CdCBW8L+s=" }
+  }
+}
