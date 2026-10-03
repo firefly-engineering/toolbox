@@ -1,0 +1,12 @@
+{
+  "_meta": {
+    "default": "2.0.2",
+    "releases": "https://github.com/JuliusBrussee/caveman/releases"
+  },
+  "2.0.2": {
+    "x86_64-linux": { "sha256": "sha256-wne5OpL2RdXcrXCqnqQNqqe66cUDam5HnVqkM6h0gZ0=" },
+    "aarch64-linux": { "sha256": "sha256-MqD+JZCBTjxAugOcll+Lw58TmoA1yXw+bNnMhQhwE1U=" },
+    "x86_64-darwin": { "sha256": "sha256-7yQAOJDWOCTLJvZmR7WjziemB3E6VfeGJCQMuwnE604=" },
+    "aarch64-darwin": { "sha256": "sha256-+P3zkOGmWjDvfsPZyofjGOavnUbZ9lSDh2n5XysHDD0=" }
+  }
+}
