@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-10-03T14:48:26Z",
+  "description": "Packages with sourceRoot = \".\" unpack into the build top dir; stdenv then runs chmod -R u+w . which fails on Determinate Nix's external-builders Linux VM because it leaves a root-owned builder.json there. Blocks openspec (via pnpm) and aperture-cli, hence llm-toolchain, on aarch64-linux when built through that VM. Unpack flat archives into a fresh subdirectory instead (shared helper used by buildPrebuiltBinary, pnpm, platform-tools).",
+  "id": "tb-fz3",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Flat-tarball unpack fails on Determinate Nix external-builders Linux VM",
+  "type": "task",
+  "updated_at": "2026-10-03T14:48:26Z"
+}
