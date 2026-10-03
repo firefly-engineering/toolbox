@@ -1,5 +1,17 @@
 {
-  "_meta": { "default": "5" },
+  "_meta": {
+    "default": "6"
+  },
+  "6": {
+    "qmd": "2.8.3",
+    "openspec": "1.6.0",
+    "agentmemory": "0.9.27",
+    "mattpocock-skills": "1.2.3",
+    "aperture-cli": "0.0.13",
+    "caveman-proxy": "2.0.2",
+    "caveman-skills": "3.1.0",
+    "ponytail-skills": "4.10.3"
+  },
   "5": {
     "qmd": "2.8.3",
     "openspec": "1.6.0",
