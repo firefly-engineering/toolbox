@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-10-03T14:43:08Z",
+  "description": "qmd 2.8.3 had node_modules hashes only for x86_64-linux and aarch64-darwin, and meta.platforms was narrowed to match, so llm-toolchain (which intersects component platforms) was unavailable on aarch64-linux. Add the hash and derive meta.platforms from the nodeModules keys.",
+  "id": "tb-uqs",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "qmd: add aarch64-linux node_modules hash so llm-toolchain builds there",
+  "type": "task",
+  "updated_at": "2026-10-03T14:43:08Z"
+}
