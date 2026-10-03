@@ -24,10 +24,10 @@ let
       + (if isDarwin platform
          then "aperture_v${version}_${platform}.zip"
          else "aperture-cli_${platform}.tar.gz");
-    sourceRoot = { version, platform }: if isDarwin platform then "release" else ".";
+    sourceRoot = ".";
     binaries = [{
       from = { version, platform }:
-        if isDarwin platform then "aperture_${platform}" else "aperture";
+        if isDarwin platform then "release/aperture_${platform}" else "aperture";
       to = "aperture";
     }];
     patchelf = false; # static Go binary (CGO_ENABLED=0)

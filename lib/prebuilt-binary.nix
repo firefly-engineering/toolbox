@@ -24,7 +24,25 @@
 # concept and stay on plain mkDerivation.
 { lib }:
 
+let
+  # Derivation attributes for an archive with no top-level directory (a "flat"
+  # tarball or zip). Plain `sourceRoot = "."` unpacks into the build directory
+  # itself, and stdenv then runs `chmod -R u+w .` over it — which fails on
+  # builders that keep files of their own there (Determinate Nix's
+  # external-builders Linux VM leaves a root-owned `builder.json`). Unpacking
+  # into a fresh subdirectory keeps the chmod on files the build owns.
+  unpackFlat = {
+    sourceRoot = ".";
+    preUnpack = ''
+      mkdir source
+      cd source
+    '';
+  };
+in
 {
+  # Shared with hand-written builders of flat archives (pnpm, platform-tools).
+  inherit unpackFlat;
+
   # buildPrebuiltBinary { pkgs; pname; platforms; url; binaries; ... }
   #   -> version: versionData: derivation
   #
@@ -45,7 +63,9 @@
   #              compression suffix (.zst/.gz/.xz/.bz2) is auto-detected and the
   #              binary decompressed into $out/bin; otherwise $src is installed
   #              as-is. A non-null value (a string, or fn { version, platform } ->
-  #              string) names the unpacked directory ("." for a flat tarball).
+  #              string) names the unpacked directory. A flat archive (no top-level
+  #              directory) is the literal string "." — not a function returning
+  #              it — and is unpacked into a fresh subdirectory (see unpackFlat).
   #   patchelf   run autoPatchelfHook + cc.cc.lib on Linux (default true; set
   #              false for static binaries)
   #   extraLibs  additional shared libraries the binary links against, for
@@ -152,5 +172,11 @@
       '';
     }
     // lib.optionalAttrs (!unpacked) { dontUnpack = true; }
-    // lib.optionalAttrs unpacked { sourceRoot = resolvedSourceRoot; });
+    # Decided from the literal argument, never by calling a per-platform
+    # function: `//` needs the attribute names, and resolving the function
+    # throws on systems the package does not cover.
+    // lib.optionalAttrs unpacked (
+      if sourceRoot == "." then unpackFlat
+      else { sourceRoot = resolvedSourceRoot; }
+    ));
 }

@@ -22,7 +22,8 @@ let
         platformData = versionData.${system}
           or (throw "platform-tools ${version} has no binary for ${system}");
       in
-      pkgs.stdenv.mkDerivation {
+      # Tarball holds rust/ llvm/ version.md at the top level.
+      pkgs.stdenv.mkDerivation (toolboxLib.unpackFlat // {
         pname = "platform-tools";
         inherit version;
 
@@ -31,8 +32,6 @@ let
           hash = platformData.sha256;
         };
 
-        # Tarball holds rust/ llvm/ version.md at the top level.
-        sourceRoot = ".";
         dontConfigure = true;
         dontBuild = true;
         dontStrip = true;
@@ -73,7 +72,7 @@ let
             "aarch64-darwin"
           ];
         };
-      };
+      });
   };
 in
 toolboxLib.buildPackage { name = "platform-tools"; dataPath = ./data.json; inherit builders; }

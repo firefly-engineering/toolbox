@@ -16,7 +16,8 @@ let
         platformData = versionData.${system}
           or (throw "pnpm ${version} has no binary for ${system}");
       in
-      pkgs.stdenv.mkDerivation {
+      # Tarball unpacks to a flat layout (the `pnpm` launcher + its `dist/`).
+      pkgs.stdenv.mkDerivation (toolboxLib.unpackFlat // {
         pname = "pnpm";
         inherit version;
 
@@ -24,9 +25,6 @@ let
           url = "https://github.com/pnpm/pnpm/releases/download/v${version}/pnpm-${platform}.tar.gz";
           hash = platformData.sha256;
         };
-
-        # Tarball unpacks to a flat layout (the `pnpm` launcher + its `dist/`).
-        sourceRoot = ".";
 
         dontConfigure = true;
         dontBuild = true;
@@ -73,7 +71,7 @@ let
             "aarch64-darwin"
           ];
         };
-      };
+      });
   };
 in
 toolboxLib.buildPackage { name = "pnpm"; dataPath = ./data.json; inherit builders; }
