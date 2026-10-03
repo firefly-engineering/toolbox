@@ -125,8 +125,8 @@ let
           homepage = "https://github.com/tobi/qmd";
           license = licenses.mit;
           mainProgram = "qmd";
-          # node_modules hashes only populated/verified for these systems.
-          platforms = [ "x86_64-linux" "aarch64-darwin" ];
+          # A system exists exactly where this version has a node_modules hash.
+          platforms = builtins.attrNames versionData.nodeModules;
         };
       };
   };
