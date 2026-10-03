@@ -1,0 +1,12 @@
+{
+  "_meta": {
+    "default": "4.10.3",
+    "releases": "https://github.com/DietrichGebert/ponytail/releases"
+  },
+  "4.10.3": {
+    "owner": "DietrichGebert",
+    "repo": "ponytail",
+    "rev": "ef8ca48fed2321ab6668b2a954f23b1af97d7f6d",
+    "sha256": "sha256-aypYnQf+zkKGj+dfs+qFKTFIvaick9p0XJNtPkSwIB0="
+  }
+}
