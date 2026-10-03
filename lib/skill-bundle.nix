@@ -19,7 +19,32 @@
 # (deprecated/, in-progress/, …).
 { lib, readData, mkStamp }:
 
+let
+  # Flattened one-folder-per-skill view of a plugin directory, for
+  # `programs.claude-code.skills`. Reads the plugin's own manifest so the
+  # selection is single-sourced. Shared with buildToolchain, whose output is a
+  # plugin directory too when it bundles skills.
+  flattenSkills = { pkgs, name, version, bundle }:
+    pkgs.runCommand "${name}-${version}-skills"
+      {
+        inherit bundle;
+        nativeBuildInputs = [ pkgs.jq ];
+      }
+      ''
+        mkdir -p "$out"
+        jq -r '.skills[]' "$bundle/.claude-plugin/plugin.json" | while read -r rel; do
+          base=$(basename "$rel")
+          if [ -e "$out/$base" ]; then
+            echo "skill name collision flattening ${name} ${version}: '$base'" >&2
+            exit 1
+          fi
+          cp -R "$bundle/$rel" "$out/$base"
+        done
+      '';
+in
 {
+  inherit flattenSkills;
+
   # buildSkillBundle { pkgs, name, dataPath } -> { versions; default; }
   #
   # data.json schema (per version, unless noted):
@@ -99,24 +124,7 @@
                 > "$out/.claude-plugin/plugin.json"
             '');
 
-          # Flattened one-folder-per-skill view for `programs.claude-code.skills`.
-          # Reads the bundle's own manifest so the selection is single-sourced.
-          skills = pkgs.runCommand "${name}-${version}-skills"
-            {
-              inherit bundle;
-              nativeBuildInputs = [ pkgs.jq ];
-            }
-            ''
-              mkdir -p "$out"
-              jq -r '.skills[]' "$bundle/.claude-plugin/plugin.json" | while read -r rel; do
-                base=$(basename "$rel")
-                if [ -e "$out/$base" ]; then
-                  echo "skill name collision flattening ${name} ${version}: '$base'" >&2
-                  exit 1
-                fi
-                cp -R "$bundle/$rel" "$out/$base"
-              done
-            '';
+          skills = flattenSkills { inherit pkgs name version bundle; };
         in
         bundle.overrideAttrs (old: {
           passthru = (old.passthru or { }) // { inherit skills; };

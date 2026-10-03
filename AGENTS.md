@@ -462,7 +462,9 @@ Use one route, not both. The `plugins` route requires Claude Code ≥ 2.1.76 (�
 
 ### Bundling into a toolchain
 
-A skill bundle can be a component of a toolchain (see *Adding a New Toolchain*); its `skills/` and `.claude-plugin/` trees are symlinked into the toolchain output alongside the other tools. Only **one** skill bundle per toolchain, though — `symlinkJoin` cannot merge two `.claude-plugin/plugin.json` files.
+A skill bundle can be a component of a toolchain (see *Adding a New Toolchain*); its `skills/` and `.claude-plugin/` trees are symlinked into the toolchain output alongside the other tools, so the toolchain is itself a plugin directory and exposes the same flattened `passthru.skills`.
+
+A toolchain may hold several skill bundles. `symlinkJoin` alone would keep only the first `.claude-plugin/plugin.json` it links, so `buildToolchain` recognises bundles by their `kind` stamp and, when there are two or more, replaces the manifest with a synthesized `{ name, skills }` listing every bundle's skills. A skill name shipped by two bundles fails the build. A toolchain with at most one bundle keeps the plain join and the bundle's own manifest.
 
 ## Builder Versioning
 

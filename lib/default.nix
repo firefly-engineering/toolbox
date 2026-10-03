@@ -123,6 +123,8 @@ let
       default = meta.default;
       toolbox = mkStamp { kind = "package"; inherit meta; };
     };
+
+  skillBundles = import ./skill-bundle.nix { inherit lib readData mkStamp; };
 in
 {
   inherit readData buildVersions buildPackage availableVersions versionToAttr registryOutputs mkStamp;
@@ -162,12 +164,56 @@ in
             else if acc == null then p
             else lib.intersectLists acc p
           ) null components;
+
+          # Skill bundles are recognised by their stamp, not their name. Each
+          # ships a `.claude-plugin/plugin.json`, and symlinkJoin keeps only the
+          # first one it links, so with two or more the toolchain would
+          # silently advertise one bundle's skills while carrying all of them.
+          # Instead the manifest is replaced by a synthesized one listing every
+          # bundle's skills. A skill name shipped by two bundles fails the
+          # build: symlinkJoin would keep one copy without a word, and the
+          # flattened view could hold only one anyway.
+          bundles = lib.mapAttrsToList (component: ver: toolbox.${component}.versions.${ver})
+            (lib.filterAttrs (component: _:
+              (toolbox.${component}.toolbox.kind or null) == "skill-bundle"
+            ) versionData);
+          manifests = lib.concatMapStringsSep " " (b: "${b}/.claude-plugin/plugin.json") bundles;
+
+          mergeManifests = ''
+            dups=$(jq -rs '[.[].skills[] | split("/") | last] | group_by(.)
+                           | map(select(length > 1) | .[0]) | join(", ")' ${manifests})
+            if [ -n "$dups" ]; then
+              echo "skill name collision merging skill bundles into ${name} ${version}: $dups" >&2
+              exit 1
+            fi
+            rm "$out/.claude-plugin/plugin.json"
+            jq -s --arg name ${lib.escapeShellArg name} \
+              '{ name: $name, skills: (map(.skills) | add) }' ${manifests} \
+              > "$out/.claude-plugin/plugin.json"
+          '';
+
+          # Toolchains with at most one bundle keep the plain join, so their
+          # derivations are unchanged.
+          toolchain = pkgs.symlinkJoin ({
+            name = "${name}-${version}";
+            paths = components;
+            meta = lib.optionalAttrs (platforms != null) { inherit platforms; };
+          } // lib.optionalAttrs (lib.length bundles > 1) {
+            nativeBuildInputs = [ pkgs.jq ];
+            postBuild = mergeManifests;
+          });
         in
-        pkgs.symlinkJoin {
-          name = "${name}-${version}";
-          paths = components;
-          meta = lib.optionalAttrs (platforms != null) { inherit platforms; };
-        };
+        # With any bundle the toolchain is a plugin directory, so it gets the
+        # same flattened view a bundle exposes.
+        if bundles == [ ] then toolchain
+        else toolchain.overrideAttrs (old: {
+          passthru = (old.passthru or { }) // {
+            skills = skillBundles.flattenSkills {
+              inherit pkgs name version;
+              bundle = toolchain;
+            };
+          };
+        });
     in
     {
       versions = builtins.mapAttrs mkToolchain versions;
@@ -192,7 +238,7 @@ in
 }
 # Skill-bundle support code lives in its own file for separation from the small
 # registry helpers above; merged in so it's reachable as toolboxLib.buildSkillBundle.
-// import ./skill-bundle.nix { inherit lib readData mkStamp; }
+// skillBundles
 # Prebuilt-binary builder, likewise in its own file; reachable as
 # toolboxLib.buildPrebuiltBinary.
 // import ./prebuilt-binary.nix { inherit lib; }
