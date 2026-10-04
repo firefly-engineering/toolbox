@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-10-04T10:33:52Z",
+  "description": "caveman-mcp is the agent-side recovery tool (mcp__caveman__caveman_retrieve) caveman-proxy requires before it will compress streaming/subscription traffic such as Claude Code. Package it from the bin-v2.0.2 release, the exact pin of caveman-proxy (they share the ccr.db format), and add it to llm-toolchain.",
+  "id": "tb-cvb",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Package caveman-mcp 2.0.2 and add it to llm-toolchain",
+  "type": "task",
+  "updated_at": "2026-10-04T10:33:52Z"
+}
