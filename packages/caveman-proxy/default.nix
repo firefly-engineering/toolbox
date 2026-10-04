@@ -8,6 +8,9 @@
 # Upstream releases its Go binaries under `bin-v<version>` tags, separate from
 # the `v<version>` tags of the skills (see `caveman-skills`). The Node `caveman`
 # CLI that wraps this binary (`caveman start`/`wrap`/`learn`) is not packaged.
+#
+# `caveman-mcp` shares this binary's ccr.db and is pinned to the same release:
+# bump the two together, never independently.
 let
   builders.default = toolboxLib.buildPrebuiltBinary {
     inherit pkgs;
