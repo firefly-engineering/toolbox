@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "unknown",
   "blocked_by": [],
   "blocks": [],
   "created": "2026-10-04T10:33:52Z",
@@ -7,7 +7,7 @@
   "id": "tb-cvb",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "Package caveman-mcp 2.0.2 and add it to llm-toolchain",
   "type": "task",
   "updated_at": "2026-10-04T10:33:52Z"
