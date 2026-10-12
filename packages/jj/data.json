@@ -1,7 +1,12 @@
 {
   "_meta": {
-    "default": "0.45.1",
+    "default": "0.46.0",
     "releases": "https://github.com/jj-vcs/jj/releases"
+  },
+  "0.46.0": {
+    "sha256": "sha256-5A443Cjlbu3+46F1Ynfu8FSOOy1yjZSgFnCbg6dMzzk=",
+    "cargoHash": "sha256-ugqvdijwIUrvq0gEQSzAxqSnF6Ui3qBmMvk1L2TXWEE=",
+    "rust": "1.98.1"
   },
   "0.45.1": {
     "sha256": "sha256-nqMd9kj6TH/6kTZ8a9XDPBESwCIOMa7c/0TgbEXoo3o=",
