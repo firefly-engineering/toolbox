@@ -1,5 +1,13 @@
 {
-  "_meta": { "default": "0.19.2", "releases": "https://github.com/dandavison/delta/releases" },
+  "_meta": { "default": "0.20.1", "releases": "https://github.com/dandavison/delta/releases" },
+  "0.20.1": {
+    "x86_64-linux": { "sha256": "sha256-UPCMh5+EyBzrIg5HZJGn9JLSycZx55kYzES635YaYkA=" },
+    "aarch64-linux": { "sha256": "sha256-2n9DOPWTVy/0Jq4VPghw4v3HJylBbv9VG0DN62eUDbg=" },
+    "aarch64-darwin": { "sha256": "sha256-vBg5zqaSiNRnOiT6/7uCXUCMqQfg99M7FnjJ5s3V5Y4=" },
+    "srcHash": "sha256-p/vYclCifRzk8ockxT5k1zBCBL+eF4oldhD3lTvy2EA=",
+    "cargoHash": "sha256-YjmYeSRt9X/+PROEGg3pBQ1IRnNuwziZ30bA/nKqbWc=",
+    "rust": "1.98.1"
+  },
   "0.19.2": {
     "x86_64-linux": { "sha256": "sha256-jmlcX1hqjFPWw7Ab4LSkIu0hi/7SpWGRyuvjc6HBirI=" },
     "aarch64-linux": { "sha256": "sha256-C/zhWaXN3V/rPW20phbYg/9RJTzgisfsEcsdIIz6q54=" },
