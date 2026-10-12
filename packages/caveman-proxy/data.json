@@ -1,12 +1,34 @@
 {
   "_meta": {
-    "default": "2.0.2",
+    "default": "2.1.0",
     "releases": "https://github.com/JuliusBrussee/caveman/releases"
   },
+  "2.1.0": {
+    "x86_64-linux": {
+      "sha256": "sha256-RENtaXBa2ZaFY8GBzRHTltauXuzNjb8ij2Il2S363LE="
+    },
+    "aarch64-linux": {
+      "sha256": "sha256-WogZeZNNUYIsz56hPFGXaf6hjFLAYeFOa9DZ+VDOdg8="
+    },
+    "x86_64-darwin": {
+      "sha256": "sha256-TtIGRC/uDBQunCvXmOZRSt6um0JQhHhzTcgNJVa1vXI="
+    },
+    "aarch64-darwin": {
+      "sha256": "sha256-XTR7/8RGrKe0eiDrLsXLzXoWf46V8E8YkaBff5a5pXw="
+    }
+  },
   "2.0.2": {
-    "x86_64-linux": { "sha256": "sha256-wne5OpL2RdXcrXCqnqQNqqe66cUDam5HnVqkM6h0gZ0=" },
-    "aarch64-linux": { "sha256": "sha256-MqD+JZCBTjxAugOcll+Lw58TmoA1yXw+bNnMhQhwE1U=" },
-    "x86_64-darwin": { "sha256": "sha256-7yQAOJDWOCTLJvZmR7WjziemB3E6VfeGJCQMuwnE604=" },
-    "aarch64-darwin": { "sha256": "sha256-+P3zkOGmWjDvfsPZyofjGOavnUbZ9lSDh2n5XysHDD0=" }
+    "x86_64-linux": {
+      "sha256": "sha256-wne5OpL2RdXcrXCqnqQNqqe66cUDam5HnVqkM6h0gZ0="
+    },
+    "aarch64-linux": {
+      "sha256": "sha256-MqD+JZCBTjxAugOcll+Lw58TmoA1yXw+bNnMhQhwE1U="
+    },
+    "x86_64-darwin": {
+      "sha256": "sha256-7yQAOJDWOCTLJvZmR7WjziemB3E6VfeGJCQMuwnE604="
+    },
+    "aarch64-darwin": {
+      "sha256": "sha256-+P3zkOGmWjDvfsPZyofjGOavnUbZ9lSDh2n5XysHDD0="
+    }
   }
 }
