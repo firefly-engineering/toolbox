@@ -1,7 +1,21 @@
 {
   "_meta": {
-    "default": "0.10.6",
+    "default": "0.11.4",
     "releases": "https://github.com/entireio/cli/releases"
+  },
+  "0.11.4": {
+    "x86_64-linux": {
+      "sha256": "sha256-uTY0Ekv1G8XgcVbZK1OFPRJDJaP/mvYMSWAwe/jrhw8="
+    },
+    "aarch64-linux": {
+      "sha256": "sha256-OJJ0zkv8CBP+XWrAzIsnC+3foCU0DkUG9IB9q3eY9Ec="
+    },
+    "x86_64-darwin": {
+      "sha256": "sha256-dP92amh3dB7OfxALLEKL1ddIiZAY9GSm6m+jl7M9o0U="
+    },
+    "aarch64-darwin": {
+      "sha256": "sha256-ZjbdW/Gy/5qcUtTqGtk2eZraliFC8PXlw8hhHzrNNHs="
+    }
   },
   "0.10.6": {
     "x86_64-linux": {
