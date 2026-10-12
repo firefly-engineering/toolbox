@@ -1,7 +1,21 @@
 {
   "_meta": {
-    "default": "3.1.0",
+    "default": "3.2.0",
     "releases": "https://github.com/JuliusBrussee/caveman/releases"
+  },
+  "3.2.0": {
+    "owner": "JuliusBrussee",
+    "repo": "caveman",
+    "rev": "e20f07e8152a0c0360f58c09e79d30ac94329991",
+    "sha256": "sha256-GfC8e+EGL7kotZQfZ9kD7ZEWJfhmXujHOHpMxeU3bEo=",
+    "select": [
+      "caveman",
+      "ultracave",
+      "megacave",
+      "caveman-commit",
+      "caveman-review",
+      "caveman-help"
+    ]
   },
   "3.1.0": {
     "owner": "JuliusBrussee",
