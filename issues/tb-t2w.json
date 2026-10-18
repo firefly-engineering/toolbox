@@ -5,7 +5,9 @@
   "created": "2026-10-18T12:07:15Z",
   "description": "Follow-up to https://github.com/firefly-engineering/toolbox/issues/7.\n\ngo-toolchain ships golangci-lint as upstream's prebuilt binary, so the Go it was built with is whatever upstream used, not the toolchain's `go` pin. golangci-lint refuses to lint a module whose `go` directive exceeds its build Go (\"the Go language version (go1.26) used to build golangci-lint is lower than the targeted Go version (1.27)\"), and on Linux it also fails type-checking a newer GOROOT stdlib (`splice_linux.go: unknown field rfd`).\n\ngo-toolchain 7 avoids this only by luck: golangci-lint 2.15.0 happens to be built with go1.27.0 and the toolchain pins go 1.27.2. The next Go minor bump that lands before a matching golangci-lint release recreates the bug, and nothing catches it.\n\n## Options\n\n- Build golangci-lint from source with `toolboxLib.buildGoPackage`, pinned to `versionData.go`, so the toolchain's Go and golangci-lint's build Go are the same by construction. Matches the issue's stated expectation.\n- Or keep the prebuilt binary and add a gate: a check that runs `golangci-lint version` (or `go version -m`) for each go-toolchain version and fails when its build Go's language version is below the toolchain's `go` pin.\n\n## Acceptance\n\n- A go-toolchain version cannot be added whose golangci-lint was built with an older Go language version than its `go` component.\n- Reproduction: a module with `go 1.\u003ctoolchain minor\u003e` lints cleanly in the toolchain's shell, on Linux and macOS, with a fresh GOLANGCI_LINT_CACHE.",
   "id": "tb-t2w",
-  "labels": [],
+  "labels": [
+    "needs-triage"
+  ],
   "priority": 2,
   "status": "open",
   "title": "go-toolchain: guarantee golangci-lint is built with the toolchain's Go",
