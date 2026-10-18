@@ -10,7 +10,7 @@ jobs:
       matrix:
         include:
           - system: x86_64-linux
-            runner: ubuntu-latest
+            runner: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v7
