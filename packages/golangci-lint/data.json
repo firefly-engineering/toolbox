@@ -1,5 +1,11 @@
 {
-  "_meta": { "default": "2.12.2", "releases": "https://github.com/golangci/golangci-lint/releases" },
+  "_meta": { "default": "2.15.0", "releases": "https://github.com/golangci/golangci-lint/releases" },
+  "2.15.0": {
+    "x86_64-linux": { "sha256": "sha256-m3/mpr9jNLmN7PjYaxFBXqeImv2r3RlZ/c4jryqevOo=" },
+    "aarch64-linux": { "sha256": "sha256-tNjxcGizXuYGDML2mhb7SHQNcG+7qBZhwxhknBFKaZg=" },
+    "x86_64-darwin": { "sha256": "sha256-dnuJmigoXoje0oI9XcxLxe9oEXPrLYDwKaexfuTs47g=" },
+    "aarch64-darwin": { "sha256": "sha256-0eQJSBqMqEbEvJfngetcsb1cIzU6Czl3ocvaGxtkR9U=" }
+  },
   "2.12.2": {
     "x86_64-linux": { "sha256": "sha256-jfWA0mcP7Y+phKrAUHCZr43ydeZlIV9ceirjlDiTpVM=" },
     "aarch64-linux": { "sha256": "sha256-RM1AqMdshnVTda3+6lLP01M8tD171kd3HgrgZeFm3zo=" },
