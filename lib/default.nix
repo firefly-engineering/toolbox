@@ -1,4 +1,4 @@
-{ lib }:
+{ lib, pythonInputs ? null }:
 
 let
   # Read and parse a data.json file, separating _meta from version entries
@@ -246,6 +246,8 @@ in
 // import ./rust-package.nix { inherit lib; }
 # Go source builder, reachable as toolboxLib.buildGoPackage.
 // import ./go-package.nix { inherit lib; }
+# Python (uv.lock) source builder, reachable as toolboxLib.buildUvApplication.
+// import ./uv-package.nix { inherit lib pythonInputs; }
 # Registry manifest for non-Nix consumers, reachable as toolboxLib.registryManifest.
 // import ./manifest.nix { inherit lib; }
 # Registry-wide invariant check, reachable as toolboxLib.checkRegistry.

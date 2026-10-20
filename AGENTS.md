@@ -56,6 +56,7 @@ toolbox/
 │   ├── prebuilt-binary.nix # buildPrebuiltBinary: tools shipped as prebuilt per-platform binaries
 │   ├── rust-package.nix   # buildRustPackage: Rust built from a tagged GitHub source
 │   ├── go-package.nix     # buildGoPackage: Go built from a tagged GitHub source
+│   ├── uv-package.nix     # buildUvApplication: Python built from a tagged GitHub source + its uv.lock
 │   ├── skill-bundle.nix   # buildSkillBundle: Claude Code skill bundles
 │   └── check-registry.nix # checkRegistry: eval-time invariants, wired to `nix flake check`
 └── packages/
@@ -339,6 +340,36 @@ Packages whose build is not "fetch a tagged GitHub tag and compile it" stay on
 their own builders: `packages/go` (bootstraps Go from source), `packages/nix`
 (meson), `packages/delta` (prebuilt with a source fallback, dispatching on
 whether the data has an entry for this system).
+
+## Python Applications (uv.lock)
+
+Python applications whose upstream commits a `uv.lock` use
+`toolboxLib.buildUvApplication` (`lib/uv-package.nix`). It builds a uv2nix
+virtualenv from the tagged source and upstream's lock, and exposes only the
+project's own entry points. nixpkgs' python package set is not used: its
+versions drift from the tree upstream tested.
+
+```nix
+builders.default = toolboxLib.buildUvApplication {
+  inherit pkgs;
+  pname = "code-review-graph";   # must match the uv project name
+  owner = "tirth8205";
+  repo = "code-review-graph";
+  python = pkgs.python313;       # optional; default pkgs.python3
+  meta = { … };
+};
+```
+
+Optional parameters: `rev` (fn `{ version } -> rev`, default `"v${version}"`)
+and `overrides` (a pyproject-nix overlay for wheels or sdists that need native
+fixes).
+
+The helper reads only `sha256` from `data.json`, the `--unpack` hash of the
+tag: every wheel and sdist is already hash-pinned in the lock. uv2nix reads the lock at eval
+time, so the helper fetches the source with `builtins.fetchTarball` rather than
+`fetchFromGitHub` (which would be import-from-derivation). Pick `python` from
+upstream's supported range: a newer interpreter can lack wheels in the lock and
+fall back to sdists that fail to build. Reference: `packages/code-review-graph`.
 
 ## Adding a New Toolchain
 

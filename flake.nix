@@ -24,6 +24,18 @@
     };
     teller.url = "github:firefly-engineering/teller";
     teller.inputs.nix-pins.follows = "nix-pins";
+
+    # Python applications are built from upstream's committed uv.lock
+    # (toolboxLib.buildUvApplication), never from nixpkgs' python package set.
+    pyproject-nix.url = "github:pyproject-nix/pyproject.nix";
+    pyproject-nix.inputs.nixpkgs.follows = "nixpkgs";
+    uv2nix.url = "github:pyproject-nix/uv2nix";
+    uv2nix.inputs.nixpkgs.follows = "nixpkgs";
+    uv2nix.inputs.pyproject-nix.follows = "pyproject-nix";
+    pyproject-build-systems.url = "github:pyproject-nix/build-system-pkgs";
+    pyproject-build-systems.inputs.nixpkgs.follows = "nixpkgs";
+    pyproject-build-systems.inputs.pyproject-nix.follows = "pyproject-nix";
+    pyproject-build-systems.inputs.uv2nix.follows = "uv2nix";
   };
 
   outputs =
@@ -93,7 +105,10 @@
         let
           pkgs = nixpkgs.legacyPackages.${system};
           lib = pkgs.lib;
-          toolboxLib = import ./lib { inherit lib; };
+          toolboxLib = import ./lib {
+            inherit lib;
+            pythonInputs = { inherit (inputs) pyproject-nix uv2nix pyproject-build-systems; };
+          };
           packageDirs = lib.filterAttrs (n: v: v == "directory") (builtins.readDir ./packages);
           toolbox = builtins.mapAttrs (
             name: _: import ./packages/${name} { inherit pkgs lib toolbox toolboxLib; }
