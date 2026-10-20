@@ -11,6 +11,10 @@
     {
       "text": "Built and smoke-tested on aarch64-darwin only (--version, build on a scratch repo, MCP initialize + tools/list). x86_64-linux/aarch64-linux evaluate under nix flake check but were not built: the tree-sitter-language-pack manylinux wheel may need autoPatchelf via the helper's overrides.",
       "timestamp": "2026-10-20T07:04:26Z"
+    },
+    {
+      "text": "x86_64-linux built green in CI: https://github.com/firefly-engineering/toolbox/actions/runs/39384367592 (aarch64-linux still unbuilt; CI is x86_64-linux only).",
+      "timestamp": "2026-10-20T07:30:40Z"
     }
   ],
   "priority": 2,
