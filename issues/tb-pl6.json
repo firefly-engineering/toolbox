@@ -6,9 +6,15 @@
   "description": "Package https://github.com/tirth8205/code-review-graph from its tagged source, building from upstream's committed uv.lock via uv2nix (nixpkgs' tree-sitter-language-pack 1.4.1 violates upstream's \u003c1 pin). Also ship its skills/ as code-review-graph-skills from the same data.json, and add both to llm-toolchain. Hooks deliberately not packaged/consumed for now.",
   "id": "tb-pl6",
   "labels": [],
+  "comments": [
+    {
+      "text": "Built and smoke-tested on aarch64-darwin only (--version, build on a scratch repo, MCP initialize + tools/list). x86_64-linux/aarch64-linux evaluate under nix flake check but were not built: the tree-sitter-language-pack manylinux wheel may need autoPatchelf via the helper's overrides.",
+      "timestamp": "2026-10-20T07:04:26Z"
+    }
+  ],
   "priority": 2,
   "status": "in_progress",
   "title": "Package code-review-graph (CLI + MCP server) and its skills",
   "type": "task",
-  "updated_at": "2026-10-20T06:54:59Z"
+  "updated_at": "2026-10-20T07:04:26Z"
 }
