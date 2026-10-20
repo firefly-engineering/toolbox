@@ -1,0 +1,12 @@
+{
+  "_meta": {
+    "default": "2.3.9",
+    "releases": "https://github.com/tirth8205/code-review-graph/releases"
+  },
+  "2.3.9": {
+    "owner": "tirth8205",
+    "repo": "code-review-graph",
+    "rev": "343ab7cea29d47a3e805381e09f8243a43d43d88",
+    "sha256": "sha256-UiQg1ygebw6PePJVHNNOUsL6buw1/oMzX34jloui9Bg="
+  }
+}
