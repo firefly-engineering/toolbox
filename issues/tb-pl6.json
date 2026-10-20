@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-10-20T06:54:58Z",
+  "description": "Package https://github.com/tirth8205/code-review-graph from its tagged source, building from upstream's committed uv.lock via uv2nix (nixpkgs' tree-sitter-language-pack 1.4.1 violates upstream's \u003c1 pin). Also ship its skills/ as code-review-graph-skills from the same data.json, and add both to llm-toolchain. Hooks deliberately not packaged/consumed for now.",
+  "id": "tb-pl6",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "Package code-review-graph (CLI + MCP server) and its skills",
+  "type": "task",
+  "updated_at": "2026-10-20T06:54:58Z"
+}
