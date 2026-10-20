@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "unknown",
   "blocked_by": [],
   "blocks": [],
   "created": "2026-10-20T06:54:58Z",
@@ -7,8 +7,8 @@
   "id": "tb-pl6",
   "labels": [],
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "Package code-review-graph (CLI + MCP server) and its skills",
   "type": "task",
-  "updated_at": "2026-10-20T06:54:58Z"
+  "updated_at": "2026-10-20T06:54:59Z"
 }
