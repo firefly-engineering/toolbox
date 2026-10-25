@@ -1,0 +1,10 @@
+{
+  "_meta": {
+    "default": "2026-10-24",
+    "releases": "https://github.com/google/elephant-goldfish-model/commits/main"
+  },
+  "2026-10-24": {
+    "rev": "3d0b34821ce88ad328b0c9bf0e06d7eb5f1cd669",
+    "sha256": "sha256-a5qF6pJEaxet98kvHLCzDIEBz+zaM1L60x6gdzoI+kM="
+  }
+}
