@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-10-25T20:20:47Z",
+  "description": "In `lib/skill-bundle.nix:92-108`, `select` only filters the skills found in the source. A selected name that matches no candidate is dropped silently, for example after an upstream rename. The bundle shrinks and the build still succeeds. Only a missing candidate path fails (`lib/skill-bundle.nix:106-108`).\n\nAffects every bundle with a `select` list, for example `packages/caveman-skills`.\n\nFound by the EGM drift review on 2026-10-25.\n\n## Acceptance\n\n- A `select` entry that matches no candidate fails the bundle build with a message naming the skill.\n- Existing bundles still build. Changing the build script moves their drvPaths, so say so in the commit.",
+  "id": "tb-x64",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "buildSkillBundle: fail when a select name matches no skill",
+  "type": "bug",
+  "updated_at": "2026-10-25T20:20:47Z"
+}
