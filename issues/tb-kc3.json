@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "unknown",
   "blocked_by": [],
   "blocks": [],
   "created": "2026-10-25T20:20:34Z",
@@ -9,8 +9,8 @@
     "needs-triage"
   ],
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "python: dontFixup disables autoPatchelfHook on Linux",
   "type": "bug",
-  "updated_at": "2026-10-25T20:20:34Z"
+  "updated_at": "2026-10-25T20:36:33Z"
 }
