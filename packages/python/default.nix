@@ -17,7 +17,7 @@ let
           or (throw "python ${version} has no binary for ${system}");
         release = versionData.release;
       in
-      pkgs.stdenv.mkDerivation {
+      pkgs.stdenv.mkDerivation ({
         pname = "python";
         inherit version;
 
@@ -30,15 +30,6 @@ let
         dontBuild = true;
         dontStrip = true;
         dontFixup = true;
-
-        nativeBuildInputs = lib.optionals pkgs.stdenv.hostPlatform.isLinux [
-          pkgs.autoPatchelfHook
-        ];
-
-        buildInputs = lib.optionals pkgs.stdenv.hostPlatform.isLinux [
-          pkgs.stdenv.cc.cc.lib
-          pkgs.zlib
-        ];
 
         installPhase = ''
           runHook preInstall
@@ -60,7 +51,18 @@ let
             "aarch64-darwin"
           ];
         };
-      };
+      } // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+        # The interpreter needs only glibc. Set the loader and rpath in one
+        # patchelf call: --set-interpreter alone (what autoPatchelf does here)
+        # leaves DT_STRTAB pointing at DT_SYMTAB and the binary cannot start.
+        # Linux-only, so the darwin derivations are unchanged.
+        postInstall = ''
+          patchelf \
+            --set-interpreter ${pkgs.stdenv.cc.bintools.dynamicLinker} \
+            --set-rpath '$ORIGIN/../lib:${lib.makeLibraryPath [ pkgs.stdenv.cc.libc ]}' \
+            $out/bin/python${lib.versions.majorMinor version}
+        '';
+      });
   };
 in
 toolboxLib.buildPackage { name = "python"; dataPath = ./data.json; inherit builders; }

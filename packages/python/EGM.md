@@ -16,8 +16,7 @@ Source: `default.nix` (builder) and `data.json` (version metadata).
 
 - Each version entry carries `release` (the python-build-standalone release date tag) and `{ sha256 }` per system (raw `fetchurl` hash).
 - `_meta.release` exists but the builder reads `versionData.release`, so every version must set its own.
-- `dontFixup`; Linux binaries are patched with `autoPatchelfHook` against `cc.cc.lib` and `zlib`.
-- Known defect: `dontFixup = true` skips the fixup phase, where `autoPatchelfHook` runs, so Linux binaries ship unpatched and the hook and its inputs have no effect.
+- `dontFixup`. On Linux, `postInstall` runs one `patchelf` call on `bin/python<major.minor>` that sets both the store glibc loader and the rpath (`$ORIGIN/../lib` plus glibc). Setting the interpreter alone, which is what `autoPatchelfHook` does, corrupts this binary's dynamic section: `DT_STRTAB` lands on `DT_SYMTAB`, and the loader fails on a library named `5`. The interpreter needs only glibc. The darwin derivations do not carry the call.
 
 ## Side Effects
 
