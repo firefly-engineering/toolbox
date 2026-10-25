@@ -1,7 +1,7 @@
 # gh-aw
 
 ## Overview
-Packages the [`gh-aw`](https://github.com/github/gh-aw) GitHub CLI extension as a single prebuilt binary via `toolboxLib.buildPrebuiltBinary`. Note: `meta.description` reads "GitHub CLI extension for activity watching"; upstream describes gh-aw as GitHub Agentic Workflows.
+Packages the [`gh-aw`](https://github.com/github/gh-aw) GitHub CLI extension as a single prebuilt binary via `toolboxLib.buildPrebuiltBinary`.
 
 ## Interface
 - `default.nix`: `builders.default = toolboxLib.buildPrebuiltBinary { pname = "gh-aw"; ... }`, passed to `toolboxLib.buildPackage`.

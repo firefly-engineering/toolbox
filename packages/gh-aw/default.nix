@@ -14,7 +14,7 @@ let
       "https://github.com/github/gh-aw/releases/download/v${version}/${platform}";
     binaries = [ "gh-aw" ];
     meta = with lib; {
-      description = "GitHub CLI extension for activity watching";
+      description = "GitHub Agentic Workflows CLI, a GitHub CLI extension";
       homepage = "https://github.com/github/gh-aw";
       license = licenses.mit;
       mainProgram = "gh-aw";
