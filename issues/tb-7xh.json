@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-10-25T20:20:34Z",
+  "description": "`packages/rust` installs only `rustc,cargo,rust-std-\u003ctriple\u003e,clippy-preview,rustfmt-preview` (`packages/rust/default.nix:47`). There is no `rust-src` component, so the built `rust-1.98.1/lib/rustlib/` has no `src/`.\n\nThe rust template exports `RUST_SRC_PATH = \"${rust}/lib/rustlib/src/rust/library\"` (`templates/rust/flake.nix:47`). In a template shell that path does not exist, so rust-analyzer gets no std sources.\n\nFound by the EGM drift review on 2026-10-25.\n\n## Acceptance\n\n- `ls $(nix build --no-link --print-out-paths .#rust.default)/lib/rustlib/src/rust/library` lists the std crates.\n- Adding the component is a new builder variant, or applies only to new versions, so existing rust drvPaths stay unchanged (AGENTS.md, Builder Versioning).",
+  "id": "tb-7xh",
+  "labels": [],
+  "priority": 2,
+  "status": "open",
+  "title": "rust: ship rust-src so RUST_SRC_PATH resolves",
+  "type": "bug",
+  "updated_at": "2026-10-25T20:20:34Z"
+}
