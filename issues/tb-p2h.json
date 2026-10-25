@@ -5,7 +5,9 @@
   "created": "2026-10-25T20:20:34Z",
   "description": "`packages/buck2/default.nix:36` sets `passthru.rev = versionData.rev or (throw ...)`. The throw fires only when something reads `passthru.rev`. `checkRegistry` forces only `drvPath` (`lib/check-registry.nix`), so a buck2 version with no `rev` passes `nix flake check` and fails later in turnkey.\n\nThe same gap applies to any package whose required field is read only through passthru.\n\nRelated: in `lib/skill-bundle.nix:92-108`, a `select` name that matches no skill in the source is dropped silently (for example after an upstream rename). The bundle shrinks and the build still succeeds. Only a missing candidate path fails.\n\nFound by the EGM drift review on 2026-10-25.\n\n## Acceptance\n\n- `nix flake check` fails on a buck2 data.json entry with no `rev`. Fix by forcing `passthru.rev` for buck2, or by having packages declare required passthru attributes that checkRegistry forces.\n- A `select` entry that matches no candidate fails the bundle build with a message naming the skill.",
   "id": "tb-p2h",
-  "labels": [],
+  "labels": [
+    "needs-triage"
+  ],
   "priority": 2,
   "status": "open",
   "title": "checkRegistry misses buck2 entries without rev",
