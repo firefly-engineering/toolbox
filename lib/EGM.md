@@ -139,7 +139,8 @@ code in this directory is authoritative where they differ.
   - The candidates are either the upstream manifest's `.skills`
     (`fromClaudePlugin`, which defaults from `_meta.fromClaudePlugin`, else
     `false`), or every `skills/**/SKILL.md` directory.
-  - `select` and `exclude` filter by basename, and `exclude` wins.
+  - `select` and `exclude` filter by basename, and `exclude` wins. A `select`
+    name that matches no candidate fails the build.
   - When `fromClaudePlugin` is set, the upstream manifest is shipped with
     `skills` rewritten to the selection. Otherwise the manifest is a
     synthesized `{ name; skills; }`.
@@ -259,8 +260,8 @@ code in this directory is authoritative where they differ.
   - `checkRegistry`'s aggregated problem report.
 - **Build failures:** colliding skill basenames (`flattenSkills`, toolchain
   manifest merge), and a candidate skill path missing from the source
-  (`buildSkillBundle`, for paths the upstream manifest lists). A `select` name
-  that matches no candidate is dropped silently, with no build failure.
+  (`buildSkillBundle`, for paths the upstream manifest lists), and a `select`
+  name that matches no candidate (`buildSkillBundle`).
 - No helper mutates the repository or any state outside the Nix store.
 
 ## Verification

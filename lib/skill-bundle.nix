@@ -100,6 +100,24 @@ in
                   | map(select((.b as $b | $exc | index($b)) | not))
                   | map(.p)
                 ')
+            ''
+            # Emitted only when `select` is set, so bundles without one keep
+            # their derivations.
+            + lib.optionalString (versionData ? select) ''
+              # 2b. Every `select` name must match a candidate: a skill upstream
+              #     renamed or dropped would otherwise vanish from the bundle.
+              unmatched=$(jq -rn \
+                --argjson c "$candidates" \
+                --argjson sel '${selectJson}' '
+                  ($c | map(split("/") | last)) as $names
+                  | $sel | map(select(. as $s | $names | index($s) | not)) | .[]
+                ')
+              if [ -n "$unmatched" ]; then
+                echo "skills selected for ${name} ${version} but not in source:" $unmatched >&2
+                exit 1
+              fi
+            ''
+            + ''
 
               # 3. Copy each selected skill dir, preserving its relative path.
               echo "$selected" | jq -r '.[]' | while read -r rel; do

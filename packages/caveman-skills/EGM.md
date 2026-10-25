@@ -14,7 +14,7 @@ Skill bundle packaging Caveman's self-contained agent skills as a Claude Code pl
 - `fromClaudePlugin` is false: upstream's manifest lists no `skills`.
 - Skills needing subagents, hooks, bundled scripts, the `caveman` CLI or a Caveman Cloud account are excluded on purpose; the auto-activation hooks are not shipped.
 - Selection runs in the build sandbox with `jq`, never at eval time.
-- Known defect: `select` only filters the skills found in the source, so a selected name that upstream renames or drops vanishes from the bundle without an error.
+- Every `select` name must match a skill in the source. If upstream renames or drops one, the build fails and names it.
 
 ## Side Effects
 - Build time only: fixed-output fetch of the pinned GitHub commit.
