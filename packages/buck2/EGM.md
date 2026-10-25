@@ -13,7 +13,7 @@ Packages Meta's Buck2 build system as a prebuilt, zstd-compressed binary from `f
 
 ## Invariants
 - Each version entry needs `rev` (from `gh api repos/facebook/buck2/commits/<tag> --jq .sha`) and `<system>.sha256` for all four systems.
-- Known defect: a missing `rev` throws only when `passthru.rev` is read, and `nix flake check` never reads it, so an entry without `rev` passes the gate.
+- A missing `rev` fails an `assert` when the version is instantiated, so `nix flake check` rejects the entry.
 - `passthru.rev` is passthru only: it does not change the derivation.
 
 ## Side Effects

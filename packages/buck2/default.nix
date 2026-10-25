@@ -30,11 +30,12 @@ let
   # tag points at, so a consumer pinning a source revision (turnkey's pinned
   # buck2 release) can check the binary against it, as it does the prelude's
   # `preludeRev`. Passthru only: the derivation itself is unchanged.
+  # Asserted, not thrown lazily from passthru: checkRegistry forces drvPath,
+  # never passthru, so only an assert makes a missing rev fail `nix flake check`.
   builders.default = version: versionData:
+    assert lib.assertMsg (versionData ? rev) "buck2 ${version} has no rev in data.json";
     (prebuilt version versionData).overrideAttrs (old: {
-      passthru = (old.passthru or { }) // {
-        rev = versionData.rev or (throw "buck2 ${version} has no rev in data.json");
-      };
+      passthru = (old.passthru or { }) // { inherit (versionData) rev; };
     });
 in
 toolboxLib.buildPackage { name = "buck2"; dataPath = ./data.json; inherit builders; }
