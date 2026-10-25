@@ -5,7 +5,9 @@
   "created": "2026-10-25T20:20:34Z",
   "description": "Small inconsistencies found by the EGM drift review on 2026-10-25:\n\n- `lib/default.nix:115-116`: the comment cites `packages/bun-baseline` as a direct `buildVersions` user. bun-baseline now uses `buildPackage` with `buildPrebuiltBinary`, and no package calls `buildVersions`.\n- `packages/solana-toolchain/default.nix:15-16`: the header says the docs generator walks `packages/*/data.json`. It now reads `.#manifest` from stamps (docs/adr/0004).\n- `packages/gh-aw/default.nix:17`: `meta.description` says \"activity watching\", but `gh-aw --help` says \"GitHub Agentic Workflows CLI\".\n- `packages/qmk_hid/default.nix:10` and `packages/vitaly/default.nix:10`: each vendors one shared `./Cargo.lock`. AGENTS.md (and `packages/nil`) uses version-namespaced locks, `Cargo-\u003cversion\u003e.lock`.\n- `README.md:74` lists `x86_64-darwin` as a target, and `templates/{devshell,go,rust}/flake.nix:17` include it in `systems`. The flake dropped `x86_64-darwin` (`flake.nix` systems comment), so a template consumer on that system gets an attribute-missing error on `toolbox.registry`.\n\n## Acceptance\n\nEach item fixed. The comment, description and README edits leave drvPaths unchanged; check with the AGENTS.md Verification Checklist comparison.",
   "id": "tb-ak4",
-  "labels": [],
+  "labels": [
+    "needs-triage"
+  ],
   "priority": 2,
   "status": "open",
   "title": "Clean up stale comments, gh-aw description, shared Cargo.lock, x86_64-darwin mentions",
