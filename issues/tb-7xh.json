@@ -9,9 +9,15 @@
   "labels": [
     "needs-triage"
   ],
+  "comments": [
+    {
+      "text": "Landed differently from the first acceptance bullet: rust-src is not an installed component of .#rust.default but a separate derivation at passthru.rustSrc (nix build .#rust.default.rustSrc). Installing it would have moved the default rust's drvPath and rebuilt every Rust package. The template's RUST_SRC_PATH points at it, and an end-to-end nix flake init -t .#rust shell resolves it. rustSrc.sha256 is required and asserted, so nix flake check rejects a version without it.",
+      "timestamp": "2026-10-25T20:54:58Z"
+    }
+  ],
   "priority": 2,
   "status": "closed",
   "title": "rust: ship rust-src so RUST_SRC_PATH resolves",
   "type": "bug",
-  "updated_at": "2026-10-25T20:36:20Z"
+  "updated_at": "2026-10-25T20:54:58Z"
 }
