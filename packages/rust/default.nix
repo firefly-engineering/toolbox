@@ -42,6 +42,10 @@ let
         platformData = versionData.${system}
           or (throw "Rust ${version} has no binary for ${system}");
       in
+      # Asserted rather than read lazily from passthru, so a missing rustSrc
+      # fails `nix flake check` (which forces drvPath, never passthru).
+      assert lib.assertMsg (versionData ? rustSrc.sha256)
+        "Rust ${version} has no rustSrc.sha256 in data.json";
       pkgs.stdenv.mkDerivation {
         pname = "rust";
         inherit version;
@@ -81,7 +85,6 @@ let
         passthru = {
           targetPlatforms = lib.platforms.all;
           badTargetPlatforms = [ ];
-        } // lib.optionalAttrs (versionData ? rustSrc) {
           # Std sources for rust-analyzer (RUST_SRC_PATH). Passthru, not an
           # installed component, so this derivation and every Rust package
           # built with it stay unchanged.
