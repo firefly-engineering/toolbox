@@ -25,8 +25,7 @@ file documents all three templates instead.
     (`github:firefly-engineering/toolbox`; its `nix-pins` follows the
     consumer's);
   - output `devShells.<system>.default`, a `pkgs.mkShell` for a hard-coded
-    `systems` list (`x86_64-linux`, `aarch64-linux`, `x86_64-darwin`,
-    `aarch64-darwin`);
+    `systems` list (`x86_64-linux`, `aarch64-linux`, `aarch64-darwin`);
   - `.envrc`: `use flake`, so direnv loads the default shell.
 - `devshell/`:
   - local helper `tool name` returns
@@ -53,9 +52,8 @@ file documents all three templates instead.
   (`registry.<system>.<pkg>.{versions,default}`), never `packages/*/data.json`.
   Bumping a package's `_meta.default` changes what new consumers get.
 - Every name passed to `tool` must be a toolbox package, or evaluation fails.
-- The hard-coded `systems` list includes `x86_64-darwin`, which the toolbox
-  flake no longer advertises. The registry has no entry for that system, so
-  the shell fails to evaluate there.
+- The hard-coded `systems` list must stay inside the systems the toolbox
+  flake advertises: `toolbox.registry` has no entry for any other system.
 - `GOROOT` comes from `reg.go.default` and `RUST_SRC_PATH` from
   `reg.rust.default`, not from the toolchain's own pin. Each pair only agrees
   while the toolchain default pins the package default (today go `1.27.2` and

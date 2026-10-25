@@ -67,12 +67,13 @@ Use one route, not both. The `plugins` route needs Claude Code ≥ 2.1.76 (≥ 2
 
 ## Platforms
 
-All packages target:
+The registry is published for:
 
 - `x86_64-linux`
 - `aarch64-linux`
-- `x86_64-darwin`
 - `aarch64-darwin`
+
+Some packages cover fewer systems (`bun-baseline` is x86_64-linux only). `x86_64-darwin` is not supported: nixpkgs 26.11 dropped it.
 
 ## Adding Packages
 
