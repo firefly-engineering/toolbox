@@ -8,9 +8,15 @@
   "labels": [
     "needs-triage"
   ],
+  "comments": [
+    {
+      "text": "Fix committed as 235d9168fb52 (autoPatchelf from postInstall, Linux only; darwin drvPath unchanged). Red confirmed: the cached x86_64-linux output's interpreter is /lib64/ld-linux-x86-64.so.2. Green NOT verified: shirka and ash-devbox SSH failed, and the fallback builder has a case-insensitive store (cp 'File exists' on terminfo hp2621a/hp2621A). To close: on a real Linux builder, build .#packages.x86_64-linux.python, check patchelf --print-interpreter points into /nix/store, and run python3 -c 'import ssl, sqlite3, zlib' in a runCommand.",
+      "timestamp": "2026-10-25T20:48:26Z"
+    }
+  ],
   "priority": 2,
   "status": "in_progress",
   "title": "python: dontFixup disables autoPatchelfHook on Linux",
   "type": "bug",
-  "updated_at": "2026-10-25T20:36:33Z"
+  "updated_at": "2026-10-25T20:48:26Z"
 }
