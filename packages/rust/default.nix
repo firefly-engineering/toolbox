@@ -10,6 +10,31 @@ let
   }.${pkgs.stdenv.hostPlatform.system}
     or (throw "Unsupported system: ${pkgs.stdenv.hostPlatform.system}");
 
+  # The platform-independent rust-src component, installed on its own:
+  # $out/lib/rustlib/src/rust/library.
+  mkRustSrc = version: srcData:
+    pkgs.stdenv.mkDerivation {
+      pname = "rust-src";
+      inherit version;
+
+      src = pkgs.fetchurl {
+        url = "https://static.rust-lang.org/dist/rust-src-${version}.tar.xz";
+        hash = srcData.sha256;
+      };
+
+      dontConfigure = true;
+      dontBuild = true;
+      # Sources only: nothing to strip or patch.
+      dontFixup = true;
+
+      installPhase = ''
+        runHook preInstall
+        bash install.sh --prefix=$out --components=rust-src --disable-ldconfig
+        rm -rf $out/lib/rustlib/{manifest-*,install.log,rust-installer-version,components,uninstall.sh}
+        runHook postInstall
+      '';
+    };
+
   builders = {
     default = version: versionData:
       let
@@ -56,6 +81,11 @@ let
         passthru = {
           targetPlatforms = lib.platforms.all;
           badTargetPlatforms = [ ];
+        } // lib.optionalAttrs (versionData ? rustSrc) {
+          # Std sources for rust-analyzer (RUST_SRC_PATH). Passthru, not an
+          # installed component, so this derivation and every Rust package
+          # built with it stay unchanged.
+          rustSrc = mkRustSrc version versionData.rustSrc;
         };
 
         meta = {

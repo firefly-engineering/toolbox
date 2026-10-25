@@ -1,12 +1,14 @@
 {
   "_meta": { "default": "1.98.1", "releases": "https://github.com/rust-lang/rust/releases" },
   "1.98.1": {
+    "rustSrc": { "sha256": "sha256-XIRuvOvMfi4Hd6TNqhIFFpFZPxan6U7brl5iQcxi2Yw=" },
     "x86_64-linux": { "sha256": "sha256-UyazbFPeEdFIyPjatlU6PRAGws/TISNoMHP608MCYFs=" },
     "aarch64-linux": { "sha256": "sha256-C1FKjMHLzZOb/w8VFmH+WLbqXHp/ZFpQmMaeMujB4KI=" },
     "x86_64-darwin": { "sha256": "sha256-DVrqYBHTtVPlqnFYCwzX+fBhTu8X9+V2fmvBYVQe2F8=" },
     "aarch64-darwin": { "sha256": "sha256-j3yd40wSxm3FWm291jsrlkXUQYd11Ll1sAeKYC9m4+g=" }
   },
   "1.97.0": {
+    "rustSrc": { "sha256": "sha256-8lMKzWtNolohFR41YNkIsx8ILt1paPltJoLIwsFcZrc=" },
     "x86_64-linux": {
       "sha256": "sha256-HPF+SQW4QdTI4/dkZ6wUjVX7P1S/ITyG8NKHo2Rx2QQ="
     },
@@ -21,6 +23,7 @@
     }
   },
   "1.96.0": {
+    "rustSrc": { "sha256": "sha256-eHX59LkUVawl4uoODxyz19FsMJ7wcgd4U40g7Q6bgYs=" },
     "x86_64-linux": {
       "sha256": "sha256-wpUEdYOlYjjqBrQ/hJ9Lh3+hK/1McQP42adMlMnE4Qg="
     },
@@ -35,6 +38,7 @@
     }
   },
   "1.95.0": {
+    "rustSrc": { "sha256": "sha256-Z7CROMjblq/Eu/xp6ncayaCR/Xd2mKy0P239n7feo2M=" },
     "x86_64-linux": {
       "sha256": "sha256-LgM48Y7LqkoPYxuegOi44mu2/nfdVFT7qKcM+WwehKE="
     },
@@ -49,6 +53,7 @@
     }
   },
   "1.94.0": {
+    "rustSrc": { "sha256": "sha256-lBLi9606rDCtiVAG1e9M4F0ET+1IFBpBRyk20eH2PLc=" },
     "x86_64-linux": {
       "sha256": "sha256-6PpBhfPvauMnJf9jix7Nv/KPXWUdwLMRHiU5NQ0DsVo="
     },
@@ -63,6 +68,7 @@
     }
   },
   "1.92.0": {
+    "rustSrc": { "sha256": "sha256-Mz1F7rdvIQlm3FwUQLU13qWHbtAWL5KGJzyF56Hjyyk=" },
     "x86_64-linux": {
       "sha256": "sha256-0szvWd2fdDnyxpSUgGn3iaBE3BrdzAgDYTIyr4+I7gw="
     },

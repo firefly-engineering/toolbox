@@ -44,8 +44,8 @@ file documents all three templates instead.
 - `rust/`:
   - packages the default `rust-toolchain` (today version `5`: rust,
     rust-analyzer, cargo-edit);
-  - sets `env.RUST_SRC_PATH = "${rust}/lib/rustlib/src/rust/library"`, where
-    `rust` is the default version of the `rust` package.
+  - sets `env.RUST_SRC_PATH = "${rust.rustSrc}/lib/rustlib/src/rust/library"`,
+    where `rust` is the default version of the `rust` package.
 
 ## Invariants
 
@@ -60,11 +60,10 @@ file documents all three templates instead.
   `reg.rust.default`, not from the toolchain's own pin. Each pair only agrees
   while the toolchain default pins the package default (today go `1.27.2` and
   rust `1.98.1`). Bump them in step.
-- The toolbox `go` derivation must keep its tree at `share/go`. The `rust`
-  derivation must ship the std sources at `lib/rustlib/src/rust/library`,
-  because rust-analyzer reads them from there.
-- Known defect: `packages/rust` installs no `rust-src` component, so
-  `RUST_SRC_PATH` points to a path that does not exist.
+- The toolbox `go` derivation must keep its tree at `share/go`. The default
+  `rust` version must carry `passthru.rustSrc` (a `rustSrc` hash in its
+  `data.json` entry), whose `lib/rustlib/src/rust/library` rust-analyzer
+  reads.
 - Template directories hold only files meant for consumers. Do not add
   `EGM.md` or other repo documentation inside them.
 

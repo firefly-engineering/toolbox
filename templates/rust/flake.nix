@@ -44,7 +44,7 @@
             ];
 
             env = {
-              RUST_SRC_PATH = "${rust}/lib/rustlib/src/rust/library";
+              RUST_SRC_PATH = "${rust.rustSrc}/lib/rustlib/src/rust/library";
             };
           };
         }
