@@ -1,5 +1,5 @@
 {
-  "assignee": "",
+  "assignee": "unknown",
   "blocked_by": [],
   "blocks": [],
   "created": "2026-10-25T20:20:47Z",
@@ -9,8 +9,8 @@
     "needs-triage"
   ],
   "priority": 2,
-  "status": "open",
+  "status": "in_progress",
   "title": "buildSkillBundle: fail when a select name matches no skill",
   "type": "bug",
-  "updated_at": "2026-10-25T20:20:47Z"
+  "updated_at": "2026-10-25T20:30:20Z"
 }
