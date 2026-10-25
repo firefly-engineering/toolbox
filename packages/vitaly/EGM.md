@@ -8,21 +8,21 @@ Packages [vitaly](https://github.com/bskaplou/vitaly), a Vial-compatible CLI for
 
 - `default.nix`: `toolboxLib.buildRustPackage` (owner `bskaplou`, repo `vitaly`, default rev `v<version>`), passed to `toolboxLib.buildPackage { name = "vitaly"; }`.
 - `data.json`: version `0.1.32` (`_meta.default`), built with toolbox rust `1.95.0`.
-- `Cargo.lock`: vendored lockfile passed as `cargoLock.lockFile`.
+- `Cargo-<version>.lock` (today `Cargo-0.1.32.lock`): vendored lockfile passed as `cargoLock.lockFile`.
 - Output: `bin/vitaly`.
 - Cross-package deps: `toolbox.rust.versions.<rust>` ([rust](../rust/EGM.md)).
 - Platforms: not declared; there is no `meta.platforms`. The OS split only picks build inputs: Linux adds `pkg-config` + `udev`, Darwin adds `apple-sdk_15`.
 
 ## Invariants
 
-- Each version entry needs `sha256` (`--unpack` hash of the tag) and `rust` (a toolbox rust version). It has no `cargoHash`: dependencies are pinned by the vendored `Cargo.lock` instead.
-- The vendored lock is a shared, non-version-namespaced `Cargo.lock`, so a new version needs the lock replaced (or namespaced) in step.
+- Each version entry needs `sha256` (`--unpack` hash of the tag) and `rust` (a toolbox rust version). It has no `cargoHash`: dependencies are pinned by the vendored lock instead.
+- Locks are version-namespaced: each version needs its own `Cargo-<version>.lock` next to `default.nix`.
 - `meta` sets no `license`.
 - Tests are not run (`doCheck = false`, set by the helper).
 
 ## Side Effects
 
-- Build time only: fixed-output fetch of the GitHub source and the crates named in `Cargo.lock`.
+- Build time only: fixed-output fetch of the GitHub source and the crates named in the vendored lock.
 
 ## Verification
 

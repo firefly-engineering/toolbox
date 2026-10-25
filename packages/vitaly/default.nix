@@ -6,8 +6,9 @@ let
     pname = "vitaly";
     owner = "bskaplou";
     repo = "vitaly";
-    extraArgs = {
-      cargoLock.lockFile = ./Cargo.lock;
+    extraArgs = { version, ... }: {
+      # Version-namespaced, like a patch: a new version vendors its own lock.
+      cargoLock.lockFile = ./. + "/Cargo-${version}.lock";
 
       nativeBuildInputs = lib.optionals pkgs.stdenv.hostPlatform.isLinux [
         pkgs.pkg-config
