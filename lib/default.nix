@@ -113,7 +113,8 @@ let
   # "builder" field, default "default"), and returns the { versions; default; }
   # shape the registry expects — the same shape buildToolchain/buildSkillBundle
   # produce. Reach for buildVersions directly only when a package needs to
-  # pre-process its version set (e.g. platform filtering); see packages/bun-baseline.
+  # pre-process its version set; no package does today. Platform filtering is
+  # not such a case: declare meta.platforms and let availableVersions filter.
   buildPackage = { name, dataPath, builders }:
     let
       inherit (readData dataPath) meta versions;

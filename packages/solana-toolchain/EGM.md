@@ -21,7 +21,7 @@ It is a hand-written `symlinkJoin`, not `buildToolchain`: the wrapped `cargo-bui
 - Only `_meta.default` is built: `versions` holds exactly one entry, so other keys in `data.json` are ignored by the derivation (but still appear in the stamp's `components`).
 - The hand-built return must carry the `toolbox` stamp; `checkRegistry` fails the flake check without it.
 - The wrapper runs `cargo-build-sbf --skip-tools-install`, so it never downloads platform-tools; `SBF_SDK_PATH` and `RUSTUP_HOME` are honoured if already set, else default to the pinned SDK and an isolated rustup home.
-- The header comment in `default.nix` says the docs generator walks `packages/*/data.json`; per `AGENTS.md` it now reads the `.#manifest` built from stamps. The stamp, not the `data.json`, is what makes this entry documented.
+- The docs generator reads the `.#manifest` built from stamps, not `data.json`: the stamp is what makes this entry documented.
 
 ## Side Effects
 

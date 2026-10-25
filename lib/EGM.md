@@ -232,10 +232,6 @@ code in this directory is authoritative where they differ.
   `fetchTarball`, there is no import-from-derivation.
 - **Refactors must not change derivations.** A behaviour-preserving change to
   any helper must leave every `drvPath` unchanged (see *Verification*).
-- **Known comment drift:** the comment above `buildPackage` in `default.nix`
-  still cites `packages/bun-baseline` as a direct `buildVersions` user. That
-  package now uses `buildPackage` plus `buildPrebuiltBinary`, and no package
-  calls `buildVersions` directly.
 
 ## Side Effects
 

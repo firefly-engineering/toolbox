@@ -12,9 +12,10 @@
 # Unlike the other `*-toolchain` packages this is a hand-written `symlinkJoin`
 # rather than `buildToolchain` — the wrapped `cargo-build-sbf` is custom logic
 # `buildToolchain` does not model. The version and its toolbox component pin
-# still live in `data.json`, so the registry stays data-driven and the docs
-# generator (which discovers packages by walking `packages/*/data.json`) sees
-# it. See docs/adr/0003.
+# still live in `data.json`, so the registry stays data-driven. The docs
+# generator reads the registry manifest, not `data.json`, so this hand-built
+# return carries its own `toolbox` stamp (mkStamp). See docs/adr/0003 and
+# docs/adr/0004.
 let
   data = toolboxLib.readData ./data.json;
   version = data.meta.default;
