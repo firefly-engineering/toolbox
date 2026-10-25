@@ -14,6 +14,8 @@ let
   builders = {
     default = version: versionData:
       pkgs.fetchFromGitHub {
+        # Named after the package: the path shows up in `--plugin-dir` flags.
+        name = "elephant-goldfish-model-${version}";
         owner = "google";
         repo = "elephant-goldfish-model";
         rev = versionData.rev;
