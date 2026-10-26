@@ -2,6 +2,7 @@
   "assignee": "unknown",
   "blocked_by": [],
   "blocks": [],
+  "closed_at": "2026-10-26T08:14:55Z",
   "created": "2026-10-25T20:20:34Z",
   "description": "`packages/python/default.nix:32` sets `dontFixup = true`, but lines 34-41 add `autoPatchelfHook` plus `cc.cc.lib` and `zlib` for Linux. `autoPatchelfHook` runs during the fixup phase, which `dontFixup` skips, so the Linux interpreter is never patched and those inputs have no effect.\n\nFound by the EGM drift review on 2026-10-25. Not yet reproduced on Linux.\n\n## Acceptance\n\n- On x86_64-linux, either the build log shows autoPatchelf running and `ldd result/bin/python3` resolves every library from the store, or the hook and inputs are removed with a comment explaining why they are not needed.\n- Existing python drvPaths stay unchanged, or the change lands as a new builder variant.",
   "id": "tb-kc3",
@@ -19,8 +20,8 @@
     }
   ],
   "priority": 2,
-  "status": "in_progress",
+  "status": "closed",
   "title": "python: dontFixup disables autoPatchelfHook on Linux",
   "type": "bug",
-  "updated_at": "2026-10-25T20:54:58Z"
+  "updated_at": "2026-10-26T08:14:55Z"
 }
