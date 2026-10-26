@@ -17,6 +17,10 @@
     {
       "text": "Acceptance amendment: the fix intentionally moves the Linux python drvPaths, because the current Linux outputs are broken (unpatched interpreter). Darwin drvPaths are unchanged. A new builder variant would leave existing versions broken, so it would not help.",
       "timestamp": "2026-10-25T20:54:58Z"
+    },
+    {
+      "text": "Verified on x86_64-linux (shirka): the interpreter points into the store, ldd resolves all libs from the store, ssl/sqlite3/zlib/ctypes import and a venv works for 3.13.12, 3.13.14 and 3.13.15. autoPatchelf alone was not enough: patchelf --set-interpreter by itself corrupts this binary (DT_STRTAB = DT_SYMTAB); one patchelf call that sets both the interpreter and the rpath works. aarch64-linux not built: ash-devbox unreachable.",
+      "timestamp": "2026-10-26T08:14:55Z"
     }
   ],
   "priority": 2,
