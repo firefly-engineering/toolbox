@@ -1,0 +1,7 @@
+{
+  "_meta": { "default": "2.1.0", "releases": "https://github.com/fabio-rovai/open-ontologies/releases" },
+  "2.1.0": {
+    "x86_64-linux": { "sha256": "sha256-6tA8cUimbqD+AcvaoonUc2HCpNVGGaYPgFpyosV+gbs=" },
+    "aarch64-darwin": { "sha256": "sha256-ST9ttRVQESUo0Z88qIyvEztGwqkFShlamLxYi1e6B7Y=" }
+  }
+}
