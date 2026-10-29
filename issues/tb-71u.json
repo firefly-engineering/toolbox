@@ -1,0 +1,14 @@
+{
+  "assignee": "",
+  "blocked_by": [],
+  "blocks": [],
+  "created": "2026-10-29T10:21:08Z",
+  "description": "Since Rust 1.90, rustc links x86_64-unknown-linux-gnu with its self-contained rust-lld by default. That bypasses nixpkgs' ld-wrapper, which is what adds RUNPATH entries for the -L directories it links against. Every package built with toolboxLib.buildRustPackage (and makeRustPlatform on toolbox rust) on x86_64-linux therefore ships with an empty RUNPATH.\n\nA binary that needs only glibc (and the libgcc_s glibc carries) still runs, which is why this went unnoticed: packages/cargo-edit's cargo-upgrade has RUNPATH [] and works. Any binary that links another shared library fails at startup, e.g. open-ontologies built from source with openssl: 'libssl.so.3: cannot open shared object file'.\n\nVerified on shirka: the same open-ontologies build with RUSTFLAGS='-C linker-features=-lld' gets RUNPATH [openssl/lib:glibc/lib:...] and runs. aarch64-linux and darwin are not affected (rust-lld is the default only on x86_64-linux-gnu).\n\nFix in shared code, not per package: lib/rust-package.nix (and packages/delta, which calls makeRustPlatform itself), or the toolbox rust derivation's linker defaults. This moves every Rust package's x86_64-linux drvPath, so the Cachix workflow rebuilds them all. Then audit x86_64-linux Rust binaries for NEEDED libraries outside glibc that were broken until now.",
+  "id": "tb-71u",
+  "labels": [],
+  "priority": 1,
+  "status": "open",
+  "title": "Rust packages on x86_64-linux link with rust-lld and get an empty RUNPATH",
+  "type": "bug",
+  "updated_at": "2026-10-29T10:21:08Z"
+}
