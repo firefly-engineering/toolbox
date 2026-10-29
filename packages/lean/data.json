@@ -1,0 +1,6 @@
+{
+  "_meta": { "default": "4.33.1", "releases": "https://github.com/leanprover/lean4/releases" },
+  "4.33.1": {
+    "sha256": "sha256-qdE1D/WFBFR8wOsbO0+YqEirHedr7imaUWO6oR8EDIw="
+  }
+}
