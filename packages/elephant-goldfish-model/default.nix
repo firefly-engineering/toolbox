@@ -8,8 +8,8 @@
 # pinned checkout *is* the plugin directory. It carries every harness's
 # manifest (`.claude-plugin/`, `.codex-plugin/`, root `plugin.json`).
 #
-# Upstream has no tags and does not bump the manifest `version`, so versions
-# are keyed by commit date.
+# Versions are upstream's release tags, pinned to the tag's commit. Entries
+# from before upstream tagged releases are keyed by commit date.
 let
   builders = {
     default = version: versionData:
