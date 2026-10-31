@@ -1,0 +1,12 @@
+{
+  "_meta": {
+    "default": "1.0.4",
+    "releases": "https://github.com/VoltAgent/awesome-claude-code-subagents/commits/main"
+  },
+  "1.0.4": {
+    "owner": "VoltAgent",
+    "repo": "awesome-claude-code-subagents",
+    "rev": "f2e2ea7e0202cc05fa2d469fcb2c57fe08603450",
+    "sha256": "sha256-/a0NKZbHSALBUyTpAEBi7p6vjC7c98x6js6Z9o63bow="
+  }
+}

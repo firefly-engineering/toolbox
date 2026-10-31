@@ -65,6 +65,34 @@ in {
 
 Use one route, not both. The `plugins` route needs Claude Code ≥ 2.1.76 (≥ 2.1.157 for persistent personal plugins); the `skills` route has no version floor. Both need a home-manager recent enough to expose `programs.claude-code.skills` / `.plugins`. Bundles are filtered to upstream's `.claude-plugin/plugin.json`, so only the curated skills are installed.
 
+### With home-manager (Claude Code subagents)
+
+`voltagent-subagents` ships VoltAgent's whole subagent catalog without enabling any of it. Pick global agents by name from its flat `agents/` directory, and install its `subagent-catalog` skill to enable others per project:
+
+```nix
+{ config, inputs, lib, pkgs, ... }:
+let
+  subagents = inputs.toolbox.packages.${pkgs.system}.voltagent-subagents;
+  globalAgents = [ "code-reviewer" "debugger" ];   # names: `subagent-catalog list`, or catalog.json
+in {
+  programs.claude-code = {
+    enable = true;
+    # The plugin's manifest lists the skill only, never the agents.
+    plugins = [ subagents ];
+    # …OR: skills = "${subagents}/skills";
+  };
+
+  # home.file, not programs.claude-code.agents: that option writes a string
+  # value as the file's *text*, and a store path read at eval time is IFD.
+  home.file = lib.listToAttrs (map (name: {
+    name = "${config.programs.claude-code.configDir}/agents/${name}.md";
+    value.source = "${subagents}/agents/${name}.md";
+  }) globalAgents);
+}
+```
+
+A misspelt name fails the home-manager build: its `source` does not exist. In a project, ask Claude to enable an agent, or run the skill's script directly: `subagent-catalog enable <name>` copies the packaged definition into `<project>/.claude/agents/`. See [`packages/voltagent-subagents/EGM.md`](packages/voltagent-subagents/EGM.md).
+
 ## Platforms
 
 The registry is published for:
